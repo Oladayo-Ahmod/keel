@@ -18,5 +18,6 @@ Each entry: what was decided and why. Newest last.
 14. **Guardian is wave 2 and needs a vault v2 behind a new factory.** A delegate slot in wave 1 would be unused attack surface.
 15. **No use of `BorrowerOperationsSignatures`.** It checks ECDSA only, and the borrower is a contract.
 16. **Core addresses are immutables.** A KEEL deployment is bound to one Mezo deployment. Fewer storage reads and no admin to compromise. Cost: a Mezo redeploy needs a KEEL redeploy.
-17. **Fork tests use a retrying local RPC proxy.** The public matsnet RPC drops a few percent of connections from some networks, and one drop fails a run. `script/rpc_retry_proxy.py` retries upstream.
-18. **Oracle is mocked in fork tests.** `PriceFeed.fetchPrice` calls a chain precompile that forge's EVM lacks (`0x7b7c…0015`).
+17. **Measure gas server side, not on a local fork.** The public matsnet RPC drops a few percent of connections from some networks, and a fork run makes thousands of sequential requests, so it did not finish in 45 minutes. `script/measure/BufferWalker.sol` runs the walk inside a constructor via `eth_call` and `eth_estimateGas`. Full fork tests will need a pinned block and a warm cache, or a different RPC provider.
+18. **Default Lens walk cap is 100 steps.** Measured at about 24.7k gas per trove, so about 2.6M gas. A full walk of 281 troves is about 7M.
+19. **Oracle is mocked in fork tests.** `PriceFeed.fetchPrice` calls a chain precompile that forge's EVM lacks (`0x7b7c…0015`).
