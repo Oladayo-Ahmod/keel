@@ -81,8 +81,27 @@ Deployed and source signature: `openTrove(uint256 _debtAmount, address _upperHin
   - It is a **lower bound that moves**: troves ahead of T can top up, close or be redeemed, and T's own NICR changes when T is adjusted.
   - Sort order can lag true ICR. Two troves with equal NICR but different rates have different debt growth. Treat the figure as an estimate, not a guarantee.
   - Bounded iteration: `bufferOf(T, maxSteps)` returns `(buffer, complete)`. If `complete` is false the buffer is at least the returned value. A trigger of the form "buffer below X" can only be trusted when `complete` is true; a partial walk can prove the buffer is large but never that it is small.
-  - Gas is **open**. Live matsnet has 280 troves (`SortedTroves.getSize()`), no max size (`getMaxSize` = 2^256-1). I have not measured gas per step; a rough estimate is 15-30k gas per trove given the external calls, which would make a full walk of 280 troves roughly 4-8M gas. Decide the step cap from a fork measurement in phase 2/3, not from this estimate. Mainnet size is not checked.
+  - Gas is measured, see [Gas of the buffer walk](#gas-of-the-buffer-walk). About 24.7k gas per trove, so a full walk of today's 281 troves is about 7M gas. Mainnet size is not checked.
 - `HintHelpers.getRedemptionHints` already has the same walk with `_maxIterations` (`HintHelpers.sol:79-170`). It is a reference for loop shape, not reusable as is (it simulates a given amount).
+
+## Gas of the buffer walk
+
+Measured 2026-10-21 against live matsnet state, using `script/measure/BufferWalker.sol`. Its constructor performs the walk and the node executes it server side with `cast estimate --create` and `cast call --create`. A local fork was tried first and dropped: forge makes thousands of sequential state requests and a run did not finish in 45 minutes against the public RPC.
+
+The walk is the single-call variant planned for the Lens: `getLast`, then per trove `getEntireDebtAndColl` plus `getPrev`, ICR computed locally. The price is a fixed argument (84 127.77 USD) because the oracle is a precompile.
+
+| Cap (steps) | Gas (estimate, includes about 130k create overhead) |
+|---|---|
+| 10 | 376,623 |
+| 50 | 1,363,468 |
+| 100 | 2,597,471 |
+| 1000 (walks all 281) | 7,068,514 |
+
+- **About 24.7k gas per trove** (slope between caps 10, 50 and 100 is 24.7k each). A full walk of 281 troves is about 6.9M gas plus the overhead.
+- The `estimate` figure is the minimum gas at which the call succeeds, so it includes the cold storage reads a real `eth_call` pays.
+- Live state at the measured block: 281 troves, all with ICR at or above 110%, smallest eligible lot 1,801.08 MUSD (the minimum is the live `minNetDebt` of 1800, so "about 1600" in the planning note is conservative), total debt ahead of the last trove 429,012,801 MUSD. One very large trove dominates the total.
+- Implication: a cap of 100 steps costs about 2.6M gas, which is the default I will use for the Lens. Any on-chain trigger that must prove a buffer is small needs a complete walk, so at today's size it is a keeper-side check, not something to run inside another transaction.
+- Not measured: the node's `eth_call` gas cap and the block gas limit. If a call at cap 1000 had failed I would have lowered the cap. It succeeded at about 7.07M.
 
 ## 7. `BorrowerOperationsSignatures` (verified)
 
@@ -119,9 +138,24 @@ Sources: `docs/CHANGELOG.md` "Matsnet Addresses" table and `solidity/artifacts/d
 
 - Faucet for testnet BTC: `https://faucet.test.mezo.org/` (docs FAQ). **MUSD has no faucet I found.** Test MUSD comes from opening a trove (min net debt 1800 MUSD, so roughly 3.1k USD of BTC at 110%+ ICR, in practice more).
 - All core contracts are upgradeable proxies (`initialize`, `__gap`, `getOrDeployProxy` in `deploy/`). The implementation can change under KEEL. Goes into `KNOWN_LIMITATIONS.md`. The EIP-1967 implementation slot read failed on a transient RPC error; open, retry in phase 3.
-- Is the testnet oracle a mock? `deploy/07_deploy_mock_aggregator.ts` exists; **open**, check what `PriceFeed` points at on matsnet. It matters for fork test realism.
+- The oracle is a chain precompile, not a mock: `PriceFeed.fetchPrice` delegates to an implementation that calls `latestRoundData` on `0x7b7c000000000000000000000000000000000015`, which forge's EVM does not implement (`NotActivated`). Fork tests must mock `fetchPrice`. The price on matsnet is currently 84 127.77 USD.
 - The docs "Chains Configuration" page lists different RPC hostnames (`testnet-rpc.mezo.org`) and chain ids. They conflict with the config page and with the live node. I use the values above, which were confirmed on chain.
 - Compiler constraints: MUSD pins `0.8.24` with `evmVersion: london` (`hardhat.config.ts:73-75`). Mezo docs say 0.8.28 with `london`. **Design impact:** set `evm_version = "london"` in `foundry.toml`. No `PUSH0`, no transient storage (so no OZ `ReentrancyGuardTransient`), no `mcopy`. Pin OZ to a version that compiles under london.
+
+## Faucet and affordability
+
+- Faucet: `https://faucet.test.mezo.org/`. The page offers BTC and MEZO and is protected by a Cloudflare Turnstile captcha. **I could not read the drip size**: it is not on the page or in the docs, and a claim needs a browser and a human. Please make one claim and tell me the amount and any cooldown; the table below then gives the position count.
+- Cost of one position at the live parameters (price 84 127.77 USD, borrowing fee 0.1%, gas reserve 200 MUSD, minimum net debt 1800 MUSD). Composite debt is 2000 MUSD at the minimum.
+
+| Target ICR | Collateral for the minimum position |
+|---|---|
+| 115% | 0.0273 BTC |
+| 150% | 0.0357 BTC |
+| 200% | 0.0476 BTC |
+
+  So positions = floor(drip / 0.0357) at a safe 150%, or floor(drip / 0.0273) at the tightest sensible 115%. Gas on Mezo is paid in BTC and is small next to this.
+- **A trove cannot be closed with the MUSD it minted.** Opening with 1798.2 MUSD of debt mints 1798.2 MUSD to the holder, but closing needs `debt - 200` = 1800 MUSD plus interest. Each position is short by about 1.8 MUSD plus accrued interest. For the demo, open a second position and borrow slightly more than needed, or acquire MUSD another way, to be able to demonstrate `close`.
+- No MUSD faucet exists, so every test MUSD comes from a trove.
 
 ## 9. Integrations for composability points (partial, nothing built)
 
@@ -132,8 +166,8 @@ Sources: `docs/CHANGELOG.md` "Matsnet Addresses" table and `solidity/artifacts/d
 
 ## Open items
 
-1. Gas per step for the redemption buffer walk. Measure on a matsnet fork.
-2. Matsnet oracle type and EIP-1967 implementation slots.
+1. EIP-1967 implementation slots of the core proxies.
+2. Stale-hint behaviour of `SortedTroves._findInsertPosition`.
 3. Mezo Earn testnet addresses and lock transfer rules.
 4. Mainnet trove count, to size the buffer cap.
 5. How liquidation payouts are split exactly. Constants say 200 MUSD plus 0.5% of collateral (`PERCENT_DIVISOR = 200`) go to the liquidator; I read `_getOffsetAndRedistributionVals` (`TroveManager.sol:1564-1610`) and `_sendGasCompensation` (`:939-951`) but not the liquidation totals code.
