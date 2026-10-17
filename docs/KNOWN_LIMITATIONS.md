@@ -9,5 +9,8 @@ Written before the code. It will be updated as the build finds more.
 - **Wave 1 has no guardian.** Wave 1 vaults cannot be acted on by anyone but the holder. The guardian needs a vault v2 and a new factory, so wave 1 positions do not get it unless migrated.
 - **A holder that cannot receive BTC cannot close or withdraw.** Payouts go to the caller. A contract holder without a payable `receive` reverts its own operations.
 - **Test MUSD is scarce.** There is no MUSD faucet. Opening a trove costs at least 1800 MUSD net debt.
-- **Mock-based tests can drift.** Unit and invariant tests use a mock of the Mezo core. Fork tests assert the same behaviours against the real contracts.
+- **Local tests use the pinned MUSD source, not the live contracts.** The pinned commit can differ from what runs on matsnet. The final fork layer checks the live proxies, and the proxy implementations are not verified yet.
 - **Not audited.** Mezo requires a third-party audit for Mezo Market featuring. This repository has not had one.
+- **Recovery Mode and the last trove.** While the system is in Recovery Mode, refinance and close revert, and collateral cannot be withdrawn. The last trove in the system cannot close. These are Mezo rules, shown in the Lens as `recoveryMode` and `canClose`. See THREAT_MODEL T19.
+- **`tokenURI` is empty in wave 1.**
+- **Closing needs more MUSD than a position minted.** The opener receives the debt amount but owes the borrowing fee, interest and nothing for the 200 MUSD reserve. A holder must acquire a little extra MUSD to close.
