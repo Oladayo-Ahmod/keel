@@ -57,10 +57,15 @@ Test: fork test with a redistribution between the bound check inputs and settlem
 
 ### T6. Rounding in rate-premium pricing (**W2**)
 
-The price of a below-market rate position is derived from `principal * rateSpread / 10_000` over a horizon. Rounding can be exploited by splitting positions or by choosing parameters that round in the attacker's favour.
-Mitigation: all pricing rounds against the party that sets the price (floor for amounts the seller receives, ceil for amounts the buyer pays), one rounding step per formula, `mulDiv` from OpenZeppelin, no division before multiplication. Wave 1 Lens rounds the annual spread toward zero and labels it informational.
+The valuation of a below-market rate is `principal * rateSpread / 10_000` over a horizon. Rounding can be exploited by splitting positions or by picking parameters that round in the attacker's favour.
+Mitigation: each rounding direction is fixed and protects a named party. One rounding step per formula, `mulDiv` from OpenZeppelin, no division before multiplication.
+- **Spread valuation** (the premium a Lens or UI quote suggests): rounds **down**. Protects the **buyer** from being quoted too much. It is never used in settlement.
+- **Fixed-price order:** the seller signs the price, so there is nothing to round.
+- **Dutch auction price at time t:** rounds **up**. Protects the **seller** from selling below the signed curve. It is clamped between the signed start and floor prices.
+- **Bound checks** (`minColl`, `maxDebt`, rate range): compared exactly, no rounding. They protect the **buyer**.
+- Wave 1 Lens rounds the annual spread toward zero and labels it informational.
 Residual: dust-level differences, below the gas cost of exploiting them.
-Fuzz target: price is monotone in spread, collateral and horizon, and a position split into two cannot sell for more than the whole.
+Fuzz target: the auction price never falls below the floor, is non-increasing in time, and a position split into two cannot be valued above the whole.
 
 ### T7. Refinance timing against the holder's interest
 
