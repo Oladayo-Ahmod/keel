@@ -42,7 +42,7 @@ The wave 2 marketplace attaches to wave 1 contracts unchanged. The guardian need
 ### PositionFactory
 
 - Constructor deploys `PositionNFT` and the `PositionVault` implementation, so both can hold the factory, NFT and Mezo core addresses as immutables. No setter, no owner, no upgrade path.
-- `openPosition(debtAmount, upperHint, lowerHint, maxFee) payable`: clones the implementation, mints the NFT to `msg.sender`, initialises the clone and calls its `open`. One transaction, so a clone is never observable uninitialised.
+- `openPosition(debt, upperHint, lowerHint, maxFee) payable`, `nonReentrant`: clones the implementation, calls the clone's factory-only `initializeAndOpen`, emits `PositionCreated`, and **mints the NFT last**. The first open cannot use the normal holder check, because the token does not exist yet, so the holder is passed in and the minted MUSD goes to them. `_safeMint` calls the receiver, so a contract holder runs code at the very end, after the position is complete (THREAT_MODEL T18).
 - `createPosition()` is not offered. A vault with no trove can come from a closed, redeemed or liquidated trove and then be reopened by its holder, so it needs no separate creation path.
 - Events: `PositionCreated(tokenId, vault, holder)`.
 
