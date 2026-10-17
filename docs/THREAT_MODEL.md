@@ -140,6 +140,14 @@ Mitigation: `openPosition` is `nonReentrant`, and the mint is the **last** step.
 Residual: a receiver that reverts in `onERC721Received` makes its own `openPosition` revert, which cancels the whole transaction, including the trove.
 Test: a receiver contract that re-enters `openPosition` and the vault from `onERC721Received` must revert, and a normal contract receiver must succeed.
 
+### T19. Recovery Mode lock-in and the last-trove block (liveness)
+
+Mezo restricts positions when the system TCR falls below 150% (Recovery Mode). While it lasts: `refinance` reverts (`BorrowerOperations.sol:1023`), `closeTrove` reverts when BorrowerOperations can mint (`:954`), collateral withdrawal is refused and a debt increase must keep ICR at or above CCR and not lower ICR (`:1265-1275`). Separately, the last trove in the system cannot close (`TroveManager.sol:1488-1496`, `:1397-1399`).
+Impact: a holder, or a buyer who just paid for a position, cannot exit or refinance for as long as the mode lasts. Nothing in KEEL can lift it.
+Mitigation: none on chain, because this is protocol behaviour. The Lens exposes `recoveryMode` and `canClose`, and the UI shows them. Repaying debt and adding collateral stay allowed, and the wrappers add no extra restriction. **W2:** listings must not promise an exit, and the guardian skips refinance in Recovery Mode instead of reverting the whole call.
+Residual: accepted. Described in `KNOWN_LIMITATIONS.md`.
+Test: enter Recovery Mode locally, check each wrapper reverts with the Mezo reason, and check `repay` and `addCollateral` still work.
+
 ## Out of scope
 
 Compromise of a holder's key. Mezo consensus failure. Bugs in OpenZeppelin. Economic attacks on MUSD's peg.
