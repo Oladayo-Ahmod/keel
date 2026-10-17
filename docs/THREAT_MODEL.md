@@ -62,12 +62,15 @@ Mitigation: all pricing rounds against the party that sets the price (floor for 
 Residual: dust-level differences, below the gas cost of exploiting them.
 Fuzz target: price is monotone in spread, collateral and horizon, and a position split into two cannot sell for more than the whole.
 
-### T7. Owner front-runs a refinance
+### T7. Refinance timing against the holder's interest
 
-A third party sees a refinance and front-runs. Or the holder is surprised by a rate that changed.
-Facts: refinance is callable only by the borrower (the vault). Global rate changes need a governance proposal and a 7 day delay (`InterestRateManager.sol:28,129-152`). The refinance sets the trove to the current global rate, higher or lower, with no slippage argument.
-Mitigation: the vault wrapper requires `globalRate + max(minRateDropBps,1) <= lockedRate` and `feeActual <= maxFee`, and checks the new rate equals the global rate. A rate change cannot land inside the transaction. A 7 day public window precedes it.
-Residual: a holder who refinances just before they would have sold at a premium loses the premium. That is the holder's decision. **W2:** a listing's committed `maxLockedRate` makes a front-run refinance (which lowers the locked rate) fail the buyer's bound only if the bound is a range. Use a range.
+Only the vault can call `refinance` on its trove, and the vault accepts only the holder (`BorrowerOperations.sol:282-286`). A third party cannot front-run it. The real risks are:
+- **The holder's own guardian (W2).** A policy that refinances automatically can fire at a moment the holder would not choose, for example right before a planned sale at a premium for the old, lower rate.
+- **A seller refinancing between listing and sale (W2).** Refinancing moves the locked rate to the current global rate. The wrapper only allows a drop, so the buyer ends up with a different locked rate than the one they priced.
+- **A rate that changed under the holder.** Global rate changes need a governance proposal and a 7 day delay (`InterestRateManager.sol:28,129-152`), so one cannot land inside a transaction.
+Facts: Mezo's `refinance` sets the trove to the current global rate, higher or lower, with no slippage argument.
+Mitigation: the wrapper requires `globalRate + max(minRateDropBps,1) <= lockedRate`, `feeActual <= maxFee`, and that the new rate equals the global rate. Guardian policies (W2) have an opt-in refinance flag and a minimum drop. Orders commit to a locked-rate range, not a single value, and settlement checks it.
+Residual: a holder who refinances before selling gives up the premium. That is their decision.
 
 ### T8. Vault clone initialisation attacks
 
