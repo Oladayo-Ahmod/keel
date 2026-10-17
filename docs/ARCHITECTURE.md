@@ -145,9 +145,10 @@ A strict improvement of at least one basis point is always enforced. `minRateDro
 
 ## Test layers
 
-1. Unit tests against a small mock of the Mezo core. Fast, used for fuzz and invariants.
-2. Fork tests against matsnet with the real contracts, oracle mocked. They cover open, adjust, refinance, close, redemption, liquidation and redistribution against live state.
-3. The mock is a risk: it can drift from the real contracts. Every behaviour the mock encodes is also asserted in a fork test.
+See [TEST_PLAN.md](TEST_PLAN.md) for status and numbers.
+
+1. **Local deployment of the real MUSD contracts.** `lib/musd` is a git submodule pinned to `aa25fd6`. `test/helpers/MezoFixture.sol` deploys every core contract behind a proxy and wires it the way Mezo's deploy scripts do. The oracle is the only fake: the real `PriceFeed` reads the `MockAggregator` that ships in the Mezo repository. Unit, fuzz, invariant and state-machine tests all run here, so they exercise real redemption, liquidation, redistribution and Recovery Mode. There is no hand-written mock of the Mezo core.
+2. **matsnet fork tests, a small final layer.** Pinned to one block so the RPC cache makes reruns cheap. They check that the live proxies behave as the pinned source does. `PriceFeed.fetchPrice` is mocked there, because the live feed calls a chain precompile that forge does not implement.
 
 ## Dependencies
 
