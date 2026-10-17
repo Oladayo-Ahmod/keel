@@ -102,10 +102,6 @@ contract KeelHandler is Test {
         return actors[i];
     }
 
-    // ---------------------------------------------------------------------
-    // setup
-    // ---------------------------------------------------------------------
-
     function init() external {
         for (uint256 i; i < 3; i++) {
             _open(actors[i], 2000e18 + i * 300e18, 20_000 + i * 3000);
@@ -115,10 +111,6 @@ contract KeelHandler is Test {
         vm.prank(redeemer);
         d.bo.openTrove{value: 50 ether}(100_000e18, address(0), address(0));
     }
-
-    // ---------------------------------------------------------------------
-    // holder actions
-    // ---------------------------------------------------------------------
 
     function openNew(uint256 actorSeed, uint256 debtSeed, uint256 icrSeed) external {
         calls["openNew"]++;
@@ -237,10 +229,6 @@ contract KeelHandler is Test {
         } catch {}
     }
 
-    // ---------------------------------------------------------------------
-    // transfers and strangers
-    // ---------------------------------------------------------------------
-
     function approveOperator(uint256 pSeed, uint256 opSeed, bool forAll) external {
         calls["approveOperator"]++;
         (uint256 i, address holder) = _pick(pSeed);
@@ -293,10 +281,6 @@ contract KeelHandler is Test {
         (bool ok,) = address(v).call(data);
         if (ok) unauthorizedSuccess++;
     }
-
-    // ---------------------------------------------------------------------
-    // things Mezo does to positions
-    // ---------------------------------------------------------------------
 
     function redeem(uint256 vSeed, uint256 amount, bool exact) external {
         calls["redeem"]++;
@@ -369,19 +353,11 @@ contract KeelHandler is Test {
         _expectUnchanged(before);
     }
 
-    // ---------------------------------------------------------------------
-    // checks run by the suite
-    // ---------------------------------------------------------------------
-
     function checkHolders() external {
         for (uint256 i; i < vaults.length; i++) {
             if (nft.ownerOf(ids[i]) != holders[i]) holderMismatch++;
         }
     }
-
-    // ---------------------------------------------------------------------
-    // internals
-    // ---------------------------------------------------------------------
 
     function _open(address who, uint256 debt, uint256 icrBps) internal {
         uint256 coll = _collFor(debt, icrBps);
