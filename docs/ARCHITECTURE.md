@@ -37,7 +37,7 @@ The wave 2 marketplace attaches to wave 1 contracts unchanged. The guardian need
 - `mint` is callable only by the factory (immutable address, set in the factory constructor).
 - `tokenId -> vault` mapping, written at mint.
 - `transferEpoch[tokenId]`: incremented in `_update` on every transfer, mint included. Anything that is meant to stop applying after a transfer (wave 2 listings, guardian policies) records the epoch when it is created and is invalid once the epoch moves. See [Extension points](#extension-points).
-- No metadata renderer in wave 1 beyond a minimal on-chain `tokenURI`. Not security relevant.
+- `tokenURI` is empty in wave 1. A renderer is UI work and not security relevant.
 
 ### PositionFactory
 
