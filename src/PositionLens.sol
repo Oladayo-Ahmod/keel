@@ -141,8 +141,6 @@ contract PositionLens {
         else if (b.complete) verdict = Verdict.Below;
     }
 
-    // ---------------------------------------------------------------------
-
     function _walk(address vault, uint256 maxSteps, uint256 threshold)
         internal
         view

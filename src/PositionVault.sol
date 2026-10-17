@@ -83,10 +83,6 @@ contract PositionVault is ReentrancyGuard {
         if (msg.sender != ACTIVE_POOL && msg.sender != COLL_SURPLUS_POOL) revert UnexpectedSender();
     }
 
-    // ---------------------------------------------------------------------
-    // opening
-    // ---------------------------------------------------------------------
-
     /// First open, called by the factory in the same transaction as the clone.
     /// The NFT does not exist yet, so the holder is passed in.
     function initializeAndOpen(
@@ -114,10 +110,6 @@ contract PositionVault is ReentrancyGuard {
         _open(msg.sender, debt, upperHint, lowerHint, maxFee);
     }
 
-    // ---------------------------------------------------------------------
-    // collateral
-    // ---------------------------------------------------------------------
-
     function addCollateral(address upperHint, address lowerHint) external payable nonReentrant onlyHolder {
         BORROWER_OPERATIONS.addColl{value: msg.value}(upperHint, lowerHint);
         emit CollateralAdded(msg.sender, msg.value);
@@ -133,10 +125,6 @@ contract PositionVault is ReentrancyGuard {
         _forwardBtc(btcBefore);
         emit CollateralWithdrawn(msg.sender, amount);
     }
-
-    // ---------------------------------------------------------------------
-    // debt
-    // ---------------------------------------------------------------------
 
     function borrow(uint256 amount, address upperHint, address lowerHint, uint256 maxFee)
         external
@@ -194,10 +182,6 @@ contract PositionVault is ReentrancyGuard {
         emit Adjusted(msg.sender);
     }
 
-    // ---------------------------------------------------------------------
-    // rate
-    // ---------------------------------------------------------------------
-
     /// Move the trove to the current global rate, but only if that is lower by at
     /// least `minRateDropBps` (never less than one) and the fee stays under
     /// `maxFee`. Mezo itself would also move a trove to a higher rate.
@@ -220,10 +204,6 @@ contract PositionVault is ReentrancyGuard {
         if (newRate != globalRate) revert RateNotUpdated(globalRate, newRate);
         emit Refinanced(msg.sender, lockedRate, newRate, fee);
     }
-
-    // ---------------------------------------------------------------------
-    // exit
-    // ---------------------------------------------------------------------
 
     /// Repays the whole debt except the 200 MUSD gas reserve, which Mezo burns
     /// from its own pool, and sends the collateral to the holder.
@@ -261,10 +241,6 @@ contract PositionVault is ReentrancyGuard {
         }
         emit Swept(msg.sender, token, amount);
     }
-
-    // ---------------------------------------------------------------------
-    // internals
-    // ---------------------------------------------------------------------
 
     function _open(address to, uint256 debt, address upperHint, address lowerHint, uint256 maxFee) internal {
         _checkFee(debt, maxFee);
