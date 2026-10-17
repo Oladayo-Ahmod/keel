@@ -133,6 +133,13 @@ Governance can make accounts fee exempt, change `borrowingRate`, `refinancingFee
 Mitigation: vault entry points that spend a fee take `maxFee`. The Lens reads parameters live.
 Residual: parameters can move between a UI quote and execution; `maxFee` bounds the loss.
 
+### T18. Factory mint callback
+
+`PositionFactory.openPosition` mints with `_safeMint`, which calls `onERC721Received` on a contract receiver. A hostile receiver could re-enter the factory in the middle of position creation.
+Mitigation: `openPosition` is `nonReentrant`, and the mint is the **last** step. By then the clone is initialised and the trove is open, so the callback sees finished state. The first `open` runs through a factory-only entrypoint on the vault that does not read `ownerOf`, since the token does not exist yet (see ARCHITECTURE).
+Residual: a receiver that reverts in `onERC721Received` makes its own `openPosition` revert, which cancels the whole transaction, including the trove.
+Test: a receiver contract that re-enters `openPosition` and the vault from `onERC721Received` must revert, and a normal contract receiver must succeed.
+
 ## Out of scope
 
 Compromise of a holder's key. Mezo consensus failure. Bugs in OpenZeppelin. Economic attacks on MUSD's peg.
