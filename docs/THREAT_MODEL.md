@@ -148,6 +148,13 @@ Mitigation: none on chain, because this is protocol behaviour. The Lens exposes 
 Residual: accepted. Described in `KNOWN_LIMITATIONS.md`.
 Test: enter Recovery Mode locally, check each wrapper reverts with the Mezo reason, and check `repay` and `addCollateral` still work.
 
+### T20. Zombie positions (**W2**)
+
+After a redemption close, a liquidation or a `close`, the vault and its NFT still exist but the trove is gone. The NFT is worth only the claimable surplus, possibly zero. It can still be listed, and a buyer who checks only price and `ownerOf` buys an empty shell.
+Mitigation: wave 2 order bounds must require `minColl > 0` and trove status `active`, both read from `getEntireDebtAndColl` and `TroveManager.getTroveStatus` in the settling transaction. An order with `minColl == 0` is rejected at creation and at settlement. The Lens reports `active`, and the UI hides inactive positions from the market view. Wave 1 has no market, so a zombie there is just an NFT the holder can reopen or claim surplus from.
+Residual: a buyer who knowingly wants surplus-only positions has no path. None is planned.
+Test: settle against a closed, a redeemed and a liquidated vault and expect a revert each time.
+
 ## Out of scope
 
 Compromise of a holder's key. Mezo consensus failure. Bugs in OpenZeppelin. Economic attacks on MUSD's peg.
