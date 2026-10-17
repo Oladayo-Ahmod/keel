@@ -1,6 +1,6 @@
 # Test plan
 
-Status at the first test pass: 77 tests, all passing, `forge test`. Coverage from `forge coverage --ir-minimum`:
+Status: 84 tests, all passing, `forge test` (77 unit and fuzz tests plus 7 invariants). Coverage from `forge coverage --ir-minimum`:
 
 | File | Lines | Statements | Branches | Functions |
 |---|---|---|---|---|
@@ -25,14 +25,34 @@ All tests run on a local deployment of the real MUSD contracts (see ARCHITECTURE
 | Mezo-side events | `MezoEvents.t.sol` | full and partial redemption with surplus claim and reopen, liquidation and reopen, redistribution visible in the Lens, Recovery Mode and last-trove blocks (T10, T19) |
 | Lens | `PositionLens.t.sol` | field accuracy against Mezo, interest accrual, rate spread, fee estimate, buffer exactness against a real redemption, capped and complete walks, verdicts, skipped liquidatable troves, inactive position, oracle failure (T11, T12, T13) |
 | Permit | `Permit.t.sol` | permit, front-run permit, bad signature, new-holder isolation (T21) |
+| Invariants and state machine | `test/invariant/` | see below |
 | Fuzz | `VaultFuzz.t.sol` | open/close round trip with interest, Lens ICR against Mezo, refinance rule, non-holder access, nothing idle after any operation sequence |
 
-## Next, before the testnet deploy
+## Invariants and state machine
 
-1. **Rolling outflow invariant.** Across any sequence of handler actions, the BTC that left the vault to holders plus the collateral still in the trove plus claimable surplus never exceeds what went in (opens, top-ups, redistribution gains). Tracked by a ghost variable in the handler.
-2. **State-machine fuzz.** A handler that interleaves open, top-up, borrow, repay, refinance, close, redemption by a third party, price moves with liquidation, global rate changes, time warps and NFT transfers between several holders. After each step: the vault holds no idle funds; only the current holder succeeds on holder functions; the Lens agrees with Mezo; a stale holder or operator never succeeds.
-3. **Invariants** on the same handler: permissions cleared on transfer (I3), payouts only to the caller (I4), vault never holds funds between calls (I2).
-4. **matsnet fork layer**, small, pinned to one block: open, adjust, refinance, close and the Lens against the live proxies. Includes the proxy implementation slot check and a stale-hint check for `SortedTroves`.
+`KeelHandler` interleaves open, top-up, withdraw, borrow, repay, adjust, refinance, close, reopen, surplus claim, approvals, NFT transfers, calls by strangers and previous holders, third-party redemption, price moves with liquidation, global rate changes and time warps over up to six positions and four actors. It keeps a ledger `L = collateral + claimable surplus` per vault. Seven invariants run after every step:
+
+| Invariant | Meaning |
+|---|---|
+| `rollingOutflowWithinCollateral` | BTC paid to holders never exceeds BTC put in plus redistribution gains, summed over the whole run |
+| `ledgerMovesOnlyByHolderFlows` | a holder action moves only its own vault's `L`, by exactly in minus out; every other vault is unchanged. This is the per-action form of "outflow never exceeds collateral plus surplus" |
+| `externalEventsRespectTheLedger` | redemption never raises any `L`; liquidation never lowers another vault's `L`; price, rate and time change none |
+| `onlyCurrentHolderMovesFunds` | no previous holder, operator or stranger ever succeeds on a holder function |
+| `permissionsClearedOnTransfer` | the NFT owner always matches the expected holder, and the single-token approval is cleared by every transfer |
+| `vaultsHoldNothing` | no vault keeps BTC or MUSD between calls |
+| `lensAgreesWithMezo` | Lens collateral, debt, ICR and holder equal Mezo's own values after any history |
+
+Runs: 64 runs of depth 64 by default. The `deep` profile runs 256 of depth 200 (51,200 calls per invariant) and passed. Mutation check: three deliberate bugs in the vault (anyone passes the holder check for one function, one wei less forwarded, the approved address passes the holder check) were each caught by at least one invariant, and the source was restored.
+
+Limits of the suite, stated plainly:
+- Holders are EOAs. Contract holders are covered by the unit tests in `Reentrancy.t.sol`, not by the state machine.
+- A partial redemption needs exact list hints, so the handler mostly produces full or cancelled redemptions.
+- The price range is 30,000 to 90,000 and Recovery Mode is reachable only when the random positions line up. Recovery Mode has its own unit test.
+- The cumulative outflow bound is loose by design. The ledger equality is the strict check.
+
+## Still open before deploy
+
+1. **matsnet fork layer**, small, pinned to one block: open, adjust, refinance, close and the Lens against the live proxies. Includes the proxy implementation slots and the stale-hint check for `SortedTroves`.
 
 ## Wave 2
 
