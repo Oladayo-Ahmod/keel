@@ -23,3 +23,7 @@ fail_on_revert = false
 
 [rpc_endpoints]
 matsnet = "https://rpc.test.mezo.org"
+
+[profile.deep.invariant]
+runs = 256
+depth = 200
