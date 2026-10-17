@@ -123,6 +123,7 @@ Residual: oracle failure is a protocol risk that KEEL inherits.
 ### T14. Upgradeable Mezo core contracts
 
 All core contracts are proxies (`initialize`, storage gaps; VERIFICATION section 8). Governance or an admin can change their code. A change could alter fees, remove a getter KEEL relies on, add an EOA check, change the redemption order, or block a function. The sorted list and the trove struct are also read by KEEL.
+On matsnet, all 14 proxies are transparent proxies and every ProxyAdmin is owned by one externally owned address (`0x1236…4cAf`, see VERIFICATION, proxy slots), so a single key can replace any core contract there.
 Impact: loss of function, mispriced Lens figures, or in the worst case a hostile upgrade that locks vaults. KEEL cannot prevent this, because it holds no admin power over Mezo.
 Mitigation: KEEL's contracts are immutable and hold no assets beyond what Mezo already holds for the trove; there is no KEEL-side pause or upgrade path to compromise. Core addresses are immutables in the implementation, so a KEEL deploy is bound to one Mezo deployment. Fork tests run against the live proxies and are re-run before every release, so a behavioural change shows up. The Lens reads through interfaces and treats a reverting getter as "unknown", not as zero.
 Residual: accepted and stated in `KNOWN_LIMITATIONS.md`. Do not describe positions as trustless with respect to Mezo governance.
