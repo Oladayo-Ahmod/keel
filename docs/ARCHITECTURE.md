@@ -56,14 +56,17 @@ Operations (all `nonReentrant`, all `onlyHolder`, funds always go to `msg.sender
 
 | Function | Wraps | Notes |
 |---|---|---|
+| `initializeAndOpen(id, holder, debt, upper, lower, maxFee)` payable | `openTrove` | Factory only, once, in the clone transaction. |
 | `open(debt, upper, lower, maxFee)` payable | `openTrove` | `msg.value` is collateral. Reverts if the borrowing fee exceeds `maxFee`. Minted MUSD is forwarded to the holder. |
 | `addCollateral(upper, lower)` payable | `addColl` | |
 | `withdrawCollateral(amount, upper, lower)` | `withdrawColl` | BTC forwarded to the holder. |
 | `borrow(amount, upper, lower, maxFee)` | `withdrawMUSD` | Same fee bound as `open`. MUSD forwarded. |
-| `repay(amount, upper, lower)` | `repayMUSD` | Pulls MUSD from `msg.sender` (needs holder's allowance to the vault, or permit). |
+| `repay(amount, upper, lower)` | `repayMUSD` | Pulls MUSD from `msg.sender` (needs the holder's allowance to the vault). |
+| `repayWithPermit(amount, upper, lower, deadline, v, r, s)` | `repayMUSD` | Same, with an EIP-2612 signature. The permit is wrapped in `try/catch`, so a front-run permit cannot block it (T21). |
 | `adjust(collWithdrawal, debtChange, isIncrease, upper, lower, maxFee)` payable | `adjustTrove` | |
 | `refinance(upper, lower, maxFee, minRateDropBps)` | `refinance` | See [Refinance wrapper](#refinance-wrapper). |
 | `close()` | `closeTrove` | Pulls `debt - 200e18` MUSD from the holder, BTC forwarded to the holder. |
+| `closeWithPermit(deadline, v, r, s)` | `closeTrove` | Same, with a permit for the exact close cost. |
 | `claimSurplus()` | `claimCollateral` | BTC left by a redemption or liquidation. |
 | `sweep(token)` | none | Sends any ERC-20 or native balance, for example a forced send, to the holder. |
 
