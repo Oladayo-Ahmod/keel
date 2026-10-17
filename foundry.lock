@@ -4,5 +4,14 @@
       "name": "v1.9.7",
       "rev": "77041d2ce690e692d6e03cc812b57d1ddaa4d505"
     }
+  },
+  "lib/musd": {
+    "rev": "aa25fd6defbe6c1385940e183ea7a0a3df4533d8"
+  },
+  "lib/openzeppelin-contracts": {
+    "tag": {
+      "name": "v5.2.0",
+      "rev": "acd4ff74de833399287ed6b31b4debf6b2b35527"
+    }
   }
 }
