@@ -155,6 +155,13 @@ Mitigation: wave 2 order bounds must require `minColl > 0` and trove status `act
 Residual: a buyer who knowingly wants surplus-only positions has no path. None is planned.
 Test: settle against a closed, a redeemed and a liquidated vault and expect a revert each time.
 
+### T21. Permit front-run griefing
+
+`repayWithPermit` and `closeWithPermit` take an EIP-2612 signature for MUSD (`MUSD` is `ERC20Permit`, `token/MUSD.sol:11`). Anyone who sees the pending transaction can submit the same permit first. The nonce is then used and the holder's call reverts inside `permit`, so the holder is blocked by a call that did what they wanted.
+Mitigation: the vault calls `permit` inside `try/catch` and ignores failure, then pulls MUSD with `transferFrom`. If the front-run permit already set the allowance, the pull succeeds. If not, `transferFrom` reverts with the token's own error. The permit is only a convenience. The signature is bound to `owner = msg.sender` and `spender = vault`, so a front-runner cannot redirect it.
+Residual: none expected. A holder who passes a bad signature gets the allowance error.
+Test: front-run the permit, then run `repayWithPermit` and expect success. Run with no allowance and a bad signature and expect a revert.
+
 ## Out of scope
 
 Compromise of a holder's key. Mezo consensus failure. Bugs in OpenZeppelin. Economic attacks on MUSD's peg.
