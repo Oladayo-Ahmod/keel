@@ -1,6 +1,6 @@
 # Test plan
 
-Status: 84 tests, all passing, `forge test` (77 unit and fuzz tests plus 7 invariants). Coverage from `forge coverage --ir-minimum`:
+Status: 90 tests, all passing, `forge test` (83 unit and fuzz tests, 7 invariants). Coverage from `forge coverage --ir-minimum`:
 
 | File | Lines | Statements | Branches | Functions |
 |---|---|---|---|---|
@@ -50,9 +50,20 @@ Limits of the suite, stated plainly:
 - The price range is 30,000 to 90,000 and Recovery Mode is reachable only when the random positions line up. Recovery Mode has its own unit test.
 - The cumulative outflow bound is loose by design. The ledger equality is the strict check.
 
-## Still open before deploy
+## matsnet checks
 
-1. **matsnet fork layer**, small, pinned to one block: open, adjust, refinance, close and the Lens against the live proxies. Includes the proxy implementation slots and the stale-hint check for `SortedTroves`.
+A forge fork test was not usable: the public RPC drops a few percent of connections and a fork run makes thousands of requests, so runs did not finish. The live-chain checks that matter are done as read-only RPC calls with scripts that retry:
+
+| Check | Script | Result |
+|---|---|---|
+| redemption buffer walk cost | `script/measure/BufferWalker.sol` | VERIFICATION, gas of the buffer walk |
+| stale hints in SortedTroves | `script/measure/hints.sh` | VERIFICATION, stale hints |
+| proxy implementation slots and admins | `script/measure/proxy_slots.sh` | VERIFICATION, proxy slots |
+| deploy dry run | `forge script script/Deploy.s.sol --fork-url ...` | 6.9M gas, succeeds |
+
+Not done:
+- a forge fork test of open, adjust, refinance and close against the live proxies. It would need a warm RPC cache or a more reliable endpoint. The first real exercise of the vault on the live contracts is the testnet demo.
+- a bytecode comparison between the live implementations and the pinned source.
 
 ## Wave 2
 
