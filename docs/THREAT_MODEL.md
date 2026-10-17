@@ -46,7 +46,10 @@ Residual: bounded loss equal to the configured caps. Fuzz target: sum of guardia
 Mezo sends BTC with `recipient.call{value:}("")` from ActivePool and CollSurplusPool, and its own comment says re-entry is fine (`SendCollateral.sol:11`). The vault is the recipient on withdraw, close and claim. It also forwards BTC to the holder, which can be a contract.
 Mitigation: `nonReentrant` on every state-changing vault function. `receive()` accepts BTC only from ActivePool and CollSurplusPool and does nothing else, so a callback into the vault has no state to corrupt. Payout to the holder happens last, after all Mezo calls. Funds are forwarded by balance delta.
 Residual: a holder contract that rejects BTC makes its own `close` revert. That harms only that holder. An attacker cannot trigger it, because the payout always goes to the caller.
-Tests: a malicious holder that re-enters `close`, `withdrawCollateral` and `repay` from its `receive`. Reentrancy from the Mezo callback path using a mock ActivePool that calls back.
+Tests, against the real Mezo contracts deployed locally, with no mock of ActivePool or CollSurplusPool:
+- a hostile holder contract that re-enters `close`, `withdrawCollateral`, `repay`, `claimSurplus` and `sweep` from its `receive` while the vault forwards BTC;
+- a hostile holder that transfers the NFT away from inside `receive`, after which the original call finishes;
+- the vault's own `receive` is exercised by the real ActivePool and CollSurplusPool on withdraw, close and claim, and rejects BTC from any other sender.
 
 ### T5. Redistribution changes state during settlement (**W2**, and Lens reads in W1)
 
