@@ -21,3 +21,9 @@ Each entry: what was decided and why. Newest last.
 17. **Measure gas server side, not on a local fork.** The public matsnet RPC drops a few percent of connections from some networks, and a fork run makes thousands of sequential requests, so it did not finish in 45 minutes. `script/measure/BufferWalker.sol` runs the walk inside a constructor via `eth_call` and `eth_estimateGas`. Full fork tests will need a pinned block and a warm cache, or a different RPC provider.
 18. **Default Lens walk cap is 100 steps.** Measured at about 24.7k gas per trove, so about 2.6M gas. A full walk of 281 troves is about 7M.
 19. **Oracle is mocked in fork tests.** `PriceFeed.fetchPrice` calls a chain precompile that forge's EVM lacks (`0x7b7c…0015`).
+20. **Test against the real MUSD contracts, deployed locally.** `lib/musd` is a submodule pinned to `aa25fd6`; only the oracle is replaced, and it uses the MockAggregator from the Mezo repository. A hand-made mock of the core would encode my reading of Mezo, which is the thing under test. Cost: a slower first compile.
+21. **Mint the NFT last, and guard the factory.** `_safeMint` runs receiver code. By then the position is complete, and `nonReentrant` stops re-entry into the factory (T18).
+22. **Permit is `try/catch` plus `transferFrom`.** A front-run permit cannot block the holder (T21).
+23. **Wave 2 listings are off-chain EIP-712 orders with on-chain cancellation.** See T22.
+24. **Vault v2 is a strict superset of v1.** The marketplace and UI treat both the same.
+25. **OpenZeppelin 5.2.0 for both KEEL and the pinned MUSD sources.** One copy, and it compiles under `london`.
