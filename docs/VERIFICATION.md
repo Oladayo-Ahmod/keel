@@ -45,7 +45,7 @@ Deployed and source signature: `openTrove(uint256 _debtAmount, address _upperHin
 - Because there is no `maxFeePercentage`, the vault has to enforce its own bound. `borrowingRate` is governance controlled with a delay; the vault should read `getBorrowingFee` and let the caller pass `maxFee`.
 - Live values on matsnet: `borrowingRate` = 1e15 (0.1%), `minNetDebt` = 1800e18, `redemptionRate` = 7.5e15 (0.75%), `refinancingFeePercentage` = 20. They match the constructor defaults at `BorrowerOperations.sol:143-152`.
 - Fixed constants (`dependencies/LiquityBase.sol`): MCR 110%, CCR 150%, gas compensation 200e18.
-- Hints are `(upperHint, lowerHint)` into SortedTroves, ordered by NICR. `HintHelpers.getApproxHint(_CR, _numTrials, _seed)` returns a start hint, then `SortedTroves.findInsertPosition` gives the pair (`HintHelpers.sol:184`, `SortedTroves.sol:193`). `HintHelpers.computeNominalCR` exists (`:235`). Hints are computed off-chain by the frontend or keeper and passed in. I did not trace how `_findInsertPosition` behaves with a stale hint; treat that as open and test it on the fork.
+- Hints are `(upperHint, lowerHint)` into SortedTroves, ordered by NICR. `HintHelpers.getApproxHint(_CR, _numTrials, _seed)` returns a start hint, then `SortedTroves.findInsertPosition` gives the pair (`HintHelpers.sol:184`, `SortedTroves.sol:193`). `HintHelpers.computeNominalCR` exists (`:235`). Hints are computed off-chain by the frontend or keeper and passed in. A stale or missing hint never reverts, it only costs gas; see [Stale hints](#stale-hints-in-sortedtroves).
 
 ## 4. Interest rate and refinance (verified)
 
@@ -137,10 +137,62 @@ Network: Mezo Testnet (matsnet), chain id 31611, RPC `https://rpc.test.mezo.org`
 Sources: `docs/CHANGELOG.md` "Matsnet Addresses" table and `solidity/artifacts/deployments/matsnet/*.json`. The two agree for all 15. Live check: all return code, and `interestRate` (100), `borrowingRate`, `refinancingFeePercentage`, `minNetDebt`, `redemptionRate` match the source defaults. Testnet state seen: 280 troves, oracle price 84 127.77 USD per BTC, lowest trove ICR about 113.9%.
 
 - Faucet for testnet BTC: `https://faucet.test.mezo.org/` (docs FAQ). **MUSD has no faucet I found.** Test MUSD comes from opening a trove (min net debt 1800 MUSD, so roughly 3.1k USD of BTC at 110%+ ICR, in practice more).
-- All core contracts are upgradeable proxies (`initialize`, `__gap`, `getOrDeployProxy` in `deploy/`). The implementation can change under KEEL. Goes into `KNOWN_LIMITATIONS.md`. The EIP-1967 implementation slot read failed on a transient RPC error; open, retry in phase 3.
+- All core contracts are upgradeable proxies (`initialize`, `__gap`, `getOrDeployProxy` in `deploy/`). The implementation can change under KEEL. Goes into `KNOWN_LIMITATIONS.md`. Slots and admins are recorded in [Proxy implementation slots](#proxy-implementation-slots).
 - The oracle is a chain precompile, not a mock: `PriceFeed.fetchPrice` delegates to an implementation that calls `latestRoundData` on `0x7b7c000000000000000000000000000000000015`, which forge's EVM does not implement (`NotActivated`). Fork tests must mock `fetchPrice`. The price on matsnet is currently 84 127.77 USD.
 - The docs "Chains Configuration" page lists different RPC hostnames (`testnet-rpc.mezo.org`) and chain ids. They conflict with the config page and with the live node. I use the values above, which were confirmed on chain.
 - Compiler constraints: MUSD pins `0.8.24` with `evmVersion: london` (`hardhat.config.ts:73-75`). Mezo docs say 0.8.28 with `london`. **Design impact:** set `evm_version = "london"` in `foundry.toml`. No `PUSH0`, no transient storage (so no OZ `ReentrancyGuardTransient`), no `mcopy`. Pin OZ to a version that compiles under london.
+
+## Stale hints in SortedTroves
+
+Question: does a wrong or out-of-date hint revert, or only cost gas? This decides whether the UI must recompute hints right before sending.
+
+From the source (`SortedTroves.sol:413-482`): `_findInsertPosition` validates each hint. A hint that is not in the list (`!contains`), or whose NICR is on the wrong side of the new NICR, is replaced by the zero address. With both hints dropped it walks the list from the head (`_descendList(data.head)`); with one hint left it walks from that node. Nothing reverts because of a bad hint. A revert only comes from the later checks in `_insert` (list full, node already present, zero id or zero NICR).
+
+Measured on live matsnet (282 troves) with `script/measure/hints.sh`: `eth_estimateGas` of `openTrove(1800 MUSD, ...)` with 0.036 BTC, sent from a funded address that has no trove. Read only.
+
+| Hints | Gas |
+|---|---|
+| correct (from `getApproxHint` then `findInsertPosition`) | 602,522 |
+| previous neighbour only | 611,374 |
+| next neighbour only | 613,377 |
+| neighbours swapped | 627,716 |
+| no hints | 4,530,482 |
+| non-member address | 4,533,393 |
+| head as both hints | 4,538,966 |
+| tail as both hints | 2,230,023 |
+
+Answer:
+- **Stale hints are safe, never a revert.** A hint that is slightly off (a neighbour, or the neighbours swapped) costs almost nothing extra.
+- **A useless hint costs about 7.5 times the gas** at today's size, because the walk calls `getNominalICR` once per step. It grows with list length.
+- **UI rule:** compute hints with `getApproxHint` then `findInsertPosition` when the user confirms, not when the form is opened, and always pass them. Do not treat a failed hint as an error to show. Recomputing right before sending is a gas optimisation and a guard against hitting a block gas limit as the list grows; it is not needed for correctness.
+- The same applies to the vault's `upperHint` and `lowerHint` arguments, which pass straight through.
+- The NICR to search for is the one after the operation, `coll * 1e20 / principal`, not the current one.
+
+## Proxy implementation slots
+
+Read with `script/measure/proxy_slots.sh` (EIP-1967 implementation and admin slots, then `owner()` of each admin).
+
+| Contract | Implementation | Admin (ProxyAdmin) |
+|---|---|---|
+| ActivePool | 0xbfc8201773bc17cc17e34a9eb4056cd5b7358192 | 0xe1a5fc495197f7918069f89ae1bc043d43063b68 |
+| BorrowerOperations | 0xc05bf344bd5b58825784326dd3112fb6cc160dcc | 0x987dce741cb2608389f3aeb36dc651273b7531bb |
+| BorrowerOperationsSignatures | 0xeec635ab00463a4a803de38c9d858a0fe3bdc235 | 0xb38d20e9f25a94110747ad24a436d819189466d4 |
+| CollSurplusPool | 0x13af349efde2a7ff4469ef1f98126ffd57c32806 | 0x815df625b084bdf65698c313a1a7e7987a37be69 |
+| DefaultPool | 0xa76a2c7869a82afc7f547b467393709251b4b141 | 0xd19495894c7583123a32dd46aeaf7ba5f3ad3df8 |
+| GasPool | 0x46c5bc542166b0918d1ccadc8f101517323052eb | 0xd435e0318e0b97d74f2a5d08a2dd9103310f8e3f |
+| GovernableVariables | 0x4edc83c5c5b0c41a594371485554b95280653f94 | 0xf7e10ed784543d827431b3e3776b887a9eb6bb4a |
+| HintHelpers | 0x8adf3f35dbe4026112bcfc078872bcb967732ea8 | 0x7925337259ed8c78361aa9b5b143688079ad386c |
+| InterestRateManager | 0xaa13b1d9cffa3f44ab3a8be0dc8774fb7841459c | 0x1306df8eef89e1de84745dae377d52c7535cd573 |
+| PCV | 0xe641ab3c04140f3e3befcf60f8eed8ad6e31c300 | 0xde63cb80c897430b21d9bebb9d65c5c33bcccb97 |
+| PriceFeed | 0xec42b37c12b8d73d320f4075a1bcd58b306629c1 | 0xc723d139e7ce77b86423b43ebc7f170b0e182be4 |
+| SortedTroves | 0x9177df58a9614b84c8c2f68df27506ab9a5d0323 | 0x8d0d03185eb28afa93aadd3fbff5c6c610c43652 |
+| StabilityPool | 0x8f0ca419bb1d54af4bf6a644f605cc247d6d3e19 | 0x1842610a553d1bea61335739c7008987b556ec9f |
+| TroveManager | 0x9aab567966983e95536fc460c12266fb0cc10b07 | 0x934360dbe9595bcfc6b7e3d249d62902ac4b31cc |
+| MUSD | not a proxy (both slots zero) | none |
+
+- All 14 are transparent proxies, each with its own ProxyAdmin. MUSD itself is a plain contract.
+- **Every ProxyAdmin on matsnet is owned by one address, `0x123694886DBf5Ac94DDA07135349534536D14cAf`, and it has no code, so it is an EOA.** One key can replace any core contract on testnet. Mainnet governance was not checked. This is the concrete form of THREAT_MODEL T14.
+- The implementation addresses are a snapshot taken on 2026-10-21. Re-run the script before a release and compare. I did not verify that the implementation bytecode matches the pinned source at `aa25fd6`; the local tests assume it does. A bytecode comparison against the compiled artifacts is still open.
 
 ## Faucet and affordability
 
@@ -166,8 +218,7 @@ Sources: `docs/CHANGELOG.md` "Matsnet Addresses" table and `solidity/artifacts/d
 
 ## Open items
 
-1. EIP-1967 implementation slots of the core proxies.
-2. Stale-hint behaviour of `SortedTroves._findInsertPosition`.
+1. Whether the deployed implementation bytecode equals the pinned source (slots are recorded, the comparison is not done).
 3. Mezo Earn testnet addresses and lock transfer rules.
 4. Mainnet trove count, to size the buffer cap.
 5. How liquidation payouts are split exactly. Constants say 200 MUSD plus 0.5% of collateral (`PERCENT_DIVISOR = 200`) go to the liquidator; I read `_getOffsetAndRedistributionVals` (`TroveManager.sol:1564-1610`) and `_sendGasCompensation` (`:939-951`) but not the liquidation totals code.
