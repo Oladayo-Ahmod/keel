@@ -6,7 +6,20 @@ test = "test"
 solc_version = "0.8.24"
 evm_version = "london"
 optimizer = true
-optimizer_runs = 200
+optimizer_runs = 100
+remappings = [
+  "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
+  "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
+  "musd/=lib/musd/solidity/contracts/",
+]
+
+[fuzz]
+runs = 256
+
+[invariant]
+runs = 64
+depth = 64
+fail_on_revert = false
 
 [rpc_endpoints]
 matsnet = "https://rpc.test.mezo.org"
