@@ -98,7 +98,9 @@ Stateless view contract, no admin. Reads only `getEntireDebtAndColl`, `getCurren
 | annualSpreadMusd (signed) | `principal * (globalRateBps - lockedRateBps) / 10_000`, rounded toward zero. Undiscounted, current rate only. |
 | claimableSurplus | `CollSurplusPool.getCollateral(vault)` |
 | refinanceFeeEstimate | `netDebt * refinancingFeePercentage / 100 * borrowingRate / 1e18` |
+| priceOk | `fetchPrice` did not revert and returned non-zero. When false, price-dependent fields are zero and `redeemable` and `canClose` are false. |
 | redeemable | `icr >= MCR` and the trove is in `SortedTroves` |
+| recoveryMode, canClose | `checkRecoveryMode(price)`; `canClose` also needs an active trove and more than one trove in the list (THREAT_MODEL T19) |
 
 `redemptionBuffer(vault, maxSteps)` returns `(buffer, eligibleAhead, steps, complete)`.
 
