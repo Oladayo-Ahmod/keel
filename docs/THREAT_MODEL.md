@@ -162,6 +162,19 @@ Mitigation: the vault calls `permit` inside `try/catch` and ignores failure, the
 Residual: none expected. A holder who passes a bad signature gets the allowance error.
 Test: front-run the permit, then run `repayWithPermit` and expect success. Run with no allowance and a bad signature and expect a revert.
 
+### T22. Listing cancellation (**W2**)
+
+Decision: wave 2 listings are **off-chain EIP-712 signed orders**, not on-chain storage. The seller signs and the marketplace verifies at settlement. Listing and repricing cost the seller no gas, and contract sellers are supported through ERC-1271.
+Risk: a signed order cannot be deleted. A stale order stays valid until it expires, so a seller who changes their mind or sees the position degrade stays exposed.
+Mitigation, all on chain:
+- every order has a `deadline`, and Dutch auctions have an end time;
+- `cancel(orderHash)` marks one order used;
+- `cancelAll()` increments a per-seller `minNonce` and voids every order below it;
+- the order carries the NFT `transferEpoch`, so a transfer voids it;
+- revoking the NFT approval to the marketplace also stops settlement.
+Residual: an order is live until one of those happens, and a cancel can lose a race with a buyer in the same block. The bounds in T1 still protect the buyer, and the seller accepts the price they signed.
+Test: sign, cancel, then settle and expect a revert. Repeat for `cancelAll`, expiry, transfer and approval revoke.
+
 ## Out of scope
 
 Compromise of a holder's key. Mezo consensus failure. Bugs in OpenZeppelin. Economic attacks on MUSD's peg.
