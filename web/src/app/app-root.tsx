@@ -6,6 +6,7 @@ import { config } from "@/config";
 import { usePositionsOf } from "@/hooks/usePositions";
 import { EmptyState } from "@/components/States";
 import { Lookup } from "@/components/Lookup";
+import { OpenPosition } from "@/components/OpenPosition";
 import { PositionList } from "@/components/PositionList";
 import Providers from "./providers";
 
@@ -71,6 +72,8 @@ function Dashboard() {
           />
         }
       />
+
+      <OpenPosition onOpened={() => state.status === "ready" && state.refresh()} />
 
       <Lookup />
 

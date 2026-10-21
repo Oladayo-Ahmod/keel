@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import { explorerAddress } from "@/config";
 import { formatBtc, formatMusd, shortAddress, toNumber } from "@/lib/format";
 import { riskOf } from "@/lib/risk";
@@ -8,18 +9,21 @@ import { BufferPanel } from "./BufferPanel";
 import { CountUp } from "./CountUp";
 import { RateCompare } from "./RateCompare";
 import { RiskGauge } from "./RiskGauge";
+import { TransferPanel } from "./TransferPanel";
 
 const NO_DEBT = 2n ** 200n;
 const btc = (n: number) => n.toFixed(5);
 const musd = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-export function PositionCard({ p, viewer }: { p: PositionInfo; viewer?: `0x${string}` }) {
+export function PositionCard({ p, viewer, onChanged }: { p: PositionInfo; viewer?: `0x${string}`; onChanged?: () => void }) {
+  const ref = useRef<HTMLElement>(null);
+  const [transferring, setTransferring] = useState(false);
   const risk = riskOf(p.icr, p.active);
   const noDebt = p.icr >= NO_DEBT;
   const mine = viewer && viewer.toLowerCase() === p.holder.toLowerCase();
 
   return (
-    <article className={`glass card pos-card risk-${risk.level}`} style={{ opacity: 0 }}>
+    <article ref={ref} className={`glass card pos-card risk-${risk.level}`} style={{ opacity: 0 }}>
       <header className="card-head">
         <div>
           <h3>Position #{p.tokenId.toString()}</h3>
@@ -95,10 +99,25 @@ export function PositionCard({ p, viewer }: { p: PositionInfo; viewer?: `0x${str
         </>
       )}
 
+      {mine && transferring && (
+        <TransferPanel
+          p={p}
+          cardRef={ref}
+          onClose={() => setTransferring(false)}
+          onDone={() => {
+            setTransferring(false);
+            onChanged?.();
+          }}
+        />
+      )}
+
       <footer className="card-foot">
-        <span>
-          {mine ? "Held by you" : <>Held by <span className="mono">{shortAddress(p.holder)}</span></>}
-        </span>
+        <span>{mine ? "Held by you" : <>Held by <span className="mono">{shortAddress(p.holder)}</span></>}</span>
+        {mine && !transferring && (
+          <button className="btn btn-quiet btn-small" onClick={() => setTransferring(true)}>
+            Transfer
+          </button>
+        )}
       </footer>
     </article>
   );

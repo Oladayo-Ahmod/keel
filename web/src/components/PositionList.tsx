@@ -47,7 +47,7 @@ export function PositionList({
       <Summary positions={state.positions} />
       <div className="grid" ref={grid}>
         {state.positions.map((p: PositionInfo) => (
-          <PositionCard key={p.tokenId.toString()} p={p} viewer={viewer} />
+          <PositionCard key={p.tokenId.toString()} p={p} viewer={viewer} onChanged={state.refresh} />
         ))}
       </div>
     </>
