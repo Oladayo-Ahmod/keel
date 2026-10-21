@@ -23,7 +23,7 @@ export function PositionCard({ p, viewer, onChanged }: { p: PositionInfo; viewer
   const mine = viewer && viewer.toLowerCase() === p.holder.toLowerCase();
 
   return (
-    <article ref={ref} className={`glass card pos-card risk-${risk.level}`} style={{ opacity: 0 }}>
+    <article ref={ref} className={`glass card pos-card risk-${risk.level}`}>
       <header className="card-head">
         <div>
           <h3>Position #{p.tokenId.toString()}</h3>
