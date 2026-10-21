@@ -65,6 +65,15 @@ Not done:
 - a forge fork test of open, adjust, refinance and close against the live proxies. It would need a warm RPC cache or a more reliable endpoint. The first real exercise of the vault on the live contracts is the testnet demo.
 - a bytecode comparison between the live implementations and the pinned source.
 
+## Web app
+
+`npm test` in `web/`: 29 tests, all passing. They cover amount and ICR formatting, risk levels, the gauge range, sorted-list hint computation (call order, nothing cached, the NICR value measured on matsnet), the open plan checks (ICR floor, minimum net debt, gas reserve, missing price, collateral never under the target), error mapping, and the transfer receiver and risk checks.
+
+Not covered by automated tests: the components themselves and the wallet round trip. What was checked by hand:
+- layout at 390 and 360 px with a real mobile viewport, on the home page, a live position, and a fixture page that shows the cards in each state, the open form with a plan, every transfer step and the underwater warning. No horizontal overflow in any of the 16 checks (`web/scripts/measure-overflow.mjs`);
+- the live position view against matsnet in desktop Chrome;
+- the transfer contract path live on matsnet (see DEPLOYMENTS.md), not through the UI. A browser wallet cannot be driven from the environment these were built in, so the wallet prompt, the pending state and the success animation have not been seen end to end.
+
 ## Wave 2
 
 Marketplace settlement atomicity and value conservation across a sale (I5), bound checks, zombie positions (T20), cancellation (T22), rounding directions (T6), and guardian caps (T3), epoch invalidation (T2).
