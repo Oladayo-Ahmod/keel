@@ -66,3 +66,20 @@ export function pressPulse(el: HTMLElement) {
   if (prefersReducedMotion()) return;
   animate(el, { scale: [1, 0.96, 1], duration: 260, ease: "outQuad" });
 }
+
+/** A card leaves after its position was handed to someone else. */
+export function flyAway(el: HTMLElement, done: () => void) {
+  if (prefersReducedMotion()) {
+    done();
+    return;
+  }
+  animate(el, {
+    translateX: [0, 64],
+    translateY: [0, -12],
+    rotate: [0, 2],
+    opacity: [1, 0],
+    duration: 620,
+    ease: "inExpo",
+    onComplete: done,
+  });
+}
