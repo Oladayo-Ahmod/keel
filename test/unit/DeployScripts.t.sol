@@ -3,7 +3,7 @@ pragma solidity 0.8.24;
 
 import {MezoFixture} from "../helpers/MezoFixture.sol";
 import {Deploy} from "../../script/Deploy.s.sol";
-import {OpenDemo} from "../../script/OpenDemo.s.sol";
+import {DemoPlan} from "../../script/DemoPlan.sol";
 import {PositionFactory} from "../../src/PositionFactory.sol";
 import {PositionLens} from "../../src/PositionLens.sol";
 
@@ -30,7 +30,7 @@ contract DeployScriptsTest is MezoFixture {
 
     // numbers from the testnet budget: 0.099 BTC, price about 84,127 USD
     function test_planFitsTheTestnetBudget() public {
-        OpenDemo demo = new OpenDemo();
+        DemoPlan demo = new DemoPlan();
         (uint256 c1, uint256 c2) = demo.plan(84_127.77e18, 1.6e18, 0.099e18, 0.015e18);
         assertApproxEqAbs(c1, 0.038073e18, 0.00001e18);
         assertApproxEqAbs(c2, 0.039976e18, 0.00001e18);
@@ -38,7 +38,7 @@ contract DeployScriptsTest is MezoFixture {
     }
 
     function testFuzz_planNeverGoesUnderOneFiftyPercent(uint256 price, uint256 icr) public {
-        OpenDemo demo = new OpenDemo();
+        DemoPlan demo = new DemoPlan();
         price = bound(price, 10_000e18, 500_000e18);
         icr = bound(icr, 1.5e18, 3e18);
         (uint256 c1, uint256 c2) = demo.plan(price, icr, 100e18, 0);
@@ -48,19 +48,19 @@ contract DeployScriptsTest is MezoFixture {
     }
 
     function test_planRefusesBelowFloor() public {
-        OpenDemo demo = new OpenDemo();
+        DemoPlan demo = new DemoPlan();
         vm.expectRevert(bytes("target ICR below 150%"));
         demo.plan(84_127e18, 1.49e18, 1e18, 0);
     }
 
     function test_planRefusesOverBudget() public {
-        OpenDemo demo = new OpenDemo();
+        DemoPlan demo = new DemoPlan();
         vm.expectRevert(bytes("not enough BTC for both positions and the reserve"));
         demo.plan(84_127e18, 1.6e18, 0.09e18, 0.015e18);
     }
 
     function test_planRefusesNoPrice() public {
-        OpenDemo demo = new OpenDemo();
+        DemoPlan demo = new DemoPlan();
         vm.expectRevert(bytes("no price"));
         demo.plan(0, 1.6e18, 1e18, 0);
     }
