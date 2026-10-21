@@ -10,7 +10,7 @@ const base = process.argv[2];
 const widths = [390, 360];
 const shots = process.argv[3];
 
-const browser = await chromium.launch({ executablePath: "C:\\Program Files\\Google\\Chrome\\Application\\chrome.exe", headless: true });
+const browser = await chromium.launch({ executablePath: process.env.CHROME, headless: true });
 
 async function measure(page, label, width) {
   const r = await page.evaluate(() => {
