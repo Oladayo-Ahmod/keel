@@ -1,15 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { usePositionById } from "@/hooks/usePositions";
 import { PositionList } from "./PositionList";
 
-/** Reads any position by NFT id, with no wallet connected. */
+/** Reads any position by NFT id, with no wallet connected. A link can carry ?id=1. */
 export function Lookup() {
   const [text, setText] = useState("");
   const [id, setId] = useState<bigint | undefined>();
   const [bad, setBad] = useState(false);
   const state = usePositionById(id);
+
+  useEffect(() => {
+    const fromLink = new URLSearchParams(window.location.search).get("id");
+    if (fromLink && /^\d{1,18}$/.test(fromLink)) {
+      setText(fromLink);
+      setId(BigInt(fromLink));
+    }
+  }, []);
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
