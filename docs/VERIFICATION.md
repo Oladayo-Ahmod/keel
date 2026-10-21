@@ -194,6 +194,12 @@ Read with `script/measure/proxy_slots.sh` (EIP-1967 implementation and admin slo
 - **Every ProxyAdmin on matsnet is owned by one address, `0x123694886DBf5Ac94DDA07135349534536D14cAf`, and it has no code, so it is an EOA.** One key can replace any core contract on testnet. Mainnet governance was not checked. This is the concrete form of THREAT_MODEL T14.
 - The implementation addresses are a snapshot taken on 2026-10-21. Re-run the script before a release and compare. I did not verify that the implementation bytecode matches the pinned source at `aa25fd6`; the local tests assume it does. A bytecode comparison against the compiled artifacts is still open.
 
+## The public RPC serves reads from nodes at different heights
+
+Seen on 2026-10-22 while testing the transfer: repeated `eth_blockNumber` calls to `https://rpc.test.mezo.org` returned 16,296,884 and 16,082,514, about 214,000 blocks apart. A read that lands on the older node sees none of the recent state: `positionInfo` returned `0x` (no code at the lens), and one `eth_call` reported "Contract code is empty". Writes and later reads on the newer node were fine. Separately, about one request in twenty from this machine dies with a TLS error.
+
+Consequences for KEEL: the UI must treat a failed or empty read as retryable, not as "no positions" (it shows its error state with a retry button), and must not conclude that a transaction failed because the next read looks unchanged. Tests and scripts that read right after a write should retry.
+
 ## Faucet and affordability
 
 - Faucet: `https://faucet.test.mezo.org/`. The page offers BTC and MEZO and is protected by a Cloudflare Turnstile captcha. **I could not read the drip size**: it is not on the page or in the docs, and a claim needs a browser and a human. Please make one claim and tell me the amount and any cooldown; the table below then gives the position count.
