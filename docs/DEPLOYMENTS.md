@@ -11,15 +11,26 @@ Deployed 2026-10-22 from `0x5104C1A69242D94159Cf7151277252e568cB8F98`.
 | PositionVault implementation (created by the factory) | `0x7A546Ba684D8A7bdcA408F4f2e65e4E3F112208E` | inside the factory tx |
 | PositionLens | `0x5e499cA8643cB4aB56a2E0A6E34De3DFb8DfFBD9` | `0xe3de1de4e3128016971097bde3e963fa58165e9d22094d2cb7105cbe8c526323` (block 16294265, 1.41M gas) |
 
-**Source verification on Blockscout: not achieved.** I tried `forge verify-contract` with the Blockscout verifier, again with explicit compiler settings, the v2 standard-input endpoint, the v2 flattened-source endpoint and the Etherscan-style `verifysourcecode` call. Every attempt returned `Fail - Unable to verify` with no further detail (Blockscout backend v6.9.2-beta). The explorer shows all four as unverified.
+**Source verification.** All four contracts are verified on Sourcify with an exact match, chain 31611:
 
-What I can show instead: `script/check_bytecode.sh` compares the creation input of the factory and lens transactions with what this checkout compiles to, and both match byte for byte. The factory's creation input embeds the NFT and the vault implementation, so those two are covered by the factory match. Run:
+| Contract | Sourcify |
+|---|---|
+| PositionFactory | [exact match, runtime and creation](https://repo.sourcify.dev/31611/0xCDf7E1a6Be19EcE762477Cf89c786B9216307405) |
+| PositionNFT | [exact match](https://repo.sourcify.dev/31611/0xEF892989eAa3acB203803aA8b4946a40815F948C) |
+| PositionVault implementation | [exact match](https://repo.sourcify.dev/31611/0x7A546Ba684D8A7bdcA408F4f2e65e4E3F112208E) |
+| PositionLens | [exact match](https://repo.sourcify.dev/31611/0x5e499cA8643cB4aB56a2E0A6E34De3DFb8DfFBD9) |
+
+Blockscout (explorer.test.mezo.org) still shows them as unverified. I tried the Etherscan-style call, `forge verify-contract` with the Blockscout verifier, the same with the exact compiler version (`v0.8.24+commit.e11b9ed9`), 100 optimizer runs, `london` and the deploy-time metadata settings, the v2 standard-input endpoint and the v2 flattened endpoint. Every one returned `Fail - Unable to verify` with no detail (backend v6.9.2-beta). The cause is on the explorer side as far as I can tell: the same inputs give an exact match on Sourcify.
+
+Independent of any explorer, `script/check_bytecode.sh` compares the creation input of the factory and lens transactions with what a checkout compiles to, and both match byte for byte. The factory's creation input embeds the NFT and the vault implementation, so those are covered too:
 
 ```
-script/check_bytecode.sh 0xe54502fd3f0dd36be8c53faa462ac7ee713b934adb129b2cd860ec08e78d6adc   0xe3de1de4e3128016971097bde3e963fa58165e9d22094d2cb7105cbe8c526323   0xEF892989eAa3acB203803aA8b4946a40815F948C
+script/check_bytecode.sh 0xe54502fd3f0dd36be8c53faa462ac7ee713b934adb129b2cd860ec08e78d6adc \
+  0xe3de1de4e3128016971097bde3e963fa58165e9d22094d2cb7105cbe8c526323 \
+  0xEF892989eAa3acB203803aA8b4946a40815F948C
 ```
 
-The cause on the explorer side is unknown. I did not change the compiler settings or the code to chase it, since that would change the deployed bytecode.
+To verify on Sourcify again, for example after a change: `forge verify-contract <address> <path>:<name> --verifier sourcify --chain-id 31611 --compiler-version 0.8.24 --num-of-optimizations 100 --evm-version london --constructor-args <abi-encoded>`. Constructor arguments are the same as in `script/check_bytecode.sh`.
 
 ### Demo positions
 
@@ -55,19 +66,47 @@ The public RPC drops some connections. Before running again after a failure, che
 
 ### Demo positions
 
-`forge script` cannot open positions on matsnet. A script runs the broadcast calls in forge's own EVM first, and opening a trove reads the price precompile, which that EVM lacks. A first version of this runbook used a forge script for it; it hung and never sent anything. Use the shell script, which sizes the positions, computes the sorted-list hints and sends with `cast`:
+`forge script` cannot open positions on matsnet. A script runs the broadcast calls in forge's own EVM first, and opening a trove reads the price precompile, which that EVM lacks. A first version of this runbook used a forge script for it; it hung and never sent anything. A shell version put the key on the command line, so both were replaced by `web/scripts/demo.ts`, which uses viem and reads the key from `ETH_PRIVATE_KEY` only:
 
 ```
-export FACTORY=0x...
-DRY_RUN=1 script/open_demo.sh      # prints sizing and hints only
-script/open_demo.sh
+cd web
+export ETH_PRIVATE_KEY=0x...        # never as an argument, never in a file in the repo
+npx tsx scripts/demo.ts status
+DRY_RUN=1 npx tsx scripts/demo.ts open     # sizing and hints only
+npx tsx scripts/demo.ts open               # the two demo positions
+npx tsx scripts/demo.ts close 1            # approve the vault for the MUSD it needs, then close
+npx tsx scripts/demo.ts transfer 2 0x...   # safeTransferFrom
 ```
 
-It refuses to run if the target ICR is under 150% (`TARGET_ICR_E18`, default 1.6e18) or if the two positions plus the reserve (`RESERVE`, default 0.015 BTC) do not fit in the wallet. It retries dropped connections only while the wallet nonce has not moved. The key is passed to `cast` on the command line, so it is visible in `ps` on that machine while a transaction is sent. `script/DemoPlan.sol` holds the same sizing as a tested pure contract.
+`open` refuses a target ICR under 150% (`TARGET_ICR`, default 1.6) or a budget that leaves less than `RESERVE` (default 0.015 BTC). Hints are computed right before each send. A trailing carriage return in a `.env` file broke key parsing once, so the script trims whitespace and quotes. A script that sends never retries blindly: if the wallet nonce moved after a failed send it stops and says so.
+
+### Transfer, checked live
+
+On 2026-10-22 position 2 was moved with `safeTransferFrom` to a throwaway address and back:
+
+| Step | Tx |
+|---|---|
+| gas for the throwaway receiver, 0.001 BTC | `0x074b1200212459155b09713053f3028cd743d54a0b48e1d3c05fe5587bb4eb11` |
+| #2 deployer to receiver, 92,024 gas | `0x8f6333d4d33da8081ce25d064f4b9349216bf52ff0e247882c75614c157e0299` |
+| #2 receiver back to deployer, 92,024 gas | `0xf3bf6eae1f23703eb5163d088f373e11694d36debe39392ffd94b510a40a2266` |
+
+While the receiver held it, the lens showed the receiver as holder with the same collateral, debt and rate, `transferEpoch` was 2, and the deployer's holder calls on the vault reverted with `NotHolder` (`0x7623fb52`). After the transfer back, epoch 3, the receiver was locked out the same way and the deployer's calls worked. The receiver's key was deleted, so about 0.001 BTC of the gas money is stranded at `0x0f086b6c73374dC1c6653ED50746A3C27bf707d4`.
+
+This exercised the contracts, not the web UI. The UI builds the same call, and simulates it first; I could not drive a browser wallet from here.
+
+### Demo plan for the remaining BTC
+
+State on 2026-10-22: wallet 0.017983 BTC and 3,700 MUSD, positions 1 and 2 both at about 160%. The oracle price moves, so amounts below are approximate.
+
+1. **Close position 1** with the 3,700 MUSD: `npx tsx scripts/demo.ts close 1`. It approves the vault for about 1,803.6 MUSD (the close cost 1,801.81 plus a 0.1% cushion for interest while the transaction is mined), then calls `close()`. A dry run with a faked allowance simulates fine. Expected: MUSD about 1,898.2 (3,700 minus the 1,801.8 repaid), BTC about 0.0570 (0.017983 plus the 0.039033 collateral, less gas). NFT #1 stays in the wallet with no trove. The 200 MUSD liquidation reserve is returned by Mezo burning it from its own pool, so it costs nothing extra.
+2. **Reopen through the web app's Open flow**: debt 1,800 MUSD, press the 160% ratio button, review, confirm. At 82,000 USD that is about 0.0390 BTC and mints 1,800 MUSD. Expected: MUSD about 3,698.2, BTC about 0.0181, a new NFT #3 at about 160%.
+3. **Transfer** NFT #2 or #3 from the card's Transfer button to a second wallet, type the last four characters of its address, and confirm.
+
+Closing needs the wallet to hold at least `debt - 200` MUSD plus a little interest. That is why position 2 borrows 1,900.
 
 ## Verify
 
-See the status at the top. The commands that were tried are `forge verify-contract <address> <path>:<name> --verifier blockscout --verifier-url https://api.explorer.test.mezo.org/api --chain-id 31611 --constructor-args <abi-encoded>`, with constructor arguments as in `script/check_bytecode.sh`. They are kept here so someone can retry when the explorer is fixed or can say why it fails.
+See the status at the top. For Blockscout the command is `forge verify-contract <address> <path>:<name> --verifier blockscout --verifier-url https://api.explorer.test.mezo.org/api --chain-id 31611 --constructor-args <abi-encoded>`; it is kept here so someone can retry when the explorer is fixed.
 
 ## Testnet budget
 
