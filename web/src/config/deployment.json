@@ -1,0 +1,23 @@
+{
+  "chainId": 31611,
+  "name": "Mezo Testnet",
+  "rpcUrl": "https://rpc.test.mezo.org",
+  "explorer": "https://explorer.test.mezo.org",
+  "keel": {
+    "factory": "0xCDf7E1a6Be19EcE762477Cf89c786B9216307405",
+    "nft": "0xEF892989eAa3acB203803aA8b4946a40815F948C",
+    "vaultImplementation": "0x7A546Ba684D8A7bdcA408F4f2e65e4E3F112208E",
+    "lens": "0x5e499cA8643cB4aB56a2E0A6E34De3DFb8DfFBD9"
+  },
+  "mezo": {
+    "borrowerOperations": "0xCdF7028ceAB81fA0C6971208e83fa7872994beE5",
+    "troveManager": "0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0",
+    "sortedTroves": "0x722E4D24FD6Ff8b0AC679450F3D91294607268fA",
+    "hintHelpers": "0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6",
+    "interestRateManager": "0xD4D6c36A592A2c5e86035A6bca1d57747a567f37",
+    "collSurplusPool": "0xB4C35747c26E4aB5F1a7CdC7E875B5946eFa6fa9",
+    "activePool": "0x143A063F62340DA3A8bEA1C5642d18C6D0F7FF51",
+    "priceFeed": "0x86bCF0841622a5dAC14A313a15f96A95421b9366",
+    "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503"
+  }
+}
