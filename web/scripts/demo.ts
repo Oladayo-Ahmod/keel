@@ -9,6 +9,7 @@
  *   npx tsx scripts/demo.ts open
  *   npx tsx scripts/demo.ts close 1               # approves the vault for the MUSD it needs, then closes
  *   npx tsx scripts/demo.ts transfer 2 0xReceiver
+ *   npx tsx scripts/demo.ts fund 0xAddress 0.001  # plain BTC send, for gas
  *
  * Optional: RPC, TARGET_ICR (default 1.6, never below 1.5 here), RESERVE (BTC kept back, default 0.015).
  */
@@ -158,6 +159,14 @@ async function transfer(idText: string, to: string) {
   console.log("transferred, tx", receipt.transactionHash, "gas", receipt.gasUsed);
 }
 
+async function fund(to: string, amount: string) {
+  const { client } = wallet();
+  if (!isAddress(to)) throw new Error("not an address");
+  const hash = await client.sendTransaction({ to: getAddress(to), value: parseUnits(amount, 18) });
+  const receipt = await pub.waitForTransactionReceipt({ hash });
+  console.log("sent", amount, "BTC, tx", receipt.transactionHash);
+}
+
 const approveAbi = [
   {
     type: "function",
@@ -177,9 +186,10 @@ const run: Record<string, () => Promise<void>> = {
   open,
   close: () => close(a),
   transfer: () => transfer(a, b),
+  fund: () => fund(a, b),
 };
 if (!run[cmd]) {
-  console.error("usage: demo.ts status | open | close <id> | transfer <id> <to>");
+  console.error("usage: demo.ts status | open | close <id> | transfer <id> <to> | fund <to> <btc>");
   process.exit(2);
 }
 run[cmd]().catch((e) => {
