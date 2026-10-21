@@ -51,7 +51,7 @@ export function RiskGauge({ icrRatio, risk, noDebt }: { icrRatio: number; risk: 
       </div>
       <div className="gauge-scale" aria-hidden>
         <span>{(GAUGE_MIN * 100).toFixed(0)}%</span>
-        <span className="mcr">110% liquidation</span>
+        <span className="mcr">marks: 110% and 150%</span>
         <span>{(GAUGE_MAX * 100).toFixed(0)}%</span>
       </div>
     </div>
