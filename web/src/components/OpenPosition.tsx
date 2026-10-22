@@ -2,9 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { parseEventLogs } from "viem";
-import { useAccount, useBalance, usePublicClient, useReadContract } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { positionFactoryAbi } from "@/abi/keel";
-import { borrowerOperationsAbi, priceFeedAbi } from "@/abi/mezo";
 import { config } from "@/config";
 import { formatBtc, formatIcr, formatMusd } from "@/lib/format";
 import { computeHints, nicrAfterOpen } from "@/lib/hints";
@@ -12,6 +11,8 @@ import { collForIcr, parseAmount, planOpen } from "@/lib/open";
 import { friendlyError } from "@/lib/errors";
 import { pressPulse } from "@/lib/motion";
 import { useTx } from "@/hooks/useTx";
+import { useOpenInputs } from "@/hooks/useChain";
+import { assertFresh } from "@/lib/rpc";
 import { TxStatus } from "./TxStatus";
 
 const PRESETS = [150n, 160n, 200n];
@@ -32,42 +33,39 @@ export function OpenPosition({ onOpened }: { onOpened: () => void }) {
   const debt = parseAmount(debtText);
   const coll = parseAmount(collText);
 
-  const price = useReadContract({ address: config.mezo.priceFeed, abi: priceFeedAbi, functionName: "fetchPrice", chainId: config.chainId });
-  const minNet = useReadContract({ address: config.mezo.borrowerOperations, abi: borrowerOperationsAbi, functionName: "minNetDebt", chainId: config.chainId });
-  const feeQ = useReadContract({
-    address: config.mezo.borrowerOperations,
-    abi: borrowerOperationsAbi,
-    functionName: "getBorrowingFee",
-    args: debt ? [debt] : undefined,
-    chainId: config.chainId,
-    query: { enabled: !!debt },
-  });
-  const balance = useBalance({ address, chainId: config.chainId, query: { enabled: !!address } });
+  const inputs = useOpenInputs(address, debt);
+  const freshRead = inputs.data;
+  const stale = !!freshRead?.freshness.stale;
+  const price = freshRead?.data.price;
+  const minNet = freshRead?.data.minNetDebt;
+  const fee = freshRead?.data.fee;
+  const balance = freshRead?.data.balance;
 
-  const ready = price.data !== undefined && minNet.data !== undefined && (feeQ.data !== undefined || !debt);
-  const loadError = price.error || minNet.error || feeQ.error;
+  const ready = price !== undefined && minNet !== undefined && (fee !== undefined || !debt);
+  const loadError = inputs.isError;
 
+  // no plan, and so no ratio or "safe" wording, is produced from data a lagging node supplied
   const plan = useMemo(() => {
-    if (!ready || !debt || !coll || price.data === undefined || minNet.data === undefined || feeQ.data === undefined) return undefined;
-    return planOpen({ debt, coll, price: price.data, fee: feeQ.data, minNetDebt: minNet.data, balance: balance.data?.value ?? 0n });
-  }, [ready, debt, coll, price.data, minNet.data, feeQ.data, balance.data]);
+    if (stale || !ready || !debt || !coll || price === undefined || minNet === undefined || fee === undefined) return undefined;
+    return planOpen({ debt, coll, price, fee, minNetDebt: minNet, balance: balance ?? 0n });
+  }, [stale, ready, debt, coll, price, minNet, fee, balance]);
 
   const wrongNetwork = isConnected && chainId !== config.chainId;
-  const canReview = isConnected && !wrongNetwork && !!plan && plan.errors.length === 0;
+  const canReview = isConnected && !wrongNetwork && !stale && !!plan && plan.errors.length === 0;
 
   const applyPreset = (pct: bigint) => {
-    if (!debt || price.data === undefined || feeQ.data === undefined) return;
-    const c = collForIcr(debt, feeQ.data, price.data, (pct * 10n ** 18n) / 100n);
+    if (stale || !debt || price === undefined || fee === undefined) return;
+    const c = collForIcr(debt, fee, price, (pct * 10n ** 18n) / 100n);
     setCollText((Number(c) / 1e18).toFixed(6));
   };
 
   const submit = async () => {
-    if (!client || !address || !debt || !coll || feeQ.data === undefined) return;
+    if (!client || !address || !debt || !coll || fee === undefined) return;
     setPrepError(undefined);
     setPreparing(true);
     try {
-      // hints are computed now, not when the form was filled, so they match the list as it is
-      const fee = feeQ.data;
+      // one more look at the chain head, then hints computed now, not when the form was filled
+      await assertFresh();
       const [upper, lower] = await computeHints(client, nicrAfterOpen(coll, debt, fee));
       const maxFee = fee + fee / 20n + 1n;
       const params = {
@@ -102,7 +100,23 @@ export function OpenPosition({ onOpened }: { onOpened: () => void }) {
         <p>Deposit BTC, borrow MUSD. You get an NFT that holds the whole position.</p>
       </header>
 
-      {loadError && <p className="banner warn" role="alert">Could not read prices or fees from the chain. Reload to try again.</p>}
+      {loadError && (
+        <p className="banner warn" role="alert">
+          Could not read prices or fees from the chain.{" "}
+          <button className="link" onClick={() => void inputs.refetch()}>
+            Try again
+          </button>
+        </p>
+      )}
+      {stale && (
+        <p className="banner warn" role="alert">
+          The node that answered is behind the chain, so the price, fee and ratio cannot be trusted. Nothing can be sent until a
+          current node answers.{" "}
+          <button className="link" onClick={() => void inputs.refetch()}>
+            Check again
+          </button>
+        </p>
+      )}
 
       {!review && !done && (
         <form
@@ -122,7 +136,7 @@ export function OpenPosition({ onOpened }: { onOpened: () => void }) {
           </label>
           <div className="presets" role="group" aria-label="Set collateral for a target ratio">
             {PRESETS.map((p) => (
-              <button type="button" key={p.toString()} className="btn btn-quiet btn-small" disabled={!ready || !debt} onClick={() => applyPreset(p)}>
+              <button type="button" key={p.toString()} className="btn btn-quiet btn-small" disabled={!ready || !debt || stale} onClick={() => applyPreset(p)}>
                 {p.toString()}% ratio
               </button>
             ))}
@@ -131,7 +145,7 @@ export function OpenPosition({ onOpened }: { onOpened: () => void }) {
           {plan && (
             <dl className="preview">
               <div><dt>Collateral ratio</dt><dd className="mono">{formatIcr(plan.icr)}</dd></div>
-              <div><dt>Borrowing fee</dt><dd className="mono">{formatMusd(feeQ.data ?? 0n)} MUSD</dd></div>
+              <div><dt>Borrowing fee</dt><dd className="mono">{formatMusd(fee ?? 0n)} MUSD</dd></div>
               <div><dt>Total debt</dt><dd className="mono">{formatMusd(plan.composite)} MUSD</dd></div>
               <div><dt>Equity</dt><dd className="mono">${formatMusd(plan.equity)}</dd></div>
             </dl>
