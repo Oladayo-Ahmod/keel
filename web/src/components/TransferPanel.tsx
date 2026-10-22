@@ -11,6 +11,7 @@ import { isRisky, receiverProblem } from "@/lib/transfer";
 import { friendlyError } from "@/lib/errors";
 import { flyAway, pressPulse } from "@/lib/motion";
 import { useTx } from "@/hooks/useTx";
+import { assertFresh } from "@/lib/rpc";
 import type { PositionInfo } from "@/hooks/usePositions";
 import { TxStatus } from "./TxStatus";
 
@@ -20,11 +21,14 @@ const NO_DEBT = 2n ** 200n;
 
 export function TransferPanel({
   p,
+  stale = false,
   cardRef,
   onDone,
   onClose,
 }: {
   p: PositionInfo;
+  /** The data behind this panel is from a lagging node, so nothing can be confirmed. */
+  stale?: boolean;
   cardRef: React.RefObject<HTMLElement | null>;
   onDone: () => void;
   onClose: () => void;
@@ -43,6 +47,7 @@ export function TransferPanel({
 
   const risk = riskOf(p.icr, p.active);
   const risky = isRisky(p);
+  const blocked = stale;
   const noDebt = p.icr >= NO_DEBT;
   const problem = receiverProblem(to, address, p);
   const receiver = !problem ? getAddress(to.trim().toLowerCase()) : undefined;
@@ -69,6 +74,8 @@ export function TransferPanel({
     setPrepError(undefined);
     setChecking(true);
     try {
+      // one more look at the chain head right before anything is simulated or signed
+      await assertFresh();
       const params = {
         address: config.keel.nft,
         abi: positionNFTAbi,
@@ -94,8 +101,8 @@ export function TransferPanel({
 
   const summary = (
     <dl className="preview">
-      <div><dt>Collateral ratio</dt><dd className="mono">{p.priceOk ? (noDebt ? "no debt" : formatIcr(p.icr)) : "unknown"}</dd></div>
-      <div><dt>Equity</dt><dd className="mono">{p.priceOk ? `$${formatMusd(p.equity)}` : "unknown"}</dd></div>
+      <div><dt>Collateral ratio</dt><dd className="mono">{stale || !p.priceOk ? "unverified" : noDebt ? "no debt" : formatIcr(p.icr)}</dd></div>
+      <div><dt>Equity</dt><dd className="mono">{stale || !p.priceOk ? "unverified" : `$${formatMusd(p.equity)}`}</dd></div>
       <div><dt>Collateral</dt><dd className="mono">{formatBtc(p.coll)} BTC</dd></div>
       <div><dt>Debt</dt><dd className="mono">{formatMusd(p.debt)} MUSD</dd></div>
       <div><dt>Locked rate</dt><dd className="mono">{formatBps(p.lockedRateBps)}</dd></div>
@@ -112,6 +119,13 @@ export function TransferPanel({
           </button>
         )}
       </header>
+
+      {stale && (
+        <p className="banner warn" role="alert">
+          The data for this position is from a node that is behind the chain, so its health cannot be confirmed. Wait for
+          the page to refresh, then try again. Nothing can be sent until then.
+        </p>
+      )}
 
       {step === "review" && (
         <>
@@ -139,7 +153,7 @@ export function TransferPanel({
             </div>
           )}
           <div className="actions">
-            <button className="btn" disabled={!reviewOk} onClick={() => setStep("receiver")}>
+            <button className="btn" disabled={!reviewOk || blocked} onClick={() => setStep("receiver")}>
               Continue
             </button>
           </div>
@@ -156,7 +170,7 @@ export function TransferPanel({
           {prepError && <p className="note warn" role="alert">{prepError}</p>}
           <div className="actions">
             <button className="btn btn-quiet" onClick={() => setStep("review")}>Back</button>
-            <button className="btn" disabled={!receiver || checking} onClick={toConfirm}>
+            <button className="btn" disabled={!receiver || checking || blocked} onClick={toConfirm}>
               {checking ? "Checking…" : "Continue"}
             </button>
           </div>
@@ -191,7 +205,7 @@ export function TransferPanel({
               </button>
               <button
                 className="btn"
-                disabled={!tailOk || tx.busy || checking}
+                disabled={!tailOk || tx.busy || checking || blocked}
                 onClick={(e) => {
                   pressPulse(e.currentTarget);
                   void send();
