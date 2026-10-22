@@ -53,6 +53,14 @@ describe("risk", () => {
     expect(riskOf(0n, false).level).toBe("none");
   });
 
+  it("never reports healthy for stale data, whatever the ratio", () => {
+    for (const icr of [e18(0.5), e18(1.2), e18(1.6), e18(5), 2n ** 256n - 1n]) {
+      const r = riskOf(icr, true, true);
+      expect(r.level).toBe("stale");
+      expect(r.label).toBe("Stale data");
+    }
+  });
+
   it("maps the gauge range", () => {
     expect(gaugeFraction(1.0)).toBe(0);
     expect(gaugeFraction(2.5)).toBe(1);
