@@ -2,6 +2,7 @@
   "chainId": 31611,
   "name": "Mezo Testnet",
   "rpcUrl": "https://rpc.test.mezo.org",
+  "rpcFallbacks": [],
   "explorer": "https://explorer.test.mezo.org",
   "keel": {
     "factory": "0xCDf7E1a6Be19EcE762477Cf89c786B9216307405",

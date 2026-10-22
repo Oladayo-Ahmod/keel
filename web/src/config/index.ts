@@ -7,6 +7,8 @@ export const config = {
   chainId: deployment.chainId,
   name: deployment.name,
   rpcUrl: deployment.rpcUrl,
+  // tried in order; more endpoints can be added in deployment.json without touching code
+  rpcUrls: [deployment.rpcUrl, ...(deployment.rpcFallbacks as string[])],
   explorer: deployment.explorer,
   keel: deployment.keel as Record<keyof typeof deployment.keel, Address>,
   mezo: deployment.mezo as Record<keyof typeof deployment.mezo, Address>,
