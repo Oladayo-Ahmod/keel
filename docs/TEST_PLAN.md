@@ -67,9 +67,10 @@ Not done:
 
 ## Web app
 
-`npm test` in `web/`: 29 tests, all passing. They cover amount and ICR formatting, risk levels, the gauge range, sorted-list hint computation (call order, nothing cached, the NICR value measured on matsnet), the open plan checks (ICR floor, minimum net debt, gas reserve, missing price, collateral never under the target), error mapping, and the transfer receiver and risk checks.
+`npm test` in `web/`: 42 tests, all passing. They cover amount and ICR formatting, risk levels, the gauge range, sorted-list hint computation (call order, nothing cached, the NICR value measured on matsnet), the open plan checks (ICR floor, minimum net debt, gas reserve, missing price, collateral never under the target), error mapping, the transfer receiver and risk checks, the stale node assessment (lag behind the newest block, old head, retry until fresh, flag after the last attempt, rethrow after repeated failures) and the rule that stale data never reads as healthy.
 
 Not covered by automated tests: the components themselves and the wallet round trip. What was checked by hand:
+- stale RPC in a real browser: `web/scripts/stale-check.mjs` fakes an old head block. With every answer old, the app shows the warning, a "Stale data" chip, the header pill warns, and nothing says Healthy. With three old answers then real ones, the app retries by itself and ends up showing the real ratio;
 - layout at 390 and 360 px with a real mobile viewport, on the home page, a live position, and a fixture page that shows the cards in each state, the open form with a plan, every transfer step and the underwater warning. No horizontal overflow in any of the 16 checks (`web/scripts/measure-overflow.mjs`);
 - the live position view against matsnet in desktop Chrome;
 - the transfer contract path live on matsnet (see DEPLOYMENTS.md), not through the UI. A browser wallet cannot be driven from the environment these were built in, so the wallet prompt, the pending state and the success animation have not been seen end to end.
