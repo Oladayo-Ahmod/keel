@@ -19,7 +19,8 @@ function tick(ratio: number, inner: number, outer: number) {
 export function RiskGauge({ icrRatio, risk, noDebt }: { icrRatio: number; risk: RiskInfo; noDebt: boolean }) {
   const arc = useRef<SVGPathElement>(null);
   const last = useRef(0);
-  const fraction = risk.level === "none" ? 0 : gaugeFraction(noDebt ? Infinity : icrRatio);
+  const unknown = risk.level === "none" || risk.level === "stale";
+  const fraction = unknown ? 0 : gaugeFraction(noDebt ? Infinity : icrRatio);
 
   useEffect(() => {
     if (arc.current) sweepArc(arc.current, LENGTH, last.current, fraction);
@@ -40,7 +41,7 @@ export function RiskGauge({ icrRatio, risk, noDebt }: { icrRatio: number; risk: 
         <path className="gauge-tick" d={tick(1.5, R - 12, R + 8)} />
       </svg>
       <div className="gauge-read">
-        {risk.level === "none" ? (
+        {unknown ? (
           <span className="gauge-num">—</span>
         ) : noDebt ? (
           <span className="gauge-num">∞</span>

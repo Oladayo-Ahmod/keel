@@ -42,12 +42,24 @@ export function PositionList({
   if (state.status === "error") return <ErrorState message={state.message} onRetry={state.retry} />;
   if (state.positions.length === 0) return <>{empty}</>;
 
+  const stale = state.freshness.stale;
   return (
     <>
+      {stale && (
+        <div className="banner warn" role="alert">
+          <span>
+            Could not reach an up-to-date node. {state.freshness.reason} Positions below are shown as unverified and
+            actions are disabled.
+          </span>
+          <button className="btn btn-small" onClick={state.refresh}>
+            Try again
+          </button>
+        </div>
+      )}
       <Summary positions={state.positions} />
       <div className="grid" ref={grid}>
         {state.positions.map((p: PositionInfo) => (
-          <PositionCard key={p.tokenId.toString()} p={p} viewer={viewer} onChanged={state.refresh} />
+          <PositionCard key={p.tokenId.toString()} p={p} viewer={viewer} onChanged={state.refresh} stale={stale} />
         ))}
       </div>
     </>

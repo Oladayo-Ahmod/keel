@@ -15,10 +15,21 @@ const NO_DEBT = 2n ** 200n;
 const btc = (n: number) => n.toFixed(5);
 const musd = (n: number) => n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
-export function PositionCard({ p, viewer, onChanged }: { p: PositionInfo; viewer?: `0x${string}`; onChanged?: () => void }) {
+export function PositionCard({
+  p,
+  viewer,
+  onChanged,
+  stale = false,
+}: {
+  p: PositionInfo;
+  viewer?: `0x${string}`;
+  onChanged?: () => void;
+  /** The node that supplied this data is behind, so nothing here can be called healthy. */
+  stale?: boolean;
+}) {
   const ref = useRef<HTMLElement>(null);
   const [transferring, setTransferring] = useState(false);
-  const risk = riskOf(p.icr, p.active);
+  const risk = riskOf(p.icr, p.active, stale);
   const noDebt = p.icr >= NO_DEBT;
   const mine = viewer && viewer.toLowerCase() === p.holder.toLowerCase();
 
@@ -34,7 +45,13 @@ export function PositionCard({ p, viewer, onChanged }: { p: PositionInfo; viewer
         <span className={`chip chip-${risk.level}`}>{risk.label}</span>
       </header>
 
-      {p.recoveryMode && (
+      {stale && (
+        <p className="banner warn" role="alert">
+          These numbers come from a node that is behind the chain. They may be out of date, so the ratio is not shown as
+          healthy or at risk.
+        </p>
+      )}
+      {p.recoveryMode && !stale && (
         <p className="banner warn" role="alert">
           The system is in Recovery Mode. Closing, refinancing and collateral withdrawals are blocked until it ends.
         </p>
@@ -45,10 +62,14 @@ export function PositionCard({ p, viewer, onChanged }: { p: PositionInfo; viewer
         </p>
       )}
 
-      <RiskGauge icrRatio={toNumber(p.priceOk ? p.icr : 0n)} risk={p.priceOk ? risk : riskOf(0n, false)} noDebt={noDebt && p.priceOk} />
-      <p className="risk-hint">{p.priceOk ? risk.hint : "Waiting for the price feed."}</p>
+      <RiskGauge
+        icrRatio={toNumber(p.priceOk ? p.icr : 0n)}
+        risk={p.priceOk || stale ? risk : riskOf(0n, false)}
+        noDebt={noDebt && p.priceOk && !stale}
+      />
+      <p className="risk-hint">{stale ? risk.hint : p.priceOk ? risk.hint : "Waiting for the price feed."}</p>
 
-      <dl className="stats">
+      <dl className={`stats${stale ? " stats-stale" : ""}`}>
         <div>
           <dt>Collateral</dt>
           <dd>
@@ -102,6 +123,7 @@ export function PositionCard({ p, viewer, onChanged }: { p: PositionInfo; viewer
       {mine && transferring && (
         <TransferPanel
           p={p}
+          stale={stale}
           cardRef={ref}
           onClose={() => setTransferring(false)}
           onDone={() => {
