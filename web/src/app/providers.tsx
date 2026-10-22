@@ -7,13 +7,17 @@ import { WagmiProvider } from "wagmi";
 import { getConfig, mezoTestnet } from "@mezo-org/passport";
 import { useState, type ReactNode } from "react";
 import { walletConnectProjectId } from "@/config";
+import { makeTransport } from "@/lib/rpc";
 
 const wagmiConfig = getConfig({
   appName: "KEEL",
   appDescription: "Tradable MUSD positions on Mezo",
   mezoNetwork: "testnet",
   walletConnectProjectId,
-});
+  // retries and fallback endpoints for everything wagmi does (receipts, balances, wallet reads);
+  // Passport spreads these after its own http transport. Its type does not expose the field.
+  transports: { [mezoTestnet.id]: makeTransport() },
+} as Parameters<typeof getConfig>[0]);
 
 export default function Providers({ children }: { children: ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: 2, staleTime: 8_000 } } }));
