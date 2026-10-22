@@ -279,6 +279,10 @@ small {
   background: var(--danger-tint);
   color: var(--danger);
 }
+.chip-stale {
+  background: var(--caution-tint);
+  color: #7a5208;
+}
 .chip-none {
   background: var(--hair);
   color: var(--muted);
@@ -293,7 +297,8 @@ small {
 .risk-danger {
   --risk: var(--danger);
 }
-.risk-none {
+.risk-none,
+.risk-stale {
   --risk: var(--faint);
 }
 
@@ -897,4 +902,36 @@ small {
   .actions .btn {
     flex: 1;
   }
+}
+
+.stats-stale dd {
+  opacity: 0.45;
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  background: var(--glass);
+  border: 1px solid var(--edge);
+  box-shadow: 0 0 0 1px var(--hair);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.status-pill i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--safe);
+}
+
+.status-pill.warn i {
+  background: var(--caution);
+}
+
+.status-pill.down i {
+  background: var(--danger);
 }

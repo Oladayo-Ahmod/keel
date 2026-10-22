@@ -5,6 +5,7 @@ import { useAccount, useSwitchChain } from "wagmi";
 import { config } from "@/config";
 import { usePositionsOf } from "@/hooks/usePositions";
 import { EmptyState } from "@/components/States";
+import { ChainStatus } from "@/components/ChainStatus";
 import { Lookup } from "@/components/Lookup";
 import { OpenPosition } from "@/components/OpenPosition";
 import { PositionList } from "@/components/PositionList";
@@ -20,6 +21,7 @@ function Header() {
         </svg>
         <span>KEEL</span>
         <span className="net">{config.name}</span>
+        <ChainStatus />
       </div>
       <ConnectButton chainStatus="icon" showBalance={false} accountStatus="address" />
     </header>
