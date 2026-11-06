@@ -1,4 +1,4 @@
-﻿# Mezo mainnet market data
+# Mezo mainnet market data
 
 Read-only snapshot of the MUSD market on Mezo mainnet (chain 31612). Nothing here sends a transaction.
 

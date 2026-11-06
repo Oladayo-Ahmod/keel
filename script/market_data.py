@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Read-only snapshot of the Mezo mainnet MUSD market (chain 31612).
 
 Everything is read at one pinned block so the numbers agree with each other.

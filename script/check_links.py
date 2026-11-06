@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python3
+#!/usr/bin/env python3
 """Fetch every submission URL the way a logged-out judge would and flag anything
 that is not a plain 200. YouTube links go through the oEmbed endpoint, because a
 private or removed video still returns 200 on the watch page.

@@ -1,4 +1,4 @@
-﻿# Mezo integration scan (Wave 2, phase A3)
+# Mezo integration scan (Wave 2, phase A3)
 
 Read-only. Nothing here is built yet. Everything below was read from Mezo mainnet (chain 31612) over the public RPC on 2026-11-06, or from the `lib/musd` checkout, and the limits of each check are stated.
 
