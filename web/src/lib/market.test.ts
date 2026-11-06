@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { hashTypedData, keccak256, toBytes } from "viem";
+import { BaseError, ContractFunctionRevertedError, encodeErrorResult, hashTypedData, keccak256, toBytes } from "viem";
 import { trozuMarketAbi } from "@/abi/trozu";
 import {
   LISTING_TYPES,
   STATES,
   buildListing,
   defaultBounds,
+  explainRevert,
+  priceCap,
   feeOn,
   isDutch,
   marketDomain,
@@ -156,5 +158,35 @@ describe("error text", () => {
     expect(marketErrorText("RateOutOfRange", [60, 100, 100])).toMatch(/0.60%/);
     expect(marketErrorText("ReserveBelowMin", [0n, 1n, 0n, 0n])).toMatch(/emptied/);
     expect(marketErrorText("Nope", [])).toBeUndefined();
+  });
+});
+
+describe("revert decoding", () => {
+  const revert = (errorName: string, args: unknown[]) =>
+    new ContractFunctionRevertedError({
+      abi: trozuMarketAbi,
+      functionName: "buy",
+      data: encodeErrorResult({ abi: trozuMarketAbi, errorName, args } as never),
+    });
+  it("turns an encoded ListingInvalid(StaleEpoch) into its sentence", () => {
+    const e = new BaseError("call failed", { cause: revert("ListingInvalid", [10]) });
+    expect(explainRevert(e)).toMatch(/changed hands/);
+  });
+  it("turns an encoded RateOutOfRange into a sentence with the rate", () => {
+    const e = new BaseError("call failed", { cause: revert("RateOutOfRange", [75, 100, 100]) });
+    expect(explainRevert(e)).toMatch(/0.75%/);
+  });
+  it("returns nothing for other errors", () => {
+    expect(explainRevert(new Error("boom"))).toBeUndefined();
+    expect(explainRevert(new BaseError("plain"))).toBeUndefined();
+  });
+});
+
+describe("price cap", () => {
+  it("is the price a minute ago, which is never below the true price", () => {
+    const l = { startPrice: e18(2_000), endPrice: e18(1_000), startTime: 1_000n, endTime: 2_000n };
+    expect(priceCap(l, 1_500n)).toBe(priceAt(l, 1_440n));
+    expect(priceCap(l, 1_500n) >= priceAt(l, 1_500n)).toBe(true);
+    expect(priceCap(l, 30n)).toBe(l.startPrice);
   });
 });

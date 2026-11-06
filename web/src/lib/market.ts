@@ -1,3 +1,4 @@
+import { BaseError, ContractFunctionRevertedError } from "viem";
 import { formatMusd } from "./format";
 
 type Address = `0x${string}`;
@@ -226,4 +227,17 @@ export function marketErrorText(name: string, args: readonly unknown[] | undefin
     default:
       return undefined;
   }
+}
+
+/** The sentence for a revert from the market, read from viem's decoded error, or undefined if it is not one of ours. */
+export function explainRevert(e: unknown): string | undefined {
+  if (!(e instanceof BaseError)) return undefined;
+  const r = e.walk((x) => x instanceof ContractFunctionRevertedError);
+  if (r instanceof ContractFunctionRevertedError && r.data) return marketErrorText(r.data.errorName, r.data.args);
+  return undefined;
+}
+
+/** A buyer's price cap: the price a minute ago, because the browser clock can run ahead of the chain's. */
+export function priceCap(l: Pick<Listing, "startPrice" | "endPrice" | "startTime" | "endTime">, nowSeconds: bigint): bigint {
+  return priceAt(l, nowSeconds > 60n ? nowSeconds - 60n : 0n);
 }
