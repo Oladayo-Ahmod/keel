@@ -1,0 +1,10 @@
+{
+  "enabled": false,
+  "note": "Wave 2 addresses from docs/DEPLOYMENTS.md on main (5b6b89f), Mezo testnet. The screens stay hidden until enabled is true or NEXT_PUBLIC_WAVE2=1 is set at build time.",
+  "deployBlock": 16611690,
+  "factory": "0x70791379537cB14981AA7114678663164141eC31",
+  "nft": "0xd53f649e4df31351De8935De9cA7110888F055b8",
+  "lens": "0xCCF8c5aFe7473eC41F64906071e1bE497872004C",
+  "vaultImplementation": "0x6ef4395325828083672FFe836d6Bc80Bf22cACFE",
+  "market": "0xEae6fEa26B178eF32829F36e5219363bB30D93DB"
+}
