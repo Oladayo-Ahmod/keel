@@ -19,7 +19,7 @@ function Header() {
           <path d="M3 19c3 6 8 9 13 9s10-3 13-9H3Z" strokeLinejoin="round" />
           <path d="M16 4v15M16 4c3 4 6 9 9 15M16 4c-3 4-6 9-9 15" strokeLinejoin="round" />
         </svg>
-        <span>KEEL</span>
+        <span>Trozu</span>
         <span className="net">{config.name}</span>
         <ChainStatus />
       </div>
@@ -32,7 +32,7 @@ function WrongNetwork() {
   const { switchChain, isPending } = useSwitchChain();
   return (
     <div className="banner warn" role="alert">
-      <span>Your wallet is on another network. KEEL positions live on {config.name}.</span>
+      <span>Your wallet is on another network. Trozu positions live on {config.name}.</span>
       <button className="btn btn-small" disabled={isPending} onClick={() => switchChain({ chainId: config.chainId })}>
         {isPending ? "Switching…" : `Switch to ${config.name}`}
       </button>

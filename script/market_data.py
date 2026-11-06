@@ -40,7 +40,7 @@ def rpc(method, params, tries=8):
     last = None
     for i in range(tries):
         try:
-            req = urllib.request.Request(RPC, body, {"content-type": "application/json", "user-agent": "keel-market-data"})
+            req = urllib.request.Request(RPC, body, {"content-type": "application/json", "user-agent": "trozu-market-data"})
             out = json.load(urllib.request.urlopen(req, timeout=60))
             if "error" in out:
                 last = out["error"]

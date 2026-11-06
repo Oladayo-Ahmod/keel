@@ -1,4 +1,4 @@
-// Builds keel-deck.pptx. Run from the repository root:
+// Builds trozu-deck.pptx. Run from the repository root:
 //   NODE_PATH=/path/to/node_modules node docs/submission/build-deck.js
 // needs: pptxgenjs, qrcode (npm). Images are read from docs/submission/images.
 //
@@ -60,8 +60,8 @@ const TOTAL = 11;
 
 const pres = new pptxgen();
 pres.layout = "LAYOUT_16x9"; // 10 x 5.625 in
-pres.title = "KEEL: tradable MUSD positions on Mezo";
-pres.author = "KEEL";
+pres.title = "Trozu: tradable MUSD positions on Mezo";
+pres.author = "Trozu";
 pres.theme = { headFontFace: F, bodyFontFace: F };
 
 function frame(n, title, notes) {
@@ -73,7 +73,7 @@ function frame(n, title, notes) {
       margin: 0, valign: "middle", isTextBox: true, fit: "shrink", objectName: "Title",
     });
   }
-  s.addText("KEEL  |  Mezo testnet  |  not audited", {
+  s.addText("Trozu  |  Mezo testnet  |  not audited", {
     x: 0.6, y: 5.18, w: 5, h: 0.25, fontFace: F, fontSize: 10, color: C.muted, margin: 0, isTextBox: true, objectName: "Footer",
   });
   s.addText(`${n} / ${TOTAL}`, {
@@ -119,23 +119,23 @@ function arrow(s, x1, y, x2) {
     const s = frame(
       1,
       null,
-      "Not part of the timed cut. KEEL makes a MUSD position on Mezo something you can hand to someone else. A trove normally belongs to one address and cannot move. KEEL puts it in a vault controlled by an NFT. It is live on Mezo testnet, the link and QR code are on screen, and it is not audited.",
+      "Not part of the timed cut. Trozu makes a MUSD position on Mezo something you can hand to someone else. A trove normally belongs to one address and cannot move. Trozu puts it in a vault controlled by an NFT. It is live on Mezo testnet, the link and QR code are on screen, and it is not audited.",
     );
-    s.addText("KEEL", { x: 0.6, y: 1.15, w: 5.2, h: 1.1, fontFace: F, fontSize: 72, bold: true, color: C.ink, margin: 0, isTextBox: true, objectName: "Wordmark" });
+    s.addText("Trozu", { x: 0.6, y: 1.15, w: 5.2, h: 1.1, fontFace: F, fontSize: 72, bold: true, color: C.ink, margin: 0, isTextBox: true, objectName: "Wordmark" });
     s.addText("Tradable MUSD positions on Mezo", { x: 0.6, y: 2.3, w: 5.4, h: 0.6, fontFace: F, fontSize: 24, color: C.muted, margin: 0, isTextBox: true, objectName: "Subtitle" });
     s.addText("A trove inside a vault, controlled by an NFT. Send the NFT, move the position.", {
       x: 0.6, y: 3.0, w: 5.2, h: 0.7, fontFace: F, fontSize: 16, color: C.ink, margin: 0, isTextBox: true, objectName: "Tagline",
     });
     s.addText("keel-two-roan.vercel.app", {
       x: 0.6, y: 3.9, w: 5.2, h: 0.4, fontFace: F, fontSize: 18, bold: true, color: C.accent, margin: 0, isTextBox: true,
-      hyperlink: { url: LIVE, tooltip: "KEEL live app" }, objectName: "Live link",
+      hyperlink: { url: LIVE, tooltip: "Trozu live app" }, objectName: "Live link",
     });
     chip(s, "Testnet. Not audited.", 0.6, 4.45, 2.1, "amber");
 
     const qr = await QRCode.toBuffer(LIVE, { errorCorrectionLevel: "M", margin: 1, width: 640, color: { dark: "#172033", light: "#FFFFFF" } });
     fs.writeFileSync(IMG("qr-live-app.png"), qr);
     card(s, 6.45, 1.0, 2.95, 3.45, C.white, "QR card");
-    s.addImage({ path: IMG("qr-live-app.png"), x: 6.75, y: 1.25, w: 2.35, h: 2.35, altText: "QR code linking to the live KEEL app", objectName: "QR code" });
+    s.addImage({ path: IMG("qr-live-app.png"), x: 6.75, y: 1.25, w: 2.35, h: 2.35, altText: "QR code linking to the live Trozu app", objectName: "QR code" });
     s.addText("Open the live app", { x: 6.45, y: 3.75, w: 2.95, h: 0.5, fontFace: F, fontSize: 14, bold: true, color: C.ink, align: "center", valign: "middle", margin: 0, isTextBox: true, objectName: "QR caption" });
   }
 
@@ -188,7 +188,7 @@ function arrow(s, x1, y, x2) {
     const s = frame(
       4,
       "A vault holds the trove. An NFT holds the vault.",
-      "[0:24 to 0:42] KEEL opens each trove from a vault contract and puts the vault under an NFT. The vault asks the NFT who owns it on every call, so there is no stored owner to update. Send the NFT and the whole position moves.",
+      "[0:24 to 0:42] Trozu opens each trove from a vault contract and puts the vault under an NFT. The vault asks the NFT who owns it on every call, so there is no stored owner to update. Send the NFT and the whole position moves.",
     );
     card(s, 0.6, 1.35, 4.9, 3.6, C.bg, "Diagram frame");
     s.addImage({ path: IMG("architecture.png"), ...fit(IMG("architecture.png"), 0.75, 1.45, 4.6, 3.4), altText: "Architecture: holder, factory, vault, NFT and the Mezo MUSD core", objectName: "Architecture" });
@@ -409,6 +409,6 @@ function arrow(s, x1, y, x2) {
     });
   }
 
-  await pres.writeFile({ fileName: path.join(ROOT, "keel-deck.pptx") });
-  console.log("written", path.join(ROOT, "keel-deck.pptx"));
+  await pres.writeFile({ fileName: path.join(ROOT, "trozu-deck.pptx") });
+  console.log("written", path.join(ROOT, "trozu-deck.pptx"));
 })();

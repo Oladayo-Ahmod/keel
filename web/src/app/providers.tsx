@@ -10,7 +10,7 @@ import { walletConnectProjectId } from "@/config";
 import { makeTransport } from "@/lib/rpc";
 
 const wagmiConfig = getConfig({
-  appName: "KEEL",
+  appName: "Trozu",
   appDescription: "Tradable MUSD positions on Mezo",
   mezoNetwork: "testnet",
   walletConnectProjectId,

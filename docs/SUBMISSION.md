@@ -7,7 +7,7 @@ Text for the AKINDO form. It uses only facts from this repository. Anything in s
 _4 characters_
 
 ```
-KEEL
+Trozu
 ```
 
 ## Project category (3 to 5 words)
@@ -23,7 +23,7 @@ Tradable MUSD debt positions
 _191 characters_
 
 ```
-KEEL puts each MUSD trove inside a vault controlled by an NFT, so a position, with its collateral, debt and locked interest rate, can be handed over as one object; it is live on Mezo testnet.
+Trozu puts each MUSD trove inside a vault controlled by an NFT, so a position, with its collateral, debt and locked interest rate, can be handed over as one object; it is live on Mezo testnet.
 ```
 
 ## How it works (max 3000 characters)
@@ -33,9 +33,9 @@ _2532 characters_
 ```
 On Mezo, a MUSD trove is keyed to the address that opened it and cannot be transferred. Its interest rate is fixed per trove when it opens, and only refinance() changes it, to whatever the global rate is at that moment, higher or lower. Redeemers burn MUSD for collateral starting with the lowest-ratio troves. So handing a position to a team wallet, a client or a buyer means repaying the debt, closing the trove and reopening at today's rate. The locked rate is lost and the opening fee is paid again.
 
-KEEL removes that limit. PositionFactory opens each trove from its own vault contract (an EIP-1167 clone), so the vault is the trove's borrower, and then mints an ERC-721 for it. The vault checks nft.ownerOf(tokenId) on every holder call and stores no owner of its own. Sending the NFT moves the whole position at once: collateral, debt and locked rate. The previous holder, and anyone they approved, is locked out in the same transaction, and funds only ever go to the caller.
+Trozu removes that limit. PositionFactory opens each trove from its own vault contract (an EIP-1167 clone), so the vault is the trove's borrower, and then mints an ERC-721 for it. The vault checks nft.ownerOf(tokenId) on every holder call and stores no owner of its own. Sending the NFT moves the whole position at once: collateral, debt and locked rate. The previous holder, and anyone they approved, is locked out in the same transaction, and funds only ever go to the caller.
 
-How MUSD is used. KEEL calls the real MUSD contracts: BorrowerOperations to open, adjust, repay, refinance and close, and TroveManager and SortedTroves to read state. Mezo's refinance can raise a trove's rate, so the vault wrapper only allows a strictly lower rate and caps the fee. Every read uses getEntireDebtAndColl, so accrued interest and pending redistribution are included, which the plain getters leave out. Opening passes sorted-list hints looked up right before sending; on testnet that measured about 0.6M gas against about 4.5M with no hints. A read-only lens reports collateral ratio, equity, locked versus market rate, and a redemption buffer: how much MUSD must be redeemed before the trove is reached in redemption order. The buffer is exact only when the walk completes, and the lens says which. Wallets connect through Mezo Passport.
+How MUSD is used. Trozu calls the real MUSD contracts: BorrowerOperations to open, adjust, repay, refinance and close, and TroveManager and SortedTroves to read state. Mezo's refinance can raise a trove's rate, so the vault wrapper only allows a strictly lower rate and caps the fee. Every read uses getEntireDebtAndColl, so accrued interest and pending redistribution are included, which the plain getters leave out. Opening passes sorted-list hints looked up right before sending; on testnet that measured about 0.6M gas against about 4.5M with no hints. A read-only lens reports collateral ratio, equity, locked versus market rate, and a redemption buffer: how much MUSD must be redeemed before the trove is reached in redemption order. The buffer is exact only when the walk completes, and the lens says which. Wallets connect through Mezo Passport.
 
 Viability. Hypothesis, not yet tested: DAOs, treasuries, funds and OTC desks that borrow MUSD need to hand over or settle positions without unwinding them, and a below-market locked rate has value that cannot move with the position today. Next come a marketplace where the buyer commits to bounds, so a seller cannot empty a position between listing and sale, and a guardian with on-chain policy bounds. There is no user or revenue data yet.
 
@@ -125,7 +125,7 @@ GitHub: https://github.com/Oladayo-Ahmod/keel
 
 - Repository: https://github.com/Oladayo-Ahmod/keel
 - Live app: https://keel-two-roan.vercel.app/
-- Deck: `docs/submission/keel-deck.pptx` (11 slides, speaker notes with a timed 2 minute script on slides 2 to 8)
+- Deck: `docs/submission/trozu-deck.pptx` (11 slides, speaker notes with a timed 2 minute script on slides 2 to 8)
 - Deployments, with transaction hashes: `docs/DEPLOYMENTS.md`
 - Threat model: `docs/THREAT_MODEL.md`
 - Sourcify: factory https://repo.sourcify.dev/31611/0xCDf7E1a6Be19EcE762477Cf89c786B9216307405, NFT https://repo.sourcify.dev/31611/0xEF892989eAa3acB203803aA8b4946a40815F948C, vault implementation https://repo.sourcify.dev/31611/0x7A546Ba684D8A7bdcA408F4f2e65e4E3F112208E, lens https://repo.sourcify.dev/31611/0x5e499cA8643cB4aB56a2E0A6E34De3DFb8DfFBD9
@@ -139,7 +139,7 @@ It follows slides 2 to 8 of the deck. The same lines are in the speaker notes.
 |---|---|---|
 | 0:00 to 0:12 | 2 | A MUSD trove belongs to one address and can't move. To hand a position over, you repay, close, and reopen at today's rate, and you pay the opening fee again. |
 | 0:12 to 0:24 | 3 | Each trove's interest rate is fixed when it opens, and the market rate can move later. The gap is real value, but it can't be moved or priced today. |
-| 0:24 to 0:42 | 4 | KEEL opens each trove from a vault contract and puts the vault under an NFT. The vault asks the NFT who owns it on every call, so there is no stored owner to update. Send the NFT and the whole position moves. |
+| 0:24 to 0:42 | 4 | Trozu opens each trove from a vault contract and puts the vault under an NFT. The vault asks the NFT who owns it on every call, so there is no stored owner to update. Send the NFT and the whole position moves. |
 | 0:42 to 1:02 | 5 | Here it is live on Mezo testnet. I sent position two to a second address. The old holder's call reverts with NotHolder. The same call from the new holder succeeds. Both transactions are on the explorer, and the hashes are on screen. |
 | 1:02 to 1:22 | 6 | This is the live app. The gauge shows the collateral ratio next to the locked and market rates, and the redemption buffer on demand. You open a position from a form, and transfer it through a review step that shows ratio and equity first. |
 | 1:22 to 1:46 | 7 | It runs on the real MUSD contracts. The vault is the trove's borrower. Mezo's own refinance can raise your rate, so the wrapper only allows a lower one. Reads use getEntireDebtAndColl, so interest and redistribution are included. Hints are looked up right before sending. |

@@ -99,7 +99,7 @@ Tests: after transfer, every holder-only function reverts for the old holder and
 ### T10. Redemption of the position
 
 A redeemer burns MUSD to take collateral from low-ICR troves first. The vault loses collateral at oracle price and may be closed (`TroveManager.sol:1252-1271`), leaving surplus in CollSurplusPool.
-Mitigation: this is protocol behaviour, not an attack. KEEL reports the redemption buffer and surplus so the holder can act, and `claimSurplus` recovers the surplus. The vault can reopen after the trove closes.
+Mitigation: this is protocol behaviour, not an attack. Trozu reports the redemption buffer and surplus so the holder can act, and `claimSurplus` recovers the surplus. The vault can reopen after the trove closes.
 Residual: the buffer is a lower bound and moves (see below). The UI does not call it safe.
 
 ### T11. Misuse of the redemption buffer
@@ -117,15 +117,15 @@ Residual: the Lens view can return `Unknown` for a deep position. That is a degr
 ### T13. Oracle and price manipulation
 
 `PriceFeed.fetchPrice` reads a chain precompile (found in phase 0). A wrong price changes ICR in the Lens and in Mezo's own checks.
-Mitigation: KEEL has no price-dependent state change of its own in wave 1; Mezo enforces MCR and CCR on every borrow and withdrawal. **W2** guardian actions and settlement checks re-read the price in the transaction and reject a zero or reverting price.
-Residual: oracle failure is a protocol risk that KEEL inherits.
+Mitigation: Trozu has no price-dependent state change of its own in wave 1; Mezo enforces MCR and CCR on every borrow and withdrawal. **W2** guardian actions and settlement checks re-read the price in the transaction and reject a zero or reverting price.
+Residual: oracle failure is a protocol risk that Trozu inherits.
 
 ### T14. Upgradeable Mezo core contracts
 
-All core contracts are proxies (`initialize`, storage gaps; VERIFICATION section 8). Governance or an admin can change their code. A change could alter fees, remove a getter KEEL relies on, add an EOA check, change the redemption order, or block a function. The sorted list and the trove struct are also read by KEEL.
+All core contracts are proxies (`initialize`, storage gaps; VERIFICATION section 8). Governance or an admin can change their code. A change could alter fees, remove a getter Trozu relies on, add an EOA check, change the redemption order, or block a function. The sorted list and the trove struct are also read by Trozu.
 On matsnet, all 14 proxies are transparent proxies and every ProxyAdmin is owned by one externally owned address (`0x1236…4cAf`, see VERIFICATION, proxy slots), so a single key can replace any core contract there.
-Impact: loss of function, mispriced Lens figures, or in the worst case a hostile upgrade that locks vaults. KEEL cannot prevent this, because it holds no admin power over Mezo.
-Mitigation: KEEL's contracts are immutable and hold no assets beyond what Mezo already holds for the trove; there is no KEEL-side pause or upgrade path to compromise. Core addresses are immutables in the implementation, so a KEEL deploy is bound to one Mezo deployment. Fork tests run against the live proxies and are re-run before every release, so a behavioural change shows up. The Lens reads through interfaces and treats a reverting getter as "unknown", not as zero.
+Impact: loss of function, mispriced Lens figures, or in the worst case a hostile upgrade that locks vaults. Trozu cannot prevent this, because it holds no admin power over Mezo.
+Mitigation: Trozu's contracts are immutable and hold no assets beyond what Mezo already holds for the trove; there is no Trozu-side pause or upgrade path to compromise. Core addresses are immutables in the implementation, so a Trozu deploy is bound to one Mezo deployment. Fork tests run against the live proxies and are re-run before every release, so a behavioural change shows up. The Lens reads through interfaces and treats a reverting getter as "unknown", not as zero.
 Residual: accepted and stated in `KNOWN_LIMITATIONS.md`. Do not describe positions as trustless with respect to Mezo governance.
 
 ### T15. NFT-level attacks
@@ -155,7 +155,7 @@ Test: a receiver contract that re-enters `openPosition` and the vault from `onER
 ### T19. Recovery Mode lock-in and the last-trove block (liveness)
 
 Mezo restricts positions when the system TCR falls below 150% (Recovery Mode). While it lasts: `refinance` reverts (`BorrowerOperations.sol:1023`), `closeTrove` reverts when BorrowerOperations can mint (`:954`), collateral withdrawal is refused and a debt increase must keep ICR at or above CCR and not lower ICR (`:1265-1275`). Separately, the last trove in the system cannot close (`TroveManager.sol:1488-1496`, `:1397-1399`).
-Impact: a holder, or a buyer who just paid for a position, cannot exit or refinance for as long as the mode lasts. Nothing in KEEL can lift it.
+Impact: a holder, or a buyer who just paid for a position, cannot exit or refinance for as long as the mode lasts. Nothing in Trozu can lift it.
 Mitigation: none on chain, because this is protocol behaviour. The Lens exposes `recoveryMode` and `canClose`, and the UI shows them. Repaying debt and adding collateral stay allowed, and the wrappers add no extra restriction. **W2:** listings must not promise an exit, and the guardian skips refinance in Recovery Mode instead of reverting the whole call.
 Residual: accepted. Described in `KNOWN_LIMITATIONS.md`.
 Test: enter Recovery Mode locally, check each wrapper reverts with the Mezo reason, and check `repay` and `addCollateral` still work.

@@ -15,7 +15,7 @@ import re, sys, json, time, pathlib, urllib.request, urllib.parse, urllib.error
 from concurrent.futures import ThreadPoolExecutor
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-UA = "Mozilla/5.0 (compatible; keel-link-check/1.0)"
+UA = "Mozilla/5.0 (compatible; trozu-link-check/1.0)"
 URL_RE = re.compile(r"https?://[^\s<>\"'`)\]\\]+")
 # not real targets: local dev, placeholders, wildcard patterns, bare api bases
 SKIP = re.compile(r"^https?://(localhost|127\.0\.0\.1|0\.0\.0\.0|example\.|schemas\.|purl\.org|www\.w3\.org)|\*|\{|\$")

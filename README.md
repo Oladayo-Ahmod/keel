@@ -1,10 +1,12 @@
 <div align="center">
 
-# KEEL
+# Trozu
 
 **Tradable, transferable MUSD positions on Mezo.**
 
 Put a trove inside a vault, represent the vault as an ERC-721, and move collateral, debt and locked interest rate as a single object.
+
+*Formerly KEEL. The Wave 1 contracts and the repository URL still carry the old name; the Wave 1 NFT is named "KEEL Position" on chain.*
 
 [![CI](https://github.com/Oladayo-Ahmod/keel/actions/workflows/ci.yml/badge.svg)](https://github.com/Oladayo-Ahmod/keel/actions/workflows/ci.yml)
 [![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-blue.svg)](LICENSE)
@@ -23,7 +25,7 @@ Put a trove inside a vault, represent the vault as an ERC-721, and move collater
 ## Table of contents
 
 - [Overview](#overview)
-- [Why KEEL](#why-keel)
+- [Why Trozu](#why-trozu)
 - [Key properties](#key-properties)
 - [Architecture](#architecture)
 - [Position lifecycle](#position-lifecycle)
@@ -43,11 +45,11 @@ MUSD is Mezo's Bitcoin-backed stablecoin. You mint it by opening a **trove**: BT
 
 A trove is keyed by the address that opened it and cannot be moved. If you want to hand a position to a team wallet, a client or a buyer, you have to repay the debt, close the trove and open a new one, which loses the locked rate and pays the opening fee again.
 
-KEEL removes that limit. Each trove is opened by a small vault contract, and the vault is represented by an ERC-721 token. Whoever holds the token controls the trove. A position, meaning its collateral, debt and locked interest rate, becomes one object that can be sent, gifted or sold.
+Trozu removes that limit. Each trove is opened by a small vault contract, and the vault is represented by an ERC-721 token. Whoever holds the token controls the trove. A position, meaning its collateral, debt and locked interest rate, becomes one object that can be sent, gifted or sold.
 
-## Why KEEL
+## Why Trozu
 
-| Problem with a plain trove | What KEEL changes |
+| Problem with a plain trove | What Trozu changes |
 |---|---|
 | The position is tied to one address forever. | The position is an NFT. Transfer the token and the whole position moves. |
 | Moving a position means closing it, repaying all debt and reopening at the current rate. | The collateral, debt and locked rate stay exactly as they were. |
@@ -57,7 +59,7 @@ KEEL removes that limit. Each trove is opened by a small vault contract, and the
 
 ## Key properties
 
-- **One source of authority.** The vault checks `nft.ownerOf(tokenId)` on every holder call and nothing else. There is no stored owner to go stale, no admin and no upgrade path in KEEL's own contracts.
+- **One source of authority.** The vault checks `nft.ownerOf(tokenId)` on every holder call and nothing else. There is no stored owner to go stale, no admin and no upgrade path in Trozu's own contracts.
 - **Funds only go to the caller.** Every payout from a vault is sent to `msg.sender`, who must be the holder.
 - **Instant, complete hand-over.** A transfer locks out the previous holder, and anyone they approved, in the same transaction. A per-token transfer epoch lets future components invalidate stale state without help from the vault.
 - **Safe refinancing.** Mezo's own `refinance` moves a trove to the current global rate whether that is lower or higher. The vault wrapper only allows a strictly lower rate and enforces a fee cap.
@@ -134,7 +136,7 @@ What the repository includes to back that up:
 - A manual mutation check: three deliberately broken vault variants were each caught by the invariant suite (recorded in [TEST_PLAN.md](docs/TEST_PLAN.md); the variants are not kept in the repository).
 - [Live protocol measurements](docs/VERIFICATION.md) (gas of the redemption buffer walk, sorted-list hint behaviour, proxy layout) taken against Mezo testnet.
 
-**Trust assumptions you inherit.** Mezo's core contracts are upgradeable proxies. A change to them can alter fees, remove a getter KEEL reads, or block a function. KEEL holds no admin power over Mezo and cannot prevent this. Positions are therefore not trustless with respect to Mezo governance. This is stated in [Known limitations](docs/KNOWN_LIMITATIONS.md).
+**Trust assumptions you inherit.** Mezo's core contracts are upgradeable proxies. A change to them can alter fees, remove a getter Trozu reads, or block a function. Trozu holds no admin power over Mezo and cannot prevent this. Positions are therefore not trustless with respect to Mezo governance. This is stated in [Known limitations](docs/KNOWN_LIMITATIONS.md).
 
 **Not audited.** The code has not had an independent security review.
 
@@ -247,7 +249,7 @@ docs/           Architecture, threat model, decisions, verification, deployments
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Threats, mitigations and the tests that cover them |
 | [DECISIONS.md](docs/DECISIONS.md) | Design decisions and reasons |
 | [VERIFICATION.md](docs/VERIFICATION.md) | What the MUSD contracts do, with file and line references, plus live measurements |
-| [KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) | What KEEL does not do or cannot control |
+| [KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) | What Trozu does not do or cannot control |
 | [TEST_PLAN.md](docs/TEST_PLAN.md) | Test layers, coverage and open items |
 | [DEPLOYMENTS.md](docs/DEPLOYMENTS.md) | Addresses, transactions, verification and runbook |
 | [MANUAL_TEST.md](docs/MANUAL_TEST.md) | Checklist for testing the wallet flows by hand |

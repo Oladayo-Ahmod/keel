@@ -1,6 +1,6 @@
 # Architecture
 
-KEEL wraps a Mezo MUSD trove in a minimal-proxy vault and represents the vault as an ERC-721. Whoever holds the NFT controls the trove. Moving the NFT moves the whole position: collateral, debt and the locked interest rate.
+Trozu wraps a Mezo MUSD trove in a minimal-proxy vault and represents the vault as an ERC-721. Whoever holds the NFT controls the trove. Moving the NFT moves the whole position: collateral, debt and the locked interest rate.
 
 Facts about MUSD that this design depends on are cited in [VERIFICATION.md](VERIFICATION.md).
 
@@ -122,7 +122,7 @@ The buffer ignores that troves ahead can change before a redemption lands (top-u
 `PositionVault.refinance(upper, lower, maxFee, minRateDropBps)`:
 
 1. Read `lockedRate = TroveManager.getTroveInterestRate(vault)` and `globalRate = InterestRateManager.interestRate()`.
-2. Require `globalRate + max(minRateDropBps, 1) <= lockedRate`. Mezo's `refinance` accepts a higher global rate and would raise the position's rate; this check makes that impossible through KEEL.
+2. Require `globalRate + max(minRateDropBps, 1) <= lockedRate`. Mezo's `refinance` accepts a higher global rate and would raise the position's rate; this check makes that impossible through Trozu.
 3. Record total debt (`principal + interest` from `getEntireDebtAndColl`) before.
 4. Call `BorrowerOperations.refinance(upper, lower)`.
 5. Require `debtAfter - debtBefore <= maxFee`. Both reads are in the same block, so the difference is the refinance fee (`BorrowerOperations.sol:1032-1037`).
@@ -139,7 +139,7 @@ A strict improvement of at least one basis point is always enforced. `minRateDro
 ## Why Foundry
 
 - Fuzzing and stateful invariant testing are first-class and fast. The brief asks for fuzz, invariants and fork tests.
-- Fork tests against matsnet use the real MUSD proxies. MUSD's own Hardhat tooling is not needed: KEEL only calls deployed contracts through interfaces.
+- Fork tests against matsnet use the real MUSD proxies. MUSD's own Hardhat tooling is not needed: Trozu only calls deployed contracts through interfaces.
 - Constraint: Mezo runs `london`, so `foundry.toml` sets `evm_version = "london"` and `solc_version = "0.8.24"` (the version MUSD pins). No `PUSH0`, no transient storage, no `mcopy`.
 - Constraint found in phase 0: `PriceFeed.fetchPrice` calls a chain precompile (`0x7b7c000000000000000000000000000000000015`) that forge's EVM does not implement. Fork tests mock `fetchPrice` with `vm.mockCall`.
 

@@ -49,7 +49,7 @@ Opened with `script/open_demo.sh` at an oracle price of 82,056 USD.
 
 Both NFTs are held by the deployer. After the opens the wallet holds 0.018983 BTC and 3,700 MUSD. The MUSD from position 2 is what lets position 1 be closed: closing needs about 1,802 MUSD.
 
-KEEL is bound to these Mezo contracts (see [VERIFICATION.md](VERIFICATION.md)): BorrowerOperations `0xCdF7028ceAB81fA0C6971208e83fa7872994beE5`, TroveManager `0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0`, SortedTroves `0x722E4D24FD6Ff8b0AC679450F3D91294607268fA`, InterestRateManager `0xD4D6c36A592A2c5e86035A6bca1d57747a567f37`, CollSurplusPool `0xB4C35747c26E4aB5F1a7CdC7E875B5946eFa6fa9`, ActivePool `0x143A063F62340DA3A8bEA1C5642d18C6D0F7FF51`, PriceFeed `0x86bCF0841622a5dAC14A313a15f96A95421b9366`, MUSD `0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503`.
+Trozu is bound to these Mezo contracts (see [VERIFICATION.md](VERIFICATION.md)): BorrowerOperations `0xCdF7028ceAB81fA0C6971208e83fa7872994beE5`, TroveManager `0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0`, SortedTroves `0x722E4D24FD6Ff8b0AC679450F3D91294607268fA`, InterestRateManager `0xD4D6c36A592A2c5e86035A6bca1d57747a567f37`, CollSurplusPool `0xB4C35747c26E4aB5F1a7CdC7E875B5946eFa6fa9`, ActivePool `0x143A063F62340DA3A8bEA1C5642d18C6D0F7FF51`, PriceFeed `0x86bCF0841622a5dAC14A313a15f96A95421b9366`, MUSD `0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503`.
 
 ## Reproduce
 
@@ -113,3 +113,7 @@ See the status at the top. For Blockscout the command is `forge verify-contract 
 The faucet gave 0.099 BTC. The plan was a 160% target ICR (never below 150%), the two positions and a reserve of at least 0.015 BTC. Actual use: 0.080 BTC for collateral, under 0.000001 BTC for gas, 0.0190 BTC left.
 
 Position 2 borrows 100 MUSD more than the minimum on purpose. After both opens the wallet holds 3,700 MUSD, and closing position 1 needs `debt - 200`, about 1,802 MUSD plus a little interest. Sorted-list hints are computed right before sending; a stale hint would only cost gas (see [VERIFICATION.md](VERIFICATION.md#stale-hints-in-sortedtroves)).
+
+## Naming
+
+The project was called KEEL in Wave 1 and is now Trozu. The Wave 1 contracts above are immutable and unchanged, so the on-chain NFT is still named "KEEL Position" with symbol "KEEL". The repository URL and the Vercel domain also keep the old name. New deployments from Wave 2 use the Trozu name and symbol.
