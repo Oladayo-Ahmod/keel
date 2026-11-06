@@ -23,6 +23,8 @@ fail_on_revert = false
 
 [rpc_endpoints]
 matsnet = "https://rpc.test.mezo.org"
+# read only, used by the pinned-block fork tests in test/fork
+mezo_mainnet = "https://rpc-http.mezo.boar.network"
 
 [profile.deep.invariant]
 runs = 256
