@@ -126,7 +126,7 @@ function PositionFacts({ row }: { row: MarketRow }) {
   );
 }
 
-function ListingCard({ row, feeBps, now, stale, onBought }: { row: MarketRow; feeBps: number; now: bigint; stale: boolean; onBought: () => void }) {
+export function ListingCard({ row, feeBps, now, stale, onBought }: { row: MarketRow; feeBps: number; now: bigint; stale: boolean; onBought: () => void }) {
   const l = row.listing;
   const price = priceAt(l, now);
   const [buying, setBuying] = useState(false);

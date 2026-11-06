@@ -1189,3 +1189,16 @@ small {
 .stats .wide {
   grid-column: 1 / -1;
 }
+
+.evidence {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+  font-size: 14px;
+}
+
+.content-page .top {
+  flex-wrap: wrap;
+  gap: var(--s3);
+}

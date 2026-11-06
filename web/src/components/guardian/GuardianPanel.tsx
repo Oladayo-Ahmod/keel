@@ -75,7 +75,7 @@ export function GuardianPanel({ p }: { p: PositionInfo }) {
   );
 }
 
-function PolicyTab({ p, g, stale, onChanged }: { p: PositionInfo; g: GuardianState; stale: boolean; onChanged: () => void }) {
+export function PolicyTab({ p, g, stale, onChanged }: { p: PositionInfo; g: GuardianState; stale: boolean; onChanged: () => void }) {
   const { address } = useAccount();
   const client = usePublicClient({ chainId: config.chainId });
   const qc = useQueryClient();
@@ -198,7 +198,7 @@ const OPS: { op: ReserveOp; label: string }[] = [
   { op: "withdrawMusd", label: "Take out MUSD" },
 ];
 
-function ReserveTab({ p, g, stale, onChanged }: { p: PositionInfo; g: GuardianState; stale: boolean; onChanged: () => void }) {
+export function ReserveTab({ p, g, stale, onChanged }: { p: PositionInfo; g: GuardianState; stale: boolean; onChanged: () => void }) {
   const { address } = useAccount();
   const client = usePublicClient({ chainId: config.chainId });
   const { signTypedDataAsync } = useSignTypedData();
@@ -319,7 +319,7 @@ function ReserveTab({ p, g, stale, onChanged }: { p: PositionInfo; g: GuardianSt
   );
 }
 
-function HistoryTab({ p }: { p: PositionInfo }) {
+export function HistoryTab({ p }: { p: PositionInfo }) {
   const [ask, setAsk] = useState(false);
   const h = useKeeperHistory(p.vault, ask);
   return (
