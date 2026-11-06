@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { usePublicClient, useWriteContract } from "wagmi";
 import type { TransactionReceipt } from "viem";
 import { friendlyError } from "@/lib/errors";
+import { withGas } from "@/lib/gas";
 
 export type TxState =
   | { status: "idle" }
@@ -40,7 +41,8 @@ export function useTx() {
       setState({ status: "signing" });
       let hash: `0x${string}`;
       try {
-        hash = await writeContractAsync(params as unknown as Parameters<typeof writeContractAsync>[0]);
+        // never leave the limit to the wallet: the node's gas estimates on Mezo are unreliable
+        hash = await writeContractAsync(withGas(params) as unknown as Parameters<typeof writeContractAsync>[0]);
       } catch (e) {
         const f = friendlyError(e);
         setState({ status: "failed", message: f.message, rejected: f.rejected });
