@@ -155,7 +155,9 @@ contract MainnetForkTest is Test {
             maxDebt: p + interest + 1e18,
             minRateBps: 0,
             maxRateBps: 10_000,
-            maxPrice: 1500e18
+            maxPrice: 1500e18,
+            minReserveBtc: 0,
+            minReserveMusd: 0
         });
         uint256 carolBefore = musd.balanceOf(carol);
         uint256 sellerBefore = musd.balanceOf(seller);
@@ -192,7 +194,9 @@ contract MainnetForkTest is Test {
         (uint256 coll, uint256 p, uint256 interest,,,) = ITroveManager(core.troveManager).getEntireDebtAndColl(address(vault));
         TrozuMarket.Bounds memory b = TrozuMarket.Bounds({
             expectedEpoch: l.epoch, minColl: coll, maxDebt: p + interest + 1e18,
-            minRateBps: 0, maxRateBps: 10_000, maxPrice: 1500e18
+            minRateBps: 0, maxRateBps: 10_000, maxPrice: 1500e18,
+            minReserveBtc: 0,
+            minReserveMusd: 0
         });
         vm.prank(seller);
         vault.withdrawCollateral(coll / 10, address(0), address(0));

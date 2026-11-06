@@ -586,7 +586,9 @@ contract TrozuHandler is Test {
                 maxDebt: p + it + 1e18,
                 minRateBps: 0,
                 maxRateBps: 10_000,
-                maxPrice: price
+                maxPrice: price,
+                minReserveBtc: 0,
+                minReserveMusd: 0
             });
             uint256 m = mode % 4;
             if (m == 1) b.expectedEpoch += 1;

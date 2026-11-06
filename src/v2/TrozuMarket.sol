@@ -11,6 +11,11 @@ import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol
 import {TrozuNFT} from "./TrozuNFT.sol";
 import {ITroveManager} from "../interfaces/mezo/IMezo.sol";
 
+interface IReserveView {
+    function reserveBtc() external view returns (uint256);
+    function reserveMusd() external view returns (uint256);
+}
+
 /// Peer to peer sale of Trozu positions for MUSD.
 ///
 /// A seller signs a listing off chain (EIP-712, or ERC-1271 for a contract
@@ -65,6 +70,8 @@ contract TrozuMarket is EIP712, ReentrancyGuard {
         uint16 minRateBps;
         uint16 maxRateBps;
         uint256 maxPrice;
+        uint256 minReserveBtc; // the vault's guardian reserve moves with the position, so it is priced in
+        uint256 minReserveMusd;
     }
 
     /// Optional EIP-2612 signature for MUSD. `deadline == 0` skips it.
@@ -121,6 +128,7 @@ contract TrozuMarket is EIP712, ReentrancyGuard {
     error DebtAboveMax(uint256 actual, uint256 max);
     error RateOutOfRange(uint16 actual, uint16 min, uint16 max);
     error PriceAboveMax(uint256 price, uint256 max);
+    error ReserveBelowMin(uint256 actualBtc, uint256 minBtc, uint256 actualMusd, uint256 minMusd);
     error FeeTooHigh();
     error ZeroAddress();
 
@@ -282,6 +290,12 @@ contract TrozuMarket is EIP712, ReentrancyGuard {
         if (principal + interest > b.maxDebt) revert DebtAboveMax(principal + interest, b.maxDebt);
         uint16 rate = TROVE_MANAGER.getTroveInterestRate(vault);
         if (rate < b.minRateBps || rate > b.maxRateBps) revert RateOutOfRange(rate, b.minRateBps, b.maxRateBps);
+        // the seller can empty the reserve after signing, so the buyer pins it too
+        uint256 rBtc = IReserveView(vault).reserveBtc();
+        uint256 rMusd = IReserveView(vault).reserveMusd();
+        if (rBtc < b.minReserveBtc || rMusd < b.minReserveMusd) {
+            revert ReserveBelowMin(rBtc, b.minReserveBtc, rMusd, b.minReserveMusd);
+        }
     }
 
     // a convenience only: if someone front-ran the permit the allowance is already set

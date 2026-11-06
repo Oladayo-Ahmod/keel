@@ -71,7 +71,9 @@ contract MarketTest is TrozuBase {
             maxDebt: p + i + 1e18,
             minRateBps: 0,
             maxRateBps: 10_000,
-            maxPrice: type(uint256).max
+            maxPrice: type(uint256).max,
+            minReserveBtc: 0,
+            minReserveMusd: 0
         });
     }
 
@@ -391,6 +393,42 @@ contract MarketTest is TrozuBase {
         vm.expectRevert(abi.encodeWithSelector(TrozuMarket.PriceAboveMax.selector, PRICE_FIXED, PRICE_FIXED - 1));
         vm.prank(buyer);
         market.buy(l, sig, b, buyer, _noPermit());
+    }
+
+    function test_sellerCannotEmptyTheReserveAfterSigning() public {
+        vm.deal(seller, 2 ether);
+        vm.prank(seller);
+        vault.fundReserveBtc{value: 0.5e18}();
+        TrozuMarket.Listing memory l = _fixed(PRICE_FIXED);
+        bytes memory sig = _sign(sellerKey, l);
+        TrozuMarket.Bounds memory b = _bounds(l);
+        b.minReserveBtc = 0.5e18;
+        // the seller front-runs the buy
+        vm.prank(seller);
+        vault.withdrawReserveBtc(0.5e18);
+        vm.expectRevert(abi.encodeWithSelector(TrozuMarket.ReserveBelowMin.selector, 0, 0.5e18, 0, 0));
+        vm.prank(buyer);
+        market.buy(l, sig, b, buyer, _noPermit());
+        assertEq(nft.ownerOf(id), seller);
+    }
+
+    function test_theMusdReserveIsPinnedToo() public {
+        _fundMusd(seller, 300e18);
+        vm.startPrank(seller);
+        musd.approve(address(vault), 300e18);
+        vault.fundReserveMusd(300e18);
+        vm.stopPrank();
+        TrozuMarket.Listing memory l = _fixed(PRICE_FIXED);
+        bytes memory sig = _sign(sellerKey, l);
+        TrozuMarket.Bounds memory b = _bounds(l);
+        b.minReserveMusd = 300e18 + 1;
+        vm.expectRevert(abi.encodeWithSelector(TrozuMarket.ReserveBelowMin.selector, 0, 0, 300e18, 300e18 + 1));
+        vm.prank(buyer);
+        market.buy(l, sig, b, buyer, _noPermit());
+        b.minReserveMusd = 300e18; // exactly what is there is enough
+        vm.prank(buyer);
+        market.buy(l, sig, b, buyer, _noPermit());
+        assertEq(vault.reserveMusd(), 300e18, "the reserve came with the position");
     }
 
     function test_failedPaymentMovesNothing() public {
