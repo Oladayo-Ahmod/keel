@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start -p 3000",
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "check:deployment": "node scripts/check-deployment.mjs"
   },
   "devDependencies": {
     "@types/node": "22.20.5",
