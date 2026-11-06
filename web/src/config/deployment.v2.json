@@ -1,0 +1,39 @@
+{
+  "chainId": 31611,
+  "name": "Mezo Testnet",
+  "rpcUrl": "https://rpc.test.mezo.org",
+  "explorer": "https://explorer.test.mezo.org",
+  "deployedAtBlock": 16611690,
+  "deployedAt": "2026-11-06",
+  "trozu": {
+    "factory": "0x70791379537cB14981AA7114678663164141eC31",
+    "nft": "0xd53f649e4df31351De8935De9cA7110888F055b8",
+    "lens": "0xCCF8c5aFe7473eC41F64906071e1bE497872004C",
+    "vaultImplementation": "0x6ef4395325828083672FFe836d6Bc80Bf22cACFE",
+    "market": "0xEae6fEa26B178eF32829F36e5219363bB30D93DB"
+  },
+  "market": {
+    "feeBps": 25,
+    "maxFeeBps": 100,
+    "feeRecipient": "0x5104C1A69242D94159Cf7151277252e568cB8F98"
+  },
+  "debtCap": "0",
+  "mezo": {
+    "borrowerOperations": "0xCdF7028ceAB81fA0C6971208e83fa7872994beE5",
+    "troveManager": "0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0",
+    "sortedTroves": "0x722E4D24FD6Ff8b0AC679450F3D91294607268fA",
+    "interestRateManager": "0xD4D6c36A592A2c5e86035A6bca1d57747a567f37",
+    "collSurplusPool": "0xB4C35747c26E4aB5F1a7CdC7E875B5946eFa6fa9",
+    "activePool": "0x143A063F62340DA3A8bEA1C5642d18C6D0F7FF51",
+    "priceFeed": "0x86bCF0841622a5dAC14A313a15f96A95421b9366",
+    "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503"
+  },
+  "abi": {
+    "_note": "paths are relative to the repository root, JSON arrays straight from forge build",
+    "factory": "abi/v2/TrozuFactory.json",
+    "nft": "abi/v2/TrozuNFT.json",
+    "vault": "abi/v2/TrozuVault.json",
+    "market": "abi/v2/TrozuMarket.json",
+    "lens": "abi/v2/PositionLens.json"
+  }
+}

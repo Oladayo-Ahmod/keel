@@ -1,0 +1,408 @@
+[
+  {
+    "type": "constructor",
+    "inputs": [
+      {
+        "name": "nft",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "core",
+        "type": "tuple",
+        "internalType": "struct MezoCore",
+        "components": [
+          {
+            "name": "borrowerOperations",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "troveManager",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "sortedTroves",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "interestRateManager",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "collSurplusPool",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "activePool",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "priceFeed",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "musd",
+            "type": "address",
+            "internalType": "address"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "BORROWER_OPERATIONS",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IBorrowerOperations"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "COLL_SURPLUS_POOL",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract ICollSurplusPool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "INTEREST_RATE_MANAGER",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IInterestRateManager"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "NFT",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract PositionNFT"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "PRICE_FEED",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract IPriceFeed"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "SORTED_TROVES",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract ISortedTroves"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "TROVE_MANAGER",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "contract ITroveManager"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "bufferAtLeast",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "threshold",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "maxSteps",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "verdict",
+        "type": "uint8",
+        "internalType": "enum PositionLens.Verdict"
+      },
+      {
+        "name": "b",
+        "type": "tuple",
+        "internalType": "struct PositionLens.Buffer",
+        "components": [
+          {
+            "name": "buffer",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "eligibleAhead",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "steps",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "complete",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "inList",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "positionInfo",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "info",
+        "type": "tuple",
+        "internalType": "struct PositionLens.Info",
+        "components": [
+          {
+            "name": "tokenId",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "vault",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "holder",
+            "type": "address",
+            "internalType": "address"
+          },
+          {
+            "name": "active",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "coll",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "principal",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "interest",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "debt",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "priceOk",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "price",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "icr",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "equity",
+            "type": "int256",
+            "internalType": "int256"
+          },
+          {
+            "name": "lockedRateBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "globalRateBps",
+            "type": "uint16",
+            "internalType": "uint16"
+          },
+          {
+            "name": "spreadBps",
+            "type": "int256",
+            "internalType": "int256"
+          },
+          {
+            "name": "annualSpreadMusd",
+            "type": "int256",
+            "internalType": "int256"
+          },
+          {
+            "name": "claimableSurplus",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "refinanceFeeEstimate",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "redeemable",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "recoveryMode",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "canClose",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "positionsOf",
+    "inputs": [
+      {
+        "name": "holder",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "ids",
+        "type": "uint256[]",
+        "internalType": "uint256[]"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "redemptionBuffer",
+    "inputs": [
+      {
+        "name": "tokenId",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "maxSteps",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "b",
+        "type": "tuple",
+        "internalType": "struct PositionLens.Buffer",
+        "components": [
+          {
+            "name": "buffer",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "eligibleAhead",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "steps",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "complete",
+            "type": "bool",
+            "internalType": "bool"
+          },
+          {
+            "name": "inList",
+            "type": "bool",
+            "internalType": "bool"
+          }
+        ]
+      }
+    ],
+    "stateMutability": "view"
+  }
+]
