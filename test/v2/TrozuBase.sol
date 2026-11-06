@@ -23,7 +23,6 @@ abstract contract TrozuBase is MezoFixture {
     address internal bg2 = makeAddr("bg2");
     address internal feeRecipient = makeAddr("feeRecipient");
     address internal keeper = makeAddr("keeper");
-    address internal whale = makeAddr("whale");
 
     uint256 internal constant PRICE = 60_000;
     uint16 internal constant START_RATE = 100;
@@ -39,8 +38,6 @@ abstract contract TrozuBase is MezoFixture {
         // high ICR, so they sit at the safe end of the list
         openBackgroundTrove(bg1, 2000e18, 0.12e18);
         openBackgroundTrove(bg2, 2000e18, 0.12e18);
-        // a deep, very safe trove that also serves as the source of test MUSD
-        openBackgroundTrove(whale, 100_000e18, 5e18);
     }
 
     function _open(address who, uint256 debt, uint256 coll) internal returns (uint256 id, TrozuVault vault) {
@@ -64,9 +61,10 @@ abstract contract TrozuBase is MezoFixture {
         (c,,,,,) = troveManager.getEntireDebtAndColl(vault);
     }
 
-    /// Give `who` MUSD by taking it from the deep background trove.
+    /// Give `who` MUSD. Minted the way the handler does it, so the sorted list and the
+    /// system ratio stay exactly what the Wave 1 tests were written against.
     function _fundMusd(address who, uint256 amount) internal {
-        vm.prank(whale);
-        musd.transfer(who, amount);
+        vm.prank(address(borrowerOperations));
+        musd.mint(who, amount);
     }
 }
