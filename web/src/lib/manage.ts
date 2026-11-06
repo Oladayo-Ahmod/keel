@@ -19,7 +19,6 @@ export interface Snapshot {
   lockedRateBps: number;
   globalRateBps: number;
   refinanceFeeEstimate: bigint;
-  annualSpreadMusd: bigint;
   claimableSurplus: bigint;
 }
 
@@ -189,7 +188,8 @@ export function planRefinance(s: Snapshot): RefinancePlan {
   common(s, p, false);
   const drop = s.lockedRateBps - s.globalRateBps;
   const fee = s.refinanceFeeEstimate;
-  const saving = s.annualSpreadMusd > 0n ? s.annualSpreadMusd : 0n;
+  // worked out from the two rates here rather than from the Lens's signed spread, whose sign is global minus locked
+  const saving = drop > 0 ? (s.principal * BigInt(drop)) / 10_000n : 0n;
   const out: RefinancePlan = {
     ...p,
     dropBps: drop,

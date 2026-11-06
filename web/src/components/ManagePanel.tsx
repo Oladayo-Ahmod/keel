@@ -73,7 +73,6 @@ const snapshotOf = (p: PositionInfo): Snapshot => ({
   lockedRateBps: p.lockedRateBps,
   globalRateBps: p.globalRateBps,
   refinanceFeeEstimate: p.refinanceFeeEstimate,
-  annualSpreadMusd: p.annualSpreadMusd,
   claimableSurplus: p.claimableSurplus,
 });
 

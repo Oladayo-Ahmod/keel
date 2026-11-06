@@ -32,7 +32,6 @@ const snap: Snapshot = {
   lockedRateBps: 100,
   globalRateBps: 50,
   refinanceFeeEstimate: e18(1),
-  annualSpreadMusd: e18(9),
   claimableSurplus: 0n,
 };
 const wallet: Wallet = { btc: e18(1), musd: e18(5_000), allowance: 0n, minNetDebt: e18(1_800) };
@@ -159,17 +158,23 @@ describe("approval choice", () => {
 });
 
 describe("refinance", () => {
+  // locked 1.00% against a market 0.50%: a 50 bp drop on 1,790 principal is 8.95 MUSD a year
   it("shows the drop, fee and break-even", () => {
     const p = planRefinance(snap);
     expect(p.errors).toEqual([]);
     expect(p.dropBps).toBe(50);
-    expect(p.breakEvenDays).toBe(40.55);
+    expect(p.yearlySaving).toBe(e18(8.95));
+    expect(p.breakEvenDays).toBe(40.78); // 1 MUSD fee at 8.95 a year, truncated
     expect(p.maxFee).toBeGreaterThan(p.fee);
   });
-  it("refuses an equal or higher market rate", () => {
+  it("reports a real saving, not zero, whichever way the Lens signs its spread", () => {
+    expect(planRefinance(snap).yearlySaving > 0n).toBe(true);
+  });
+  it("refuses an equal or higher market rate and reports no saving", () => {
     expect(planRefinance({ ...snap, globalRateBps: 100 }).errors.join()).toMatch(/nothing to gain/);
-    const up = planRefinance({ ...snap, globalRateBps: 150, annualSpreadMusd: -e18(9) });
+    const up = planRefinance({ ...snap, globalRateBps: 150 });
     expect(up.errors.join()).toMatch(/raise your rate/);
+    expect(up.yearlySaving).toBe(0n);
     expect(up.breakEvenDays).toBeUndefined();
   });
   it("is blocked in recovery mode", () => {
