@@ -23,7 +23,7 @@ Tooltips for trove, collateral ratio, redemption buffer, locked rate, refinance,
 
 ## Market (behind the flag)
 
-Flag: `src/config/wave2.json` `enabled`, or build with `NEXT_PUBLIC_WAVE2=1`. Default is off and nothing wave 2 renders. The json carries the testnet addresses recorded in `docs/DEPLOYMENTS.md` on main.
+Flag: build with `NEXT_PUBLIC_WAVE2=1`. Default is off and nothing wave 2 renders. Addresses come from `src/config/deployment.v2.json` (the same file the keeper reads); `npm run check:deployment` fails if any of them has no code on matsnet.
 
 - Browse: reads `ListingAnnounced` logs in 9,000-block windows from the deployment block, asks `check()` for each listing, attaches `positionInfo` and the vault's reserve.
 - Buy: bounds are what was on screen. Debt gets 0.5% headroom for interest, the price cap is the price one minute ago (clock slack), the reserve minimums are pinned. Permit is over `maxPrice`, which is what the market asks the token for.
