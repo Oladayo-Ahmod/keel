@@ -145,3 +145,37 @@ Deployed 2026-11-06 from `0x5104C1A69242D94159Cf7151277252e568cB8F98` with `scri
 Blockscout (explorer.test.mezo.org) was not tried again; Wave 1's Blockscout verification failed for explorer-side reasons.
 
 The deployment is from commit `4e00aac` (after the review fixes). The vault implementation is 21,122 bytes of runtime, under the 24,576 limit.
+
+### Wave 2 live proof and demo state (2026-11-06)
+
+Created by `npm run proof` in [`keeper/`](../keeper). Every transaction, with its hash, is in [PROOF.md](PROOF.md); [`proof.json`](proof.json) is the same data for the app.
+
+| | Address / id |
+|---|---|
+| v2 position | NFT id **1** on the Trozu NFT, vault `0x2B08BB7F73beD0FA0454907a7E7082F1a58d9AB9`, opened in tx `0x3c8456df1c02b699565fed0076fb02bc8970ff495b7b7bd198f4e76e33dc2c15` |
+| Holder (also seller and fee recipient) | deployer `0x5104C1A69242D94159Cf7151277252e568cB8F98` |
+| Second wallet (buyer) | `0xf8B5CF0292C4e5202CC9a9e6041FD59F692edEe2` (a generated testnet key, in `.env` as `SECOND_PRIVATE_KEY`, 0.002 BTC for gas) |
+| Keeper | `0x7a24528a52E59dF9Dde2E9655a8FC9d1E4601C5c` (generated, `KEEPER_PRIVATE_KEY`, 0.002 BTC for gas) |
+
+What was proven on chain: open, transfer away and back, announce, a fixed-price sale with MUSD permit (100 MUSD, fee 0.25 MUSD), a cancel, a Dutch-auction sale (115.67 MUSD between a 120 start and a 60 floor), a guardian ratio-floor top-up by the keeper, and a redemption-defense top-up by the keeper after a complete walk. Nine refusals are recorded as `eth_call` results with the contract's real revert.
+
+**Current state of the staged position.** Held by the deployer, ratio about 127.9%, a live guardian policy (redemption defense, floor 112%, buffer floor 10,000,000 MUSD, so it will act again whenever the walk completes), and 0.001188 BTC left in its reserve. It is the "guarded position". It is close enough to liquidation (110%) that a moderate oracle move would matter, so it is a demo position, not a safe one.
+
+**Funds used.** Position 1 of Wave 1 was closed to fund this (see above): 0.057016 BTC and 1,897 MUSD afterwards. The proof used 0.0351 BTC net across the new position and its reserve, plus 0.004 BTC for the two wallets and negligible gas (146 wei per gas). The deployer now holds 0.017890 BTC and 3,513 MUSD, which keeps the 0.003 BTC reserve.
+
+**Failed transactions, kept in the record.** Three things went wrong and none moved funds:
+1. A keeper `execute` (tx `0x1002b8e1…2e60`, block 16,612,677) ran out of gas at a limit of 25,584: the node's `eth_estimateGas` answered about 21,300 where the call needs about 5.6M. The keeper now sends with at least 6M of gas limit (the unused part is not charged).
+2. A second keeper `execute` (tx `0xae438464…722c`, block 16,612,964) used 5.58M of a 6M limit and ran out of gas: the redemption-defense path adds a 100-step walk and the keeper had sent no sorted-list hints. The keeper now computes hints and the retry succeeded.
+3. One of my own `setPolicy` transactions was rejected by the node before inclusion for a gas limit below the data-gas floor, same cause as the first.
+
+**Judge staging: not done, and why.** The brief asked for a few listings at different prices, one running Dutch auction and one guarded position. Only the guarded position exists. Each additional position needs at least 0.029 BTC of collateral (Mezo's 1,800 MUSD minimum at the 110% floor, about 0.036 BTC at a sensible 135%), and after the proof the deployer holds 0.0179 BTC with 0.003 to keep. Missing, and what it would take:
+
+| Item | Status | Needs |
+|---|---|---|
+| Listings at different prices | not staged | one more position per listing, about 0.036 BTC each |
+| A running Dutch auction | not staged | one more position, about 0.036 BTC (listing the guarded position would risk a judge's purchase killing its policy) |
+| A guarded position | **staged** (above) | nothing |
+
+Three more positions would take about 0.11 BTC. A faucet top-up of that size would allow it; the proof script can be reused for the listings.
+
+**Keeper schedule.** `.github/workflows/keeper.yml` runs every 15 minutes. It needs a repository secret `KEEPER_PRIVATE_KEY` (the keeper key above, or a new dedicated one). Without the secret it runs as a dry run. I have not set any secrets and cannot; the key is only in `.env`, which is git-ignored.
