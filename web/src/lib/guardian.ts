@@ -133,3 +133,35 @@ export function remaining(cap: bigint, spent: bigint): bigint {
 export function windowFresh(periodStart: bigint, period: number, now: bigint): boolean {
   return now >= periodStart + BigInt(period);
 }
+
+/** Empty means zero, for the optional limits; anything else must be a plain non-negative decimal. */
+export function parseOptional(text: string, decimals = 18): bigint | undefined {
+  const t = text.trim();
+  if (t === "") return 0n;
+  if (!/^\d*\.?\d*$/.test(t) || t === ".") return undefined;
+  const [i, f = ""] = t.split(".");
+  if (f.length > decimals) return undefined;
+  return BigInt(i || "0") * 10n ** BigInt(decimals) + BigInt(f.padEnd(decimals, "0") || "0");
+}
+
+/** "130" or "130.5" as a 1e18 ratio, 1.3e18. Undefined if it is not a number. */
+export function parsePercent(text: string): bigint | undefined {
+  const v = parseOptional(text, 16);
+  return v === undefined || v === 0n ? undefined : v;
+}
+
+/** A starting policy sized to the position: act under 130%, restore to 160%, never move more than a fifth at once. */
+export function suggestPolicy(coll: bigint, debt: bigint): PolicyInput {
+  return {
+    floorIcr: 13n * 10n ** 17n,
+    targetIcr: 16n * 10n ** 17n,
+    maxActionBtc: coll / 5n,
+    maxActionMusd: debt / 5n,
+    periodCapBtc: (coll * 2n) / 5n,
+    periodCapMusd: (debt * 2n) / 5n,
+    keeperTipBtc: 5n * 10n ** 13n,
+    bufferFloorMusd: 0n,
+    period: 86400,
+    maxWalkSteps: 0,
+  };
+}

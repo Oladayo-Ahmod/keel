@@ -18,7 +18,16 @@ import { TxStatus } from "./TxStatus";
 const PRESETS = [150n, 160n, 200n];
 
 /** Opens a position: form, review, then hints and simulation right before sending. */
-export function OpenPosition({ onOpened }: { onOpened: () => void }) {
+export function OpenPosition({
+  onOpened,
+  factory = config.keel.factory,
+  title = "Open a position",
+}: {
+  onOpened: () => void;
+  /** The factory to open through: wave 1 by default. Both have the same openPosition signature. */
+  factory?: `0x${string}`;
+  title?: string;
+}) {
   const { address, isConnected, chainId } = useAccount();
   const client = usePublicClient({ chainId: config.chainId });
   const tx = useTx();
@@ -69,7 +78,7 @@ export function OpenPosition({ onOpened }: { onOpened: () => void }) {
       const [upper, lower] = await computeHints(client, nicrAfterOpen(coll, debt, fee));
       const maxFee = fee + fee / 20n + 1n;
       const params = {
-        address: config.keel.factory,
+        address: factory,
         abi: positionFactoryAbi,
         functionName: "openPosition",
         args: [debt, upper, lower, maxFee],
@@ -94,9 +103,9 @@ export function OpenPosition({ onOpened }: { onOpened: () => void }) {
   const done = tx.state.status === "success";
 
   return (
-    <section className="glass panel" aria-label="Open a position">
+    <section className="glass panel" aria-label={title}>
       <header className="panel-head">
-        <h2>Open a position</h2>
+        <h2>{title}</h2>
         <p>Deposit BTC, borrow MUSD. You get an NFT that holds the whole position.</p>
       </header>
 

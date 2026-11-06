@@ -13,11 +13,18 @@ export function PositionList({
   viewer,
   idle,
   empty,
+  nft,
+  v2 = false,
+  extra,
 }: {
   state: PositionsState;
   viewer?: `0x${string}`;
   idle: React.ReactNode;
   empty: React.ReactNode;
+  nft?: `0x${string}`;
+  v2?: boolean;
+  /** Sections shown under the manage panel of each card, such as sell and guardian. */
+  extra?: (p: PositionInfo) => React.ReactNode;
 }) {
   const grid = useRef<HTMLDivElement>(null);
   const seen = useRef<string>("");
@@ -59,7 +66,7 @@ export function PositionList({
       <Summary positions={state.positions} />
       <div className="grid" ref={grid}>
         {state.positions.map((p: PositionInfo) => (
-          <PositionCard key={p.tokenId.toString()} p={p} viewer={viewer} onChanged={state.refresh} stale={stale} />
+          <PositionCard key={p.tokenId.toString()} p={p} viewer={viewer} onChanged={state.refresh} stale={stale} nft={nft} v2={v2} extra={extra?.(p)} />
         ))}
       </div>
     </>

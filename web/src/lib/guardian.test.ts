@@ -124,3 +124,27 @@ describe("the ABI matches the Policy the form builds", () => {
     expect(names).toEqual(expect.arrayContaining(["epoch", "active"]));
   });
 });
+
+import { parseOptional, parsePercent, suggestPolicy } from "./guardian";
+
+describe("form parsing", () => {
+  it("empty means zero, junk is rejected", () => {
+    expect(parseOptional("")).toBe(0n);
+    expect(parseOptional("0")).toBe(0n);
+    expect(parseOptional("1.5")).toBe(e18(1.5));
+    expect(parseOptional("abc")).toBeUndefined();
+    expect(parseOptional("-1")).toBeUndefined();
+    expect(parseOptional("1.2.3")).toBeUndefined();
+    expect(parseOptional("1." + "0".repeat(19))).toBeUndefined();
+  });
+  it("percent becomes a 1e18 ratio", () => {
+    expect(parsePercent("130")).toBe(e18(1.3));
+    expect(parsePercent("162.5")).toBe(e18(1.625));
+    expect(parsePercent("0")).toBeUndefined();
+    expect(parsePercent("")).toBeUndefined();
+  });
+  it("a suggested policy is valid for any sensible position", () => {
+    expect(validatePolicy(suggestPolicy(e18(0.05), e18(1_800)))).toEqual([]);
+    expect(validatePolicy(suggestPolicy(e18(2), e18(90_000)))).toEqual([]);
+  });
+});

@@ -2,13 +2,18 @@
 
 import { ConnectButton } from "@rainbow-me/rainbowkit";
 import { useAccount, useSwitchChain } from "wagmi";
+import { useState } from "react";
 import { config } from "@/config";
+import { wave2 } from "@/config/wave2";
 import { usePositionsOf } from "@/hooks/usePositions";
 import { EmptyState } from "@/components/States";
 import { ChainStatus } from "@/components/ChainStatus";
 import { Lookup } from "@/components/Lookup";
 import { OpenPosition } from "@/components/OpenPosition";
 import { PositionList } from "@/components/PositionList";
+import { GuardianPanel } from "@/components/guardian/GuardianPanel";
+import { MarketScreen } from "@/components/market/MarketScreen";
+import { SellPanel } from "@/components/market/SellPanel";
 import Providers from "./providers";
 
 function Header() {
@@ -43,6 +48,9 @@ function WrongNetwork() {
 function Dashboard() {
   const { address, isConnected, chainId } = useAccount();
   const state = usePositionsOf(isConnected ? address : undefined);
+  // wave 2 is hidden until the flag is on, so nothing below changes for anyone before then
+  const state2 = usePositionsOf(wave2.enabled && isConnected ? address : undefined, wave2.lens);
+  const [view, setView] = useState<"positions" | "market">("positions");
 
   return (
     <main className="shell">
@@ -56,6 +64,39 @@ function Dashboard() {
       </section>
 
       {isConnected && chainId !== config.chainId && <WrongNetwork />}
+
+      {wave2.enabled && (
+        <div className="subnav" role="tablist" aria-label="Sections">
+          <button role="tab" aria-selected={view === "positions"} className={`tab${view === "positions" ? " on" : ""}`} onClick={() => setView("positions")}>Positions</button>
+          <button role="tab" aria-selected={view === "market"} className={`tab${view === "market" ? " on" : ""}`} onClick={() => setView("market")}>Market</button>
+        </div>
+      )}
+
+      {wave2.enabled && view === "market" && <MarketScreen />}
+
+      {(!wave2.enabled || view === "positions") && (
+      <>
+      {wave2.enabled && (
+        <section className="grid-stack" aria-label="Trozu positions">
+          <h2>Market and guardian positions</h2>
+          <PositionList
+            state={state2}
+            viewer={address}
+            nft={wave2.nft}
+            v2
+            extra={(p) => (
+              <>
+                <SellPanel p={p} />
+                <GuardianPanel p={p} />
+              </>
+            )}
+            idle={<EmptyState title="Connect a wallet to see these positions" body="Positions opened through the Trozu factory can be sold on the market and protected by a guardian." action={<ConnectButton label="Connect wallet" />} />}
+            empty={<EmptyState title="No Trozu positions in this wallet" body="Open one below. It works like a wave 1 position and can also be sold and guarded." />}
+          />
+          <OpenPosition factory={wave2.factory} title="Open a market-ready position" onOpened={() => state2.status === "ready" && state2.refresh()} />
+          <h2>Wave 1 positions</h2>
+        </section>
+      )}
 
       <PositionList
         state={state}
@@ -78,6 +119,8 @@ function Dashboard() {
       <OpenPosition onOpened={() => state.status === "ready" && state.refresh()} />
 
       <Lookup />
+      </>
+      )}
 
       <footer className="foot">
         <span>Testnet only. Not audited.</span>
