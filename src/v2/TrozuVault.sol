@@ -48,6 +48,7 @@ contract TrozuVault is ReentrancyGuard {
 
     /// Hard limits baked into the code, whatever a policy says.
     uint256 public constant MAX_KEEPER_TIP = 1e14; // 0.0001 BTC
+    uint256 public constant MIN_ACTION_PER_TIP = 10; // an action must move 10x its tip in BTC value, or pays none
     uint256 public constant MAX_WALK_STEPS = 100;
     uint256 public constant MAX_TARGET_ICR = 5e18;
     uint256 public constant MIN_PERIOD = 1 hours;
@@ -570,7 +571,7 @@ contract TrozuVault is ReentrancyGuard {
             if ((s.coll + amt) * s.price / s.debt >= s.minIcr) {
                 r.kind = belowFloor ? Kind.TopUpBtc : Kind.DefendBtc;
                 r.amount = amt;
-                r.tip = s.tip;
+                r.tip = _tipFor(s.tip, amt);
                 return r;
             }
             blocked = true;
@@ -583,7 +584,7 @@ contract TrozuVault is ReentrancyGuard {
                 if (s.coll * s.price / (s.debt - amt) >= s.minIcr) {
                     r.kind = Kind.RepayMusd;
                     r.amount = amt;
-                    r.tip = s.tip;
+                    r.tip = _tipFor(s.tip, amt * 1e18 / s.price); // the repay's worth in BTC
                     return r;
                 }
                 blocked = true;
@@ -607,6 +608,14 @@ contract TrozuVault is ReentrancyGuard {
         room = _min(room, _sub(s.debt, minDebt));
         return _min(room, _sub(s.debt, s.coll * s.price / p.targetIcr));
     }
+    /// A tip is only worth paying for an action that is worth something. If the BTC value moved is
+    /// under MIN_ACTION_PER_TIP times the tip, the action still runs but the tip is zero, so a
+    /// keeper cannot farm the period allowance with dust actions as interest nudges the ratio
+    /// under the target block after block.
+    function _tipFor(uint256 tip, uint256 valueBtc) internal pure returns (uint256) {
+        return valueBtc >= tip * MIN_ACTION_PER_TIP ? tip : 0;
+    }
+
     function _none(Plan memory r, Reason why) internal pure returns (Plan memory) {
         r.kind = Kind.None;
         r.reason = why;

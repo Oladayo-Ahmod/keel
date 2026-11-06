@@ -379,6 +379,57 @@ contract GuardianTest is TrozuBase {
         assertGe(_icr(), tcr);
     }
 
+    // ---- dust actions pay no tip (review finding 2) ----
+
+    function test_aDustActionRunsButPaysNoTip() public {
+        TrozuVault.Policy memory p = _policy();
+        p.keeperTipBtc = vault.MAX_KEEPER_TIP();
+        _setPolicy(p);
+        _fundBtc(0.2e18);
+        setPrice(50_000);
+        _execute(); // a real action restores the target and is tipped
+        // interest nudges the ratio a hair under the floor again after a long warp at a lower floor
+        p.floorIcr = _icr() + 1e12;
+        p.targetIcr = p.floorIcr + 1e12;
+        _setPolicy(p);
+        vm.warp(block.timestamp + 3 days);
+        TrozuVault.Plan memory plan = vault.preview();
+        if (plan.kind != TrozuVault.Kind.None) {
+            assertLt(plan.amount, 10 * p.keeperTipBtc);
+            assertEq(plan.tip, 0, "dust pays no tip");
+        }
+    }
+
+    function test_repayDustPaysNoTip() public {
+        TrozuVault.Policy memory p = _policy();
+        p.keeperTipBtc = vault.MAX_KEEPER_TIP();
+        _setPolicy(p);
+        _fundBtc(1e13); // enough for a tip only
+        _fundMusdReserve(1000e18);
+        setPrice(50_000);
+        _execute(); // first repay is real
+        // at Mezo's minimum debt only dust can follow
+        setPrice(48_000);
+        TrozuVault.Plan memory plan = vault.preview();
+        if (plan.kind == TrozuVault.Kind.RepayMusd && plan.amount * 1e18 / 48_000e18 < 10 * p.keeperTipBtc) {
+            assertEq(plan.tip, 0);
+        }
+    }
+
+    function testFuzz_aTipIsAlwaysAtMostATenthOfTheValueMoved(uint256 price, uint256 tipSeed) public {
+        price = bound(price, 30_000, 58_000);
+        TrozuVault.Policy memory p = _policy();
+        p.keeperTipBtc = bound(tipSeed, 1e12, vault.MAX_KEEPER_TIP());
+        _setPolicy(p);
+        _fundBtc(0.2e18);
+        _fundMusdReserve(300e18);
+        setPrice(price);
+        TrozuVault.Plan memory plan = vault.preview();
+        if (plan.kind == TrozuVault.Kind.None) return;
+        uint256 value = plan.kind == TrozuVault.Kind.RepayMusd ? plan.amount * 1e18 / (price * 1e18) : plan.amount;
+        assertTrue(plan.tip == 0 || value >= plan.tip * 10, "tip over a tenth of the value moved");
+    }
+
     // ---- MUSD repay ----
 
     function test_repayPathUsesTheMusdReserve() public {
