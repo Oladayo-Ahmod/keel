@@ -34,7 +34,8 @@ export function friendlyError(e: unknown): FriendlyError {
   if (/insufficient funds|exceeds the balance/i.test(text)) {
     return { message: "The wallet does not hold enough BTC for this amount plus gas.", rejected: false };
   }
-  if (/FeeTooHigh/.test(text)) {
+  // not preceded by a letter, so RefinanceFeeTooHigh is not mistaken for the borrowing fee
+  if (/(^|[^A-Za-z])FeeTooHigh/.test(text)) {
     return { message: "The borrowing fee rose above your limit before the transaction ran. Try again.", rejected: false };
   }
   if (/TCR < CCR/.test(text)) {
