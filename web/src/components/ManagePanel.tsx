@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAccount, usePublicClient, useSignTypedData } from "wagmi";
 import { zeroAddress } from "viem";
 import { positionVaultAbi } from "@/abi/keel";
+import { trozuVaultAbi } from "@/abi/trozu";
 import { erc20Abi } from "@/abi/mezo";
 import { config } from "@/config";
 import { formatBps, formatBtc, formatIcr, formatMusd } from "@/lib/format";
@@ -79,7 +80,7 @@ const snapshotOf = (p: PositionInfo): Snapshot => ({
 const text = (wei: bigint) => (Number(wei) / 1e18).toFixed(6);
 
 /** Everything a holder can do to a position, one action at a time, each checked before the wallet opens. */
-export function ManagePanel({ p, stale = false, onChanged }: { p: PositionInfo; stale?: boolean; onChanged?: () => void }) {
+export function ManagePanel({ p, stale = false, v2 = false, onChanged }: { p: PositionInfo; stale?: boolean; v2?: boolean; onChanged?: () => void }) {
   const { address } = useAccount();
   const client = usePublicClient({ chainId: config.chainId });
   const { signTypedDataAsync } = useSignTypedData();
@@ -98,7 +99,7 @@ export function ManagePanel({ p, stale = false, onChanged }: { p: PositionInfo; 
 
   const amount = parseAmount(amountText);
   const usesAmount = kind in AMOUNT_LABEL;
-  const pre = usePreflight(p.vault, address, kind === "borrow" ? amount : undefined);
+  const pre = usePreflight(p.vault, address, kind === "borrow" ? amount : undefined, v2);
   const data = pre.data?.data;
   const nodeStale = stale || !!pre.data?.freshness.stale;
 
@@ -204,7 +205,8 @@ export function ManagePanel({ p, stale = false, onChanged }: { p: PositionInfo; 
         permit,
         token: kind === "sweep" ? sweepToken : undefined,
       });
-      const params = { address: p.vault, abi: positionVaultAbi, ...built, chainId: config.chainId } as const;
+      // the wave 2 ABI also knows the errors only a wave 2 vault can raise, such as the debt cap
+      const params = { address: p.vault, abi: v2 ? trozuVaultAbi : positionVaultAbi, ...built, chainId: config.chainId } as const;
       // simulate against the real chain so a revert shows as a sentence, not a failed transaction
       await client.simulateContract({ ...params, account: address } as never);
       setBusy(false);

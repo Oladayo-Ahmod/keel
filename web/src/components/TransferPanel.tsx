@@ -23,10 +23,13 @@ export function TransferPanel({
   p,
   stale = false,
   cardRef,
+  nft = config.keel.nft,
   onDone,
   onClose,
 }: {
   p: PositionInfo;
+  /** The NFT contract that holds this position: wave 1 by default. */
+  nft?: `0x${string}`;
   /** The data behind this panel is from a lagging node, so nothing can be confirmed. */
   stale?: boolean;
   cardRef: React.RefObject<HTMLElement | null>;
@@ -77,7 +80,7 @@ export function TransferPanel({
       // one more look at the chain head right before anything is simulated or signed
       await assertFresh();
       const params = {
-        address: config.keel.nft,
+        address: nft,
         abi: positionNFTAbi,
         functionName: "safeTransferFrom",
         args: [address, receiver, p.tokenId],

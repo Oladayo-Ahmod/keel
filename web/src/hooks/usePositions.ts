@@ -36,7 +36,6 @@ export type PositionsState =
   | { status: "error"; message: string; retry: () => void }
   | { status: "ready"; positions: PositionInfo[]; refresh: () => void; freshness: Freshness };
 
-const lens = config.keel.lens;
 const MAX_POSITIONS = 50;
 
 // ERC721NonexistentToken(uint256), by name or by its selector when the ABI does not know it
@@ -56,7 +55,7 @@ interface Loaded {
  * Two steps, the id list and then one lens call per id, each paired with the head of the node
  * that answered. If either answer cannot be shown to be current the result says so.
  */
-async function load(holder: `0x${string}` | undefined, fixedId: bigint | undefined): Promise<Loaded> {
+async function load(lens: `0x${string}`, holder: `0x${string}` | undefined, fixedId: bigint | undefined): Promise<Loaded> {
   let ids: readonly bigint[];
   let idsFreshness: Freshness | undefined;
   if (fixedId !== undefined) {
@@ -97,10 +96,10 @@ function toState(q: {
 }
 
 /** Positions held by an address, read from the lens. */
-export function usePositionsOf(holder: `0x${string}` | undefined): PositionsState {
+export function usePositionsOf(holder: `0x${string}` | undefined, lens: `0x${string}` = config.keel.lens): PositionsState {
   const q = useQuery({
-    queryKey: ["positions", holder],
-    queryFn: () => load(holder, undefined),
+    queryKey: ["positions", lens, holder],
+    queryFn: () => load(lens, holder, undefined),
     enabled: !!holder,
     refetchInterval: 20_000,
     retry: 1,
@@ -110,10 +109,10 @@ export function usePositionsOf(holder: `0x${string}` | undefined): PositionsStat
 }
 
 /** One position by NFT id, for lookups without a wallet. */
-export function usePositionById(id: bigint | undefined): PositionsState {
+export function usePositionById(id: bigint | undefined, lens: `0x${string}` = config.keel.lens): PositionsState {
   const q = useQuery({
-    queryKey: ["position", id?.toString()],
-    queryFn: () => load(undefined, id),
+    queryKey: ["position", lens, id?.toString()],
+    queryFn: () => load(lens, undefined, id),
     enabled: id !== undefined,
     refetchInterval: 20_000,
     retry: 1,

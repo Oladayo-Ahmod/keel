@@ -43,6 +43,15 @@ export function friendlyError(e: unknown): FriendlyError {
       rejected: false,
     };
   }
+  if (/DebtCapExceeded/.test(text)) {
+    return { message: "This deployment caps how much a single position can owe, and this would go over it. Borrow less.", rejected: false };
+  }
+  if (/NoRateImprovement/.test(text)) {
+    return { message: "The market rate is no longer below this position's locked rate, so refinancing would not help.", rejected: false };
+  }
+  if (/RefinanceFeeTooHigh/.test(text)) {
+    return { message: "The refinancing fee came out above your limit. Nothing was changed. Try again.", rejected: false };
+  }
   if (/ERC721InvalidReceiver|ERC721IncorrectOwner|ERC721InsufficientApproval/.test(text)) {
     return { message: "The NFT could not be moved. The receiver may be a contract that cannot hold NFTs.", rejected: false };
   }

@@ -22,8 +22,17 @@ export function PositionCard({
   viewer,
   onChanged,
   stale = false,
+  nft,
+  v2 = false,
+  extra,
 }: {
   p: PositionInfo;
+  /** NFT contract of this position, when it is not the wave 1 one. */
+  nft?: `0x${string}`;
+  /** The vault is a wave 2 vault: it holds a guardian reserve that sweep must leave alone. */
+  v2?: boolean;
+  /** Extra sections, such as the guardian, shown under the management panel. */
+  extra?: React.ReactNode;
   viewer?: `0x${string}`;
   onChanged?: () => void;
   /** The node that supplied this data is behind, so nothing here can be called healthy. */
@@ -124,12 +133,15 @@ export function PositionCard({
       )}
 
       {mine && !transferring && (
-        <ManagePanel p={p} stale={stale} onChanged={onChanged} />
+        <ManagePanel p={p} stale={stale} v2={v2} onChanged={onChanged} />
       )}
+
+      {mine && !transferring && extra}
 
       {mine && transferring && (
         <TransferPanel
           p={p}
+          nft={nft}
           stale={stale}
           cardRef={ref}
           onClose={() => setTransferring(false)}
