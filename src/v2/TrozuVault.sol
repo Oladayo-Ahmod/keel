@@ -100,7 +100,8 @@ contract TrozuVault is ReentrancyGuard {
         NoPrice,
         Healthy,
         BufferUnknown,
-        NoReserve
+        NoReserve,
+        BelowMinimum // an action would still leave the ratio under 110%, which Mezo refuses in normal mode
     }
 
     struct Plan {
@@ -506,6 +507,7 @@ contract TrozuVault is ReentrancyGuard {
         uint256 remMusd;
         uint256 tip;
         bool fresh;
+        bool recovery;
     }
 
     function _plan() internal view returns (Plan memory r) {
@@ -520,6 +522,7 @@ contract TrozuVault is ReentrancyGuard {
         bool ok;
         (ok, s.price) = _price();
         if (!ok) return _none(r, Reason.NoPrice);
+        s.recovery = TROVE_MANAGER.checkRecoveryMode(s.price);
         {
             (uint256 c, uint256 principal, uint256 interest,,,) = TROVE_MANAGER.getEntireDebtAndColl(address(this));
             s.coll = c;
@@ -546,26 +549,37 @@ contract TrozuVault is ReentrancyGuard {
         s.remMusd = _sub(p.periodCapMusd, s.fresh ? 0 : spentMusd);
         s.tip = (reserveBtc >= p.keeperTipBtc && s.remBtc >= p.keeperTipBtc) ? p.keeperTipBtc : 0;
 
+        // Mezo refuses an adjustment that leaves the ratio under 110% in normal mode (in
+        // recovery mode a pure top-up or repay is always allowed), so an action that cannot
+        // clear that line is not offered: it would only revert and waste the keeper's gas.
+        bool blocked;
+
         // BTC first
         uint256 amt = _btcAmount(p, s);
         if (amt > 0) {
-            r.kind = belowFloor ? Kind.TopUpBtc : Kind.DefendBtc;
-            r.amount = amt;
-            r.tip = s.tip;
-            return r;
+            if (s.recovery || (s.coll + amt) * s.price / s.debt >= MCR) {
+                r.kind = belowFloor ? Kind.TopUpBtc : Kind.DefendBtc;
+                r.amount = amt;
+                r.tip = s.tip;
+                return r;
+            }
+            blocked = true;
         }
 
         // then a MUSD repay, only for the ratio floor
         if (belowFloor) {
             amt = _repayAmount(p, s);
             if (amt > 0) {
-                r.kind = Kind.RepayMusd;
-                r.amount = amt;
-                r.tip = s.tip;
-                return r;
+                if (s.recovery || s.coll * s.price / (s.debt - amt) >= MCR) {
+                    r.kind = Kind.RepayMusd;
+                    r.amount = amt;
+                    r.tip = s.tip;
+                    return r;
+                }
+                blocked = true;
             }
         }
-        return _none(r, Reason.NoReserve);
+        return _none(r, blocked ? Reason.BelowMinimum : Reason.NoReserve);
     }
 
     // BTC to add: what restores the target ratio, within the reserve, the period allowance and the per-action cap
