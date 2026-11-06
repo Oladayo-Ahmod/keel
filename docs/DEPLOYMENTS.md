@@ -117,3 +117,29 @@ Position 2 borrows 100 MUSD more than the minimum on purpose. After both opens t
 ## Naming
 
 The project was called KEEL in Wave 1 and is now Trozu. The Wave 1 contracts above are immutable and unchanged, so the on-chain NFT is still named "KEEL Position" with symbol "KEEL". The repository URL and the Vercel domain also keep the old name. New deployments from Wave 2 use the Trozu name and symbol.
+
+## Wave 2: Mezo testnet (matsnet, chain id 31611)
+
+Deployed 2026-11-06 from `0x5104C1A69242D94159Cf7151277252e568cB8F98` with `script/DeployV2.s.sol`. The Wave 1 contracts above are untouched; these are new deployments bound to the same Mezo testnet core. Fee recipient is the deployer address, because no other address was specified; it is an immutable and cannot change. Fee 25 bps (the contract refuses more than 100). Per-position debt cap: none (0).
+
+| Contract | Address | Deploy tx |
+|---|---|---|
+| TrozuFactory | `0x70791379537cB14981AA7114678663164141eC31` | `0xe7bae178b3cb667d81aeb941ae717f0465b93abd43269c18295ae9f791b6903a` (block 16611690, 7.63M gas) |
+| TrozuNFT ("Trozu Position", `TROZU`), created by the factory | `0xd53f649e4df31351De8935De9cA7110888F055b8` | inside the factory tx |
+| PositionLens bound to the Trozu NFT, created by the factory | `0xCCF8c5aFe7473eC41F64906071e1bE497872004C` | inside the factory tx |
+| TrozuVault implementation, created by the factory | `0x6ef4395325828083672FFe836d6Bc80Bf22cACFE` | inside the factory tx |
+| TrozuMarket | `0xEae6fEa26B178eF32829F36e5219363bB30D93DB` | `0xd4643026ede31329f68538261b9ff274a7b185e31acbf5422630189d9908a37a` (block 16611692, 2.06M gas) |
+
+**Source verification.** All five report an exact runtime match on Sourcify, chain 31611 (the three created inside the factory have no creation transaction of their own, so only the runtime is matched). Re-run with `script/verify_v2.sh`.
+
+| Contract | Sourcify |
+|---|---|
+| TrozuFactory | [exact match](https://repo.sourcify.dev/31611/0x70791379537cB14981AA7114678663164141eC31) |
+| TrozuNFT | [exact match](https://repo.sourcify.dev/31611/0xd53f649e4df31351De8935De9cA7110888F055b8) |
+| PositionLens (Trozu) | [exact match](https://repo.sourcify.dev/31611/0xCCF8c5aFe7473eC41F64906071e1bE497872004C) |
+| TrozuVault implementation | [exact match](https://repo.sourcify.dev/31611/0x6ef4395325828083672FFe836d6Bc80Bf22cACFE) |
+| TrozuMarket | [exact match](https://repo.sourcify.dev/31611/0xEae6fEa26B178eF32829F36e5219363bB30D93DB) |
+
+Blockscout (explorer.test.mezo.org) was not tried again; Wave 1's Blockscout verification failed for explorer-side reasons.
+
+The deployment is from commit `4e00aac` (after the review fixes). The vault implementation is 21,122 bytes of runtime, under the 24,576 limit.
