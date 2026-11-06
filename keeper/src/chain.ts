@@ -9,6 +9,7 @@ import {
   defineChain,
   getAbiItem,
   http,
+  parseAbi,
   type Abi,
   type Account,
   type PublicClient,
@@ -28,7 +29,7 @@ export interface Config {
   deployedAtBlock: number;
   trozu: { factory: Hex; nft: Hex; lens: Hex; vaultImplementation: Hex; market: Hex };
   market: { feeBps: number; maxFeeBps: number; feeRecipient: Hex };
-  mezo: Record<string, Hex>;
+  mezo: Record<string, Hex> & { hintHelpers: Hex; sortedTroves: Hex; troveManager: Hex };
   abi: Record<string, string>;
 }
 
@@ -122,13 +123,35 @@ export function realChain(cfg: Config, publicClient: PublicClient, walletClient?
       return { ...p, kind: Number(p.kind), reason: Number(p.reason) };
     },
 
-    async estimateExecute(vault) {
+    async hints(vault, plan) {
+      const tm = parseAbi(["function getEntireDebtAndColl(address) view returns (uint256,uint256,uint256,uint256,uint256,uint256)"]);
+      const [coll, principal, interest] = (await publicClient.readContract({ address: cfg.mezo.troveManager, abi: tm, functionName: "getEntireDebtAndColl", args: [vault] })) as readonly bigint[];
+      const debt = principal + interest;
+      // TopUpBtc and DefendBtc add collateral, RepayMusd removes debt; the list is keyed by coll * 1e20 / debt
+      const [newColl, newDebt] = plan.kind === 2 ? [coll, debt - plan.amount] : [coll + plan.amount, debt];
+      const nicr = (newColl * 10n ** 20n) / newDebt;
+      const [approx] = (await publicClient.readContract({
+        address: cfg.mezo.hintHelpers,
+        abi: parseAbi(["function getApproxHint(uint256,uint256,uint256) view returns (address,uint256,uint256)"]),
+        functionName: "getApproxHint",
+        args: [nicr, 50n, BigInt(Math.floor(Math.random() * 1_000_000))],
+      })) as readonly [Hex, bigint, bigint];
+      const [upper, lower] = (await publicClient.readContract({
+        address: cfg.mezo.sortedTroves,
+        abi: parseAbi(["function findInsertPosition(uint256,address,address) view returns (address,address)"]),
+        functionName: "findInsertPosition",
+        args: [nicr, approx, approx],
+      })) as readonly [Hex, Hex];
+      return [upper, lower] as const;
+    },
+
+    async estimateExecute(vault, hints) {
       try {
         return await publicClient.estimateContractGas({
           address: vault,
           abi: vaultAbi,
           functionName: "execute",
-          args: ["0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000"],
+          args: [hints?.[0] ?? "0x0000000000000000000000000000000000000000", hints?.[1] ?? "0x0000000000000000000000000000000000000000"],
           account: account ?? "0x0000000000000000000000000000000000000001",
         });
       } catch (e) {
@@ -136,13 +159,13 @@ export function realChain(cfg: Config, publicClient: PublicClient, walletClient?
       }
     },
 
-    async sendExecute(vault, gas) {
+    async sendExecute(vault, gas, hints) {
       if (!walletClient || !account) throw new Error("no keeper account: set KEEPER_PRIVATE_KEY");
       const hash = await walletClient.writeContract({
         address: vault,
         abi: vaultAbi,
         functionName: "execute",
-        args: ["0x0000000000000000000000000000000000000000", "0x0000000000000000000000000000000000000000"],
+        args: [hints?.[0] ?? "0x0000000000000000000000000000000000000000", hints?.[1] ?? "0x0000000000000000000000000000000000000000"],
         gas,
         account,
         chain: walletClient.chain,

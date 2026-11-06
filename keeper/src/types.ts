@@ -49,7 +49,11 @@ export interface ChainApi {
   policyEmitters(from: bigint, to: bigint): Promise<Hex[]>;
   policyLive(vault: Hex): Promise<boolean>;
   preview(vault: Hex): Promise<Plan>;
+  /// Sorted-list hints for the position's new ratio after the planned action. Mezo only uses them as
+  /// a starting point, so a wrong pair costs gas and never reverts; no hints means a walk from the
+  /// head of the list (about 4.5M gas against about 0.6M with a good hint, measured in Wave 1).
+  hints?(vault: Hex, plan: Plan): Promise<readonly [Hex, Hex]>;
   /// Throws ChainRevert if the call would revert.
-  estimateExecute(vault: Hex): Promise<bigint>;
-  sendExecute(vault: Hex, gas: bigint): Promise<SendResult>;
+  estimateExecute(vault: Hex, hints?: readonly [Hex, Hex]): Promise<bigint>;
+  sendExecute(vault: Hex, gas: bigint, hints?: readonly [Hex, Hex]): Promise<SendResult>;
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { discover, runOnce, windows, withBackoff } from "./keeper.js";
+import { chooseGas, discover, runOnce, windows, withBackoff } from "./keeper.js";
 import { ChainApi, ChainRevert, Hex, Kind, Plan } from "./types.js";
 
 const V1 = "0x1111111111111111111111111111111111111111" as Hex;
@@ -31,7 +31,7 @@ function mockChain(over: Partial<ChainApi> = {}): ChainApi & { sent: Hex[] } {
   };
 }
 
-const base = { fromBlock: 0n, dryRun: false, sleep: noSleep };
+const base = { fromBlock: 0n, dryRun: false, sleep: noSleep, gasFloor: 0n };
 
 describe("windows", () => {
   it("never exceeds the node's 10,000 block limit and covers every block once", () => {
@@ -190,5 +190,57 @@ describe("runOnce", () => {
     const api = mockChain({ createdVaults: async () => [V1], policyEmitters: async () => [SPOOF] });
     expect(await runOnce(api, base)).toEqual([]);
     expect(api.sent).toEqual([]);
+  });
+});
+
+describe("gas", () => {
+  it("buffers the estimate", () => {
+    expect(chooseGas(100_000n, 120n, 0n, 10_000_000n)).toBe(120_000n);
+  });
+  it("never goes under the floor, even when the node's estimate is absurdly low", () => {
+    // seen on Mezo testnet: an estimate of about 21,300 for a call that needs about 5.6M
+    expect(chooseGas(21_320n, 120n, 6_000_000n, 9_500_000n)).toBe(6_000_000n);
+  });
+  it("never goes over the cap", () => {
+    expect(chooseGas(9_000_000n, 120n, 6_000_000n, 9_500_000n)).toBe(9_500_000n);
+  });
+  it("runOnce sends with the floor when the estimate is tiny", async () => {
+    const gases: bigint[] = [];
+    const api = mockChain({
+      estimateExecute: async () => 21_320n,
+      sendExecute: async (_v, gas) => { gases.push(gas); return { hash: ("0x" + "56".repeat(32)) as Hex, status: "success", gasUsed: 5_500_000n }; },
+    });
+    await runOnce(api, { fromBlock: 0n, dryRun: false, sleep: noSleep });
+    expect(gases).toEqual([6_000_000n, 6_000_000n]);
+  });
+});
+
+describe("hints", () => {
+  const hintPair = ["0x00000000000000000000000000000000000000a1", "0x00000000000000000000000000000000000000b2"] as const;
+
+  it("looks hints up from the plan and gives the same pair to the estimate and the send", async () => {
+    const estimated: unknown[] = [];
+    const sentWith: unknown[] = [];
+    const planSeen: Plan[] = [];
+    const api = mockChain({
+      hints: async (_v, plan) => { planSeen.push(plan); return hintPair; },
+      estimateExecute: async (_v, h) => { estimated.push(h); return 100_000n; },
+      sendExecute: async (_v, _g, h) => { sentWith.push(h); return { hash: ("0x" + "78".repeat(32)) as Hex, status: "success", gasUsed: 1n }; },
+    });
+    await runOnce(api, base);
+    expect(planSeen[0].amount).toBe(5n);
+    expect(estimated).toEqual([hintPair, hintPair]);
+    expect(sentWith).toEqual([hintPair, hintPair]);
+  });
+
+  it("falls back to no hints when the lookup fails, and still sends", async () => {
+    const sentWith: unknown[] = [];
+    const api = mockChain({
+      hints: async () => { throw new Error("hint helper down"); },
+      sendExecute: async (_v, _g, h) => { sentWith.push(h); return { hash: ("0x" + "9a".repeat(32)) as Hex, status: "success", gasUsed: 1n }; },
+    });
+    const out = await runOnce(api, { ...base, maxAttempts: 1 });
+    expect(out.map((o) => o.result)).toEqual(["sent", "sent"]);
+    expect(sentWith).toEqual([undefined, undefined]);
   });
 });

@@ -26,7 +26,8 @@
     "collSurplusPool": "0xB4C35747c26E4aB5F1a7CdC7E875B5946eFa6fa9",
     "activePool": "0x143A063F62340DA3A8bEA1C5642d18C6D0F7FF51",
     "priceFeed": "0x86bCF0841622a5dAC14A313a15f96A95421b9366",
-    "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503"
+    "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
+    "hintHelpers": "0x4e4cBA3779d56386ED43631b4dCD6d8EacEcBCF6"
   },
   "abi": {
     "_note": "paths are relative to the repository root, JSON arrays straight from forge build",

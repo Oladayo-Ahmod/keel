@@ -8,6 +8,12 @@ export interface KeeperOptions {
   windowSize?: bigint;
   /// Gas estimate times this over 100, for headroom against state drift between estimate and inclusion.
   gasBufferPct?: bigint;
+  /// Never send with less than this. On Mezo testnet the node once answered eth_estimateGas for
+  /// execute() with about 21,300, while the call really needs about 5.6M, and the transaction ran
+  /// out of gas. The unused part of a gas limit is not charged, so a generous floor costs nothing.
+  gasFloor?: bigint;
+  /// Never ask for more than this; the chain's block limit is 10M.
+  gasCap?: bigint;
   maxAttempts?: number;
   baseDelayMs?: number;
   sleep?: (ms: number) => Promise<void>;
@@ -60,6 +66,13 @@ export async function discover(api: ChainApi, o: Required<Pick<KeeperOptions, "f
   return [...emitters].filter((e) => vaults.has(e)) as Hex[];
 }
 
+/// The gas limit to send with: the buffered estimate, but never under the floor and never over the cap.
+export function chooseGas(estimate: bigint, bufferPct: bigint, floor: bigint, cap: bigint): bigint {
+  const buffered = (estimate * bufferPct) / 100n;
+  const g = buffered > floor ? buffered : floor;
+  return g > cap ? cap : g;
+}
+
 export function describe(p: Plan): string {
   return `${KIND_NAMES[p.kind] ?? p.kind} reason=${REASON_NAMES[p.reason] ?? p.reason} amount=${p.amount} tip=${p.tip} icr=${p.icr}`;
 }
@@ -75,6 +88,8 @@ export async function runOnce(api: ChainApi, options: KeeperOptions): Promise<Ou
     sleep: options.sleep ?? defaultSleep,
   };
   const gasBufferPct = options.gasBufferPct ?? 120n;
+  const gasFloor = options.gasFloor ?? 6_000_000n;
+  const gasCap = options.gasCap ?? 9_500_000n;
   const log = options.log ?? (() => {});
   const outcomes: Outcome[] = [];
 
@@ -94,9 +109,19 @@ export async function runOnce(api: ChainApi, options: KeeperOptions): Promise<Ou
       }
       log(`${vault} planner says act: ${describe(plan)}`);
 
+      // hints are an optimisation only: if the lookup fails, send with none
+      let hints: readonly [Hex, Hex] | undefined;
+      if (api.hints) {
+        try {
+          hints = await withBackoff(() => api.hints!(vault, plan), o);
+        } catch {
+          hints = undefined;
+        }
+      }
+
       let gas: bigint;
       try {
-        gas = (await withBackoff(() => api.estimateExecute(vault), o)) * gasBufferPct / 100n;
+        gas = chooseGas(await withBackoff(() => api.estimateExecute(vault, hints), o), gasBufferPct, gasFloor, gasCap);
       } catch (e) {
         // the plan said act but the call would revert now (state moved, or another keeper got there first)
         if (e instanceof ChainRevert) {
@@ -111,7 +136,7 @@ export async function runOnce(api: ChainApi, options: KeeperOptions): Promise<Ou
         outcomes.push({ vault, result: "would-send", kind, amount: plan.amount, tip: plan.tip, gas });
         continue;
       }
-      const sent: SendResult = await withBackoff(() => api.sendExecute(vault, gas), o);
+      const sent: SendResult = await withBackoff(() => api.sendExecute(vault, gas, hints), o);
       if (sent.status !== "success") {
         outcomes.push({ vault, result: "failed", why: `transaction ${sent.hash} reverted` });
       } else {
