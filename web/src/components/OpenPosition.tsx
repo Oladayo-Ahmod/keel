@@ -14,6 +14,7 @@ import { useTx } from "@/hooks/useTx";
 import { useOpenInputs } from "@/hooks/useChain";
 import { assertFresh } from "@/lib/rpc";
 import { TxStatus } from "./TxStatus";
+import { GasRow } from "./GasRow";
 
 const PRESETS = [150n, 160n, 200n];
 
@@ -178,6 +179,7 @@ export function OpenPosition({
             <div><dt>You receive</dt><dd className="mono">{formatMusd(debt)} MUSD</dd></div>
             <div><dt>Debt owed</dt><dd className="mono">{formatMusd(plan.composite)} MUSD</dd></div>
             <div><dt>Collateral ratio</dt><dd className="mono">{formatIcr(plan.icr)}</dd></div>
+            <GasRow fn="openPosition" />
           </dl>
           <p className="note">
             Debt includes the fee and Mezo&apos;s 200 MUSD liquidation reserve, which is returned when the trove closes. The

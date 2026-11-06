@@ -32,6 +32,7 @@ import { useTx } from "@/hooks/useTx";
 import type { PositionInfo } from "@/hooks/usePositions";
 import { Tip } from "../Tip";
 import { TxStatus } from "../TxStatus";
+import { GasNote } from "../GasRow";
 
 type Tab = "policy" | "reserve" | "history";
 
@@ -177,6 +178,7 @@ export function PolicyTab({ p, g, stale, onChanged }: { p: PositionInfo; g: Guar
       {problems.map((m) => <p key={m} className="note warn" role="alert">{m}</p>)}
       {warnings.map((m) => <p key={m} className="note warn">{m}</p>)}
       {err && <p className="note warn" role="alert">{err}</p>}
+      <GasNote fn="setPolicy" />
       <TxStatus state={tx.state} successText="The guardian policy is saved." />
       <div className="actions">
         {pol.active && (
@@ -307,6 +309,7 @@ export function ReserveTab({ p, g, stale, onChanged }: { p: PositionInfo; g: Gua
       {text && problems.map((m) => <p key={m} className="note warn" role="alert">{m}</p>)}
       {pre.isError && <p className="banner warn" role="alert">Could not read your balances. <button className="link" onClick={() => void pre.refetch()}>Try again</button></p>}
       {err && <p className="note warn" role="alert">{err}</p>}
+      <GasNote fn={op === "fundBtc" ? "fundReserveBtc" : op === "fundMusd" ? "fundReserveMusd" : op === "withdrawBtc" ? "withdrawReserveBtc" : "withdrawReserveMusd"} />
       <TxStatus state={tx.state.status === "idle" && approveTx.state.status !== "idle" ? approveTx.state : tx.state} successText="The reserve is updated." />
       {!done ? (
         <button className="btn" disabled={problems.length > 0 || busy || tx.busy || approveTx.busy || stale || !data} onClick={(e) => { pressPulse(e.currentTarget); void run(); }}>

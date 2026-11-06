@@ -16,6 +16,7 @@ import { assertFresh, freshRead } from "@/lib/rpc";
 import { useTx } from "@/hooks/useTx";
 import type { PositionInfo } from "@/hooks/usePositions";
 import { TxStatus } from "../TxStatus";
+import { GasNote } from "../GasRow";
 
 /** Everything a listing is built from, read together: the epoch, the nonce, the approval and the fee. */
 function useSellInputs(tokenId: bigint, owner: `0x${string}` | undefined) {
@@ -168,6 +169,7 @@ export function SellPanel({ p }: { p: PositionInfo }) {
           {stale && <p className="banner warn" role="alert">The node is behind the chain. Wait for it to catch up before listing.</p>}
           {startText && errors.map((m) => <p key={m} className="note warn" role="alert">{m}</p>)}
           {err && <p className="note warn" role="alert">{err}</p>}
+          <GasNote fn="announce" />
           <TxStatus state={tx.state.status === "idle" && approveTx.state.status !== "idle" ? approveTx.state : tx.state} successText="Listed. It now shows in the market." />
           {!done && (
             <div className="actions">

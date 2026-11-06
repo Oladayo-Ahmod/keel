@@ -42,6 +42,7 @@ import { useTx } from "@/hooks/useTx";
 import type { PositionInfo } from "@/hooks/usePositions";
 import { Tip } from "./Tip";
 import { TxStatus } from "./TxStatus";
+import { GasRow } from "./GasRow";
 
 const TABS: { kind: ActionKind; label: string }[] = [
   { kind: "add", label: "Add collateral" },
@@ -496,6 +497,8 @@ function ApprovalNote({ amount, allowance, permitOk }: { amount: bigint; allowan
   );
 }
 
+const FN_FOR_KIND: Record<ActionKind, string> = { add: "addCollateral", withdraw: "withdrawCollateral", borrow: "borrow", repay: "repay", refinance: "refinance", close: "close", claim: "claimSurplus", sweep: "sweep" };
+
 function ReviewFacts({ kind, amount, plan, data, token }: { kind: ActionKind; amount: bigint | undefined; plan: Plan | undefined; data: Preflight | undefined; token: `0x${string}` }) {
   const rows: [string, string][] = [];
   if (kind === "add" && amount) rows.push(["You add", `${formatBtc(amount)} BTC`]);
@@ -520,6 +523,7 @@ function ReviewFacts({ kind, amount, plan, data, token }: { kind: ActionKind; am
       {rows.map(([k, v]) => (
         <div key={k}><dt>{k}</dt><dd className="mono">{v}</dd></div>
       ))}
+      <GasRow fn={FN_FOR_KIND[kind]} />
     </dl>
   );
 }

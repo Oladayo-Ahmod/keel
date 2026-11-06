@@ -14,6 +14,7 @@ import { useTx } from "@/hooks/useTx";
 import { assertFresh } from "@/lib/rpc";
 import type { PositionInfo } from "@/hooks/usePositions";
 import { TxStatus } from "./TxStatus";
+import { GasRow } from "./GasRow";
 
 type Step = "review" | "receiver" | "confirm";
 
@@ -109,6 +110,7 @@ export function TransferPanel({
       <div><dt>Collateral</dt><dd className="mono">{formatBtc(p.coll)} BTC</dd></div>
       <div><dt>Debt</dt><dd className="mono">{formatMusd(p.debt)} MUSD</dd></div>
       <div><dt>Locked rate</dt><dd className="mono">{formatBps(p.lockedRateBps)}</dd></div>
+      <GasRow fn="safeTransferFrom" />
     </dl>
   );
 

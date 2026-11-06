@@ -21,6 +21,7 @@ import { useTx } from "@/hooks/useTx";
 import { EmptyState, Skeleton } from "../States";
 import { Tip } from "../Tip";
 import { TxStatus } from "../TxStatus";
+import { GasRow } from "../GasRow";
 import { DutchChart } from "./DutchChart";
 
 const nowSec = () => BigInt(Math.floor(Date.now() / 1000));
@@ -237,6 +238,7 @@ function BuyPanel({ row, feeBps, stale, onCancel, onBought }: { row: MarketRow; 
         <div><dt>Price now</dt><dd className="mono">{formatMusd(price)} MUSD</dd></div>
         <div><dt>Market fee</dt><dd className="mono">{formatMusd(fee)} MUSD</dd></div>
         <div><dt>Seller gets</dt><dd className="mono">{formatMusd(price - fee)} MUSD</dd></div>
+        <GasRow fn="buy" />
       </dl>
       {bounds && (
         <>
