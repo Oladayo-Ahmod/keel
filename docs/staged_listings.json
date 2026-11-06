@@ -1,0 +1,8 @@
+{
+  "note": "Listings of the proof position (token 1), signed by the deployer and announced on Wave 2 testnet. Priced far above the position's value so nobody takes them. Live until the deadline, or until the position moves (transfer bumps the epoch).",
+  "chainId": 31611,
+  "listings": [
+    {"label":"fixed","tx":"0x4449073abe1fe3fa94ec5633a3189d0428f0005cd1588e72bb98cb45f66e1252","listingHash":"0xab83be1adb88a587fc35305820d1e40892a80f7771dc46d12b4fc7fa1fc84cf7","listing":{"seller":"0x5104C1A69242D94159Cf7151277252e568cB8F98","tokenId":"1","epoch":"7","nonce":"0","startPrice":"6000000000000000000000","endPrice":"6000000000000000000000","startTime":"0","endTime":"0","deadline":"1796577582","salt":"7001"},"signature":"0x916a0ac060c0367eccfce76a3ea5074c24141a89492e61bb1c95cecee64162c27308a65fd60089fe097e4259700f1d97cb87454f454a7cc4c059e1c2182433231b"},
+    {"label":"dutch","tx":"0x47a76b4596767b6c2641b0f9ebdec904b7e9455e471c57f295ffa8de0b64a79e","listingHash":"0xf5a0f8ed464286d40dcc5cff81088d76c96a5a8230ea33f58b73fab2bee4f0d9","listing":{"seller":"0x5104C1A69242D94159Cf7151277252e568cB8F98","tokenId":"1","epoch":"7","nonce":"0","startPrice":"9000000000000000000000","endPrice":"5000000000000000000000","startTime":"1793985582","endTime":"1796577582","deadline":"1796663982","salt":"7002"},"signature":"0xd564b767b43b7b4e0a34b6543667db553b076476f4b565a4a624d0fd688822c90c07fd1fa40d7d0dc559e21057089dd4286ac075a6bb1d5d2a5153b1d4fa11c81c"}
+  ]
+}
