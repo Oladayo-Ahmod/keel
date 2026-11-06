@@ -20,6 +20,10 @@ interface IMinNetDebt {
     function minNetDebt() external view returns (uint256);
 }
 
+interface ITotalCollRatio {
+    function getTCR(uint256 price) external view returns (uint256);
+}
+
 /// One MUSD trove, owned by this contract and controlled by whoever holds the
 /// position NFT. Deployed as an EIP-1167 clone by the factory.
 ///
@@ -507,7 +511,7 @@ contract TrozuVault is ReentrancyGuard {
         uint256 remMusd;
         uint256 tip;
         bool fresh;
-        bool recovery;
+        uint256 minIcr; // the ratio an action must reach: 110%, or the system ratio in recovery mode
     }
 
     function _plan() internal view returns (Plan memory r) {
@@ -522,7 +526,13 @@ contract TrozuVault is ReentrancyGuard {
         bool ok;
         (ok, s.price) = _price();
         if (!ok) return _none(r, Reason.NoPrice);
-        s.recovery = TROVE_MANAGER.checkRecoveryMode(s.price);
+        s.minIcr = MCR;
+        if (TROVE_MANAGER.checkRecoveryMode(s.price)) {
+            // Mezo accepts any pure top-up in recovery mode, but a trove under the system ratio can
+            // still be liquidated there, so money added to it is money handed to the liquidator.
+            uint256 tcr = ITotalCollRatio(address(TROVE_MANAGER)).getTCR(s.price);
+            if (tcr > s.minIcr) s.minIcr = tcr;
+        }
         {
             (uint256 c, uint256 principal, uint256 interest,,,) = TROVE_MANAGER.getEntireDebtAndColl(address(this));
             s.coll = c;
@@ -549,15 +559,15 @@ contract TrozuVault is ReentrancyGuard {
         s.remMusd = _sub(p.periodCapMusd, s.fresh ? 0 : spentMusd);
         s.tip = (reserveBtc >= p.keeperTipBtc && s.remBtc >= p.keeperTipBtc) ? p.keeperTipBtc : 0;
 
-        // Mezo refuses an adjustment that leaves the ratio under 110% in normal mode (in
-        // recovery mode a pure top-up or repay is always allowed), so an action that cannot
-        // clear that line is not offered: it would only revert and waste the keeper's gas.
+        // An action is offered only if it leaves the trove at or above `minIcr`. In normal mode
+        // Mezo would revert anything under 110%; in recovery mode it would accept the action but a
+        // trove still under the system ratio can be liquidated, which would take the reserve.
         bool blocked;
 
         // BTC first
         uint256 amt = _btcAmount(p, s);
         if (amt > 0) {
-            if (s.recovery || (s.coll + amt) * s.price / s.debt >= MCR) {
+            if ((s.coll + amt) * s.price / s.debt >= s.minIcr) {
                 r.kind = belowFloor ? Kind.TopUpBtc : Kind.DefendBtc;
                 r.amount = amt;
                 r.tip = s.tip;
@@ -570,7 +580,7 @@ contract TrozuVault is ReentrancyGuard {
         if (belowFloor) {
             amt = _repayAmount(p, s);
             if (amt > 0) {
-                if (s.recovery || s.coll * s.price / (s.debt - amt) >= MCR) {
+                if (s.coll * s.price / (s.debt - amt) >= s.minIcr) {
                     r.kind = Kind.RepayMusd;
                     r.amount = amt;
                     r.tip = s.tip;

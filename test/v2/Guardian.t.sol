@@ -356,18 +356,27 @@ contract GuardianTest is TrozuBase {
         assertGe(_icr(), 1.1e18);
     }
 
-    function test_inRecoveryModeAnyPartialTopUpIsAllowed() public {
-        // push the system into recovery mode: collateral ratio under 150%
+    function test_inRecoveryModeATopUpMustClearTheSystemRatio() public {
+        // recovery mode: the system ratio is under 150%
         setPrice(28_000);
         assertTrue(troveManager.checkRecoveryMode(28_000e18));
+        uint256 tcr = troveManager.getTCR(28_000e18);
         TrozuVault.Policy memory p = _policy();
-        p.maxActionBtc = 0.002e18; // far from enough to reach 110%
+        p.maxActionBtc = 0.002e18; // Mezo would accept it, but it leaves the trove far under the system ratio
         _setPolicy(p);
         _fundBtc(0.2e18);
-        assertEq(uint8(vault.preview().kind), uint8(TrozuVault.Kind.TopUpBtc));
-        uint256 collBefore = _collOf(address(vault));
+        assertEq(uint8(vault.preview().reason), uint8(TrozuVault.Reason.BelowMinimum));
+        _expectNothing(TrozuVault.Reason.BelowMinimum);
+        assertEq(vault.reserveBtc(), 0.2e18, "reserve is not fed to a trove that can still be liquidated");
+
+        // an action big enough to put the trove at or over the system ratio is offered
+        p.maxActionBtc = 0.1e18;
+        p.periodCapBtc = 0.2e18;
+        _setPolicy(p);
+        TrozuVault.Plan memory plan = vault.preview();
+        assertEq(uint8(plan.kind), uint8(TrozuVault.Kind.TopUpBtc));
         _execute();
-        assertGt(_collOf(address(vault)), collBefore);
+        assertGe(_icr(), tcr);
     }
 
     // ---- MUSD repay ----
