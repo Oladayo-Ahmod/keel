@@ -24,6 +24,7 @@ struct HandlerDeps {
     InterestRateManager irm;
     MockAggregator aggregator;
     address council;
+    address aggregatorOwner;
 }
 
 /// Drives KEEL positions through everything that can happen to them: holder
@@ -306,6 +307,7 @@ contract KeelHandler is Test {
         calls["movePrice"]++;
         uint256[] memory before = _snap();
         price = bound(seed, 30_000, 90_000);
+        vm.prank(d.aggregatorOwner); // the mock oracle is owned by the test contract
         d.aggregator.setPrice(price * 1e8);
         _expectUnchanged(before);
     }

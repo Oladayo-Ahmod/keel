@@ -25,7 +25,8 @@ contract InvariantsTest is KeelBase {
                 surplus: collSurplusPool,
                 irm: interestRateManager,
                 aggregator: aggregator,
-                council: council
+                council: council,
+                aggregatorOwner: address(this)
             })
         );
         handler.init();
