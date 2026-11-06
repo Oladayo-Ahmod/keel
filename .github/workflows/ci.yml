@@ -16,6 +16,14 @@ jobs:
           version: v1.4.4
       - name: Build
         run: forge build
+      # the app's ABI file is generated from this build; fail if it was not regenerated
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: App ABI is up to date
+        run: |
+          (cd web && node scripts/generate-abi-v2.mjs ../out)
+          git diff --exit-code web/src/abi/trozu.ts
       - name: Test
         run: forge test
 
