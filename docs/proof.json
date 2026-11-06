@@ -1,0 +1,456 @@
+{
+  "startedAt": "2026-11-06T15:17:40.863Z",
+  "chainId": 31611,
+  "explorer": "https://explorer.test.mezo.org",
+  "contracts": {
+    "factory": "0x70791379537cB14981AA7114678663164141eC31",
+    "nft": "0xd53f649e4df31351De8935De9cA7110888F055b8",
+    "lens": "0xCCF8c5aFe7473eC41F64906071e1bE497872004C",
+    "vaultImplementation": "0x6ef4395325828083672FFe836d6Bc80Bf22cACFE",
+    "market": "0xEae6fEa26B178eF32829F36e5219363bB30D93DB"
+  },
+  "wallets": {
+    "deployer": "0x5104C1A69242D94159Cf7151277252e568cB8F98",
+    "second": "0xf8B5CF0292C4e5202CC9a9e6041FD59F692edEe2",
+    "keeper": "0x7a24528a52E59dF9Dde2E9655a8FC9d1E4601C5c",
+    "feeRecipient": "0x5104C1A69242D94159Cf7151277252e568cB8F98"
+  },
+  "balances": {
+    "before": {
+      "deployerBtc": "53015523356572177",
+      "secondBtc": "2000000000000000",
+      "keeperBtc": "2000000000000000",
+      "deployerMusd": "1897361599947802309932",
+      "secondMusd": "0"
+    },
+    "after": {
+      "deployerBtc": "17890459760064179",
+      "secondBtc": "1999999883802542",
+      "keeperBtc": "2019997980831972",
+      "deployerMusd": "3513028266614468976599",
+      "secondMusd": "184333333333333333333"
+    }
+  },
+  "steps": [
+    {
+      "n": 1,
+      "name": "fund-buyer",
+      "title": "Fund the second wallet with 400 MUSD",
+      "actor": "deployer",
+      "tx": "0x598636793458c8e46e158584bc12f030843898ef97c76f2af68e884254070ee8",
+      "block": 16612238,
+      "gasUsed": "51697",
+      "note": "MUSD moved from the deployer; the buyer needs it for the two sales"
+    },
+    {
+      "n": 2,
+      "name": "open",
+      "title": "Open a v2 position at about 135%",
+      "actor": "deployer",
+      "tx": "0x3c8456df1c02b699565fed0076fb02bc8970ff495b7b7bd198f4e76e33dc2c15",
+      "block": 16612240,
+      "gasUsed": "912587",
+      "note": "token 1, vault 0x2B08BB7F73beD0FA0454907a7E7082F1a58d9AB9, ratio 134.88%",
+      "data": {
+        "tokenId": "1",
+        "vault": "0x2B08BB7F73beD0FA0454907a7E7082F1a58d9AB9",
+        "coll": "35742572023552886",
+        "debt": "1800000000000000000000"
+      }
+    },
+    {
+      "n": 3,
+      "name": "policy-before-transfer",
+      "title": "Set a guardian policy (it should not survive the transfers)",
+      "actor": "deployer",
+      "tx": "0xcb9a4dce86e20ee9d96001b53445fbda1a48639c3c9b8c3c52472371c8dc2f25",
+      "block": 16612244,
+      "gasUsed": "214845",
+      "note": "policy stamped with the token's current transfer epoch"
+    },
+    {
+      "n": 4,
+      "name": "approve-market",
+      "title": "Approve the market on the NFT",
+      "actor": "deployer",
+      "tx": "0x020a8d5b067702b12b599008712492d49d2afe257b1caaf8eb8a373523aa8109",
+      "block": 16612245,
+      "gasUsed": "46242"
+    },
+    {
+      "n": 5,
+      "name": "transfer-out",
+      "title": "Transfer the position to the second wallet",
+      "actor": "deployer",
+      "tx": "0x5a5f35a22f294e7331b5710bf55f70729d8ca75bb173df159a2269db02076c70",
+      "block": 16612252,
+      "gasUsed": "86373",
+      "note": "collateral, debt and locked rate moved as one object"
+    },
+    {
+      "n": 6,
+      "name": "transfer-back",
+      "title": "The second wallet transfers it back",
+      "actor": "second",
+      "tx": "0x51a4e06ee1f7084028a7fceac2db0f533d2e2b2c1b8d133ee7032308939e6abc",
+      "block": 16612254,
+      "gasUsed": "86373"
+    },
+    {
+      "n": 7,
+      "name": "announce-1",
+      "title": "Announce a fixed-price listing (100 MUSD) as an event",
+      "actor": "deployer",
+      "tx": "0x17de082256fb585a04998dd2131e38c4d0d5cdfc857ec7f601df1da05eb52f5c",
+      "block": 16612605,
+      "gasUsed": "98811",
+      "note": "ListingAnnounced hash 0x20ef08dcb00fcca4ef02b51c1553f09b40c52525095d7c6f3e58853c148dc1fe",
+      "data": {
+        "hash": "0x20ef08dcb00fcca4ef02b51c1553f09b40c52525095d7c6f3e58853c148dc1fe",
+        "listing": {
+          "seller": "0x5104C1A69242D94159Cf7151277252e568cB8F98",
+          "tokenId": "1",
+          "epoch": "3",
+          "startPrice": "100000000000000000000",
+          "endPrice": "100000000000000000000",
+          "startTime": "0",
+          "endTime": "0",
+          "deadline": "1794066162",
+          "nonce": "0",
+          "salt": "1"
+        },
+        "signature": "0x47a9e0234389da21ebe2ce76834acb0273b3bc7e801d0cfd5b61705c52ce799e71bfdb78026302494fb5c9ccfe7df4a38bc98e9de966928275182e8a64b033e91b"
+      }
+    },
+    {
+      "n": 8,
+      "name": "buy-fixed",
+      "title": "The second wallet buys it for 100 MUSD (permit, no prior approval)",
+      "actor": "second",
+      "tx": "0x54932e1a3ab207156f0bab7a2fe607a65ee5444bd957e684f6b69323d334d9d1",
+      "block": 16612610,
+      "gasUsed": "276848",
+      "note": "paid 100.00 MUSD, fee 0.2500 MUSD (25 bps) reached the recipient. The seller is also the fee recipient on this deployment, so the seller's net is price minus fee plus fee; the MUSD Transfer logs show both legs",
+      "data": {
+        "price": "100000000000000000000",
+        "fee": "250000000000000000",
+        "musdTransfersToFeeRecipient": [
+          "99750000000000000000",
+          "250000000000000000"
+        ],
+        "feeRecipientMusdBefore": "3297361599947802309932",
+        "buyer": "0xf8B5CF0292C4e5202CC9a9e6041FD59F692edEe2"
+      }
+    },
+    {
+      "n": 9,
+      "name": "transfer-back-2",
+      "title": "The second wallet transfers it back to the deployer",
+      "actor": "second",
+      "tx": "0xffc23ca75609a7abbca5952dfbccaa9d90e47dc158740a5403214701198ca08d",
+      "block": 16612616,
+      "gasUsed": "86373"
+    },
+    {
+      "n": 10,
+      "name": "announce-2",
+      "title": "Announce a second listing (150 MUSD)",
+      "actor": "deployer",
+      "tx": "0x0e4b568d8395a09f2fe87478f2e6f9f31e631fe0f3ed565adb7ea1284f36c1b0",
+      "block": 16612621,
+      "gasUsed": "98811"
+    },
+    {
+      "n": 11,
+      "name": "cancel",
+      "title": "The seller cancels the listing on chain",
+      "actor": "deployer",
+      "tx": "0xe3f10614c2c99050b099ac8f4a765678a7af512d12b8bcb87daa3a18111bd60c",
+      "block": 16612625,
+      "gasUsed": "49507"
+    },
+    {
+      "n": 12,
+      "name": "announce-dutch",
+      "title": "Announce a Dutch auction: 120 MUSD falling to 60 over 15 minutes",
+      "actor": "deployer",
+      "tx": "0xac64a58fa9a102270055f5931b0bec4a768f49a7e39c9e3f552e777380bb869f",
+      "block": 16612649,
+      "gasUsed": "99293",
+      "data": {
+        "listing": {
+          "seller": "0x5104C1A69242D94159Cf7151277252e568cB8F98",
+          "tokenId": "1",
+          "epoch": "5",
+          "startPrice": "120000000000000000000",
+          "endPrice": "60000000000000000000",
+          "startTime": "1793979950",
+          "endTime": "1793980850",
+          "deadline": "1794066350",
+          "nonce": "0",
+          "salt": "4"
+        }
+      }
+    },
+    {
+      "n": 13,
+      "name": "approve-musd-dutch",
+      "title": "The second wallet approves the market for MUSD",
+      "actor": "second",
+      "tx": "0x9c2e7e95d9a8e0e932b313095c9e4330ccc45860b823aa8e94974547ea3fd114",
+      "block": 16612651,
+      "gasUsed": "29306"
+    },
+    {
+      "n": 14,
+      "name": "buy-dutch",
+      "title": "The second wallet buys at the auction's current price",
+      "actor": "second",
+      "tx": "0xab73ced51e6870a30d1aa4b4d28a25a326d711a78745eaee73c3426fa0e555de",
+      "block": 16612662,
+      "gasUsed": "230600",
+      "note": "sold at 115.6667 MUSD, between the 120 start and the 60 floor; fee 0.2892",
+      "data": {
+        "price": "115666666666666666667",
+        "fee": "289166666666666667",
+        "elapsedSeconds": "65"
+      }
+    },
+    {
+      "n": 15,
+      "name": "transfer-back-3",
+      "title": "The second wallet transfers it back to the deployer",
+      "actor": "second",
+      "tx": "0xf8dc035da04c87fda9661b2f27fdc1cae2612ed0edcf817e1fc612ad2351e8bf",
+      "block": 16612665,
+      "gasUsed": "86373"
+    },
+    {
+      "n": 16,
+      "name": "fund-reserve",
+      "title": "Fund the guardian reserve with BTC",
+      "actor": "deployer",
+      "tx": "0x2dfff931a8711dd6e8074901d5e76f4ed509344838d1bb2c8d0dbbe911d3fdf3",
+      "block": 16612669,
+      "gasUsed": "58000",
+      "note": "0.0065 BTC, withdrawable by the holder at any time"
+    },
+    {
+      "n": 17,
+      "name": "policy-floor",
+      "title": "Set the policy floor just above the current ratio",
+      "actor": "deployer",
+      "tx": "0xec82420aa9f10808b3d58598584bf41d7e49ecb735101bdc2c1ba8ee25802379",
+      "block": 16612672,
+      "gasUsed": "83945",
+      "note": "ratio 135.17%, floor 139.17%, target 145.17%. The oracle cannot be moved on testnet, so the floor is raised instead"
+    },
+    {
+      "n": 18,
+      "name": "keeper-topup",
+      "title": "The keeper tops the position up (ratio floor)",
+      "actor": "keeper",
+      "tx": "0x7d2280786535e8ce51456007e12073906266a3afc39a8e6341ac90763a309335",
+      "block": 16612731,
+      "gasUsed": "5219911",
+      "note": "collateral 0.03574 -> 0.03836 BTC, ratio 135.07% -> 145.17%; keeper tip 10000000000000 wei (keeper balance moved 9999237892994 wei net of its gas)",
+      "data": {
+        "collBefore": "35742572023552886",
+        "collAfter": "38364033658284394",
+        "icrBefore": "1350748678132251706",
+        "icrAfter": "1451665810187117527",
+        "amount": "2675185613730292",
+        "tip": "10000000000000"
+      }
+    },
+    {
+      "n": 19,
+      "name": "policy-defense",
+      "title": "Set a redemption-defense floor far above the real buffer",
+      "actor": "deployer",
+      "tx": "0x75c2a0ee1ad4642ffb98cf38df441ac9f9aad78aa22b0429d8314c9b300bac36",
+      "block": 16612924,
+      "gasUsed": "3000000",
+      "note": "real buffer ahead of the position: 271804.70 MUSD across 98 troves, walk NOT complete in 100 steps; defense floor 10,000,000 MUSD",
+      "data": {
+        "buffer": "271804703041511750430499",
+        "eligibleAhead": "98",
+        "steps": "100",
+        "complete": false
+      }
+    },
+    {
+      "n": 20,
+      "name": "withdraw-for-defense",
+      "title": "Lower the ratio to about 118% so the position sits nearer the front of the queue",
+      "actor": "deployer",
+      "tx": "0x4d0fa1a896db869df62df322cecf3c0baae03477fb4ec2207f01dda1c42fd9cc",
+      "block": 16612945,
+      "gasUsed": "7451858",
+      "note": "withdrew 0.00712 BTC of the holder's own collateral, ratio 144.88% -> 118.01%",
+      "data": {
+        "amount": "7117510653832362"
+      }
+    },
+    {
+      "n": 21,
+      "name": "policy-defense-2",
+      "title": "Set the redemption-defense policy again at the lower ratio",
+      "actor": "deployer",
+      "tx": "0x0b7f3ed7b472cddf64aa09c0a4a3f1184b1f3a0398b268d55f00efcf61cf5349",
+      "block": 16612952,
+      "gasUsed": "3000000",
+      "note": "real buffer ahead now: 19878.59 MUSD across 10 troves, walk complete in 12 steps",
+      "data": {
+        "buffer": "19878586761661748000093",
+        "eligibleAhead": "10",
+        "steps": "12",
+        "complete": true
+      }
+    },
+    {
+      "n": 22,
+      "name": "keeper-defense",
+      "title": "The keeper tops the position up (redemption defense)",
+      "actor": "keeper",
+      "tx": "0xbc7158fe8ceb62a08a4360d6d407eca5463640fb3a946950edfa5fd80a83ac3d",
+      "block": 16613016,
+      "gasUsed": "3000000",
+      "note": "DefendBtc: collateral 0.03125 -> 0.03392 BTC after a complete walk proved the buffer was under the floor",
+      "data": {
+        "amount": "2679184350443688",
+        "collBefore": "31246523004452032",
+        "collAfter": "33917316659262987"
+      }
+    }
+  ],
+  "refusals": [
+    {
+      "name": "old-holder",
+      "what": "the old holder tries to withdraw collateral after the transfer",
+      "contract": "0x2B08BB7F73beD0FA0454907a7E7082F1a58d9AB9",
+      "call": "withdrawCollateral",
+      "revert": "NotHolder",
+      "args": [],
+      "raw": "0x7623fb52"
+    },
+    {
+      "name": "stale-policy",
+      "what": "a keeper tries the policy that was set before the two transfers",
+      "contract": "0x2B08BB7F73beD0FA0454907a7E7082F1a58d9AB9",
+      "call": "execute",
+      "revert": "NothingToDo(PolicyStale)",
+      "args": [
+        "2"
+      ],
+      "raw": "0xf8a1c2ab0000000000000000000000000000000000000000000000000000000000000002"
+    },
+    {
+      "name": "stale-epoch",
+      "what": "buying a listing signed before the position moved away and back",
+      "contract": "0xEae6fEa26B178eF32829F36e5219363bB30D93DB",
+      "call": "buy",
+      "revert": "ListingInvalid(StaleEpoch)",
+      "args": [
+        "10"
+      ],
+      "raw": "0x6cf0d400000000000000000000000000000000000000000000000000000000000000000a"
+    },
+    {
+      "name": "old-holder-after-sale",
+      "what": "the seller tries to move collateral after the sale",
+      "contract": "0x2B08BB7F73beD0FA0454907a7E7082F1a58d9AB9",
+      "call": "withdrawCollateral",
+      "revert": "NotHolder",
+      "args": [],
+      "raw": "0x7623fb52"
+    },
+    {
+      "name": "bounds-violation",
+      "what": "a buyer who requires more collateral than the position has",
+      "contract": "0xEae6fEa26B178eF32829F36e5219363bB30D93DB",
+      "call": "buy",
+      "revert": "CollateralBelowMin(35742572023552886, 35742572023552887)",
+      "args": [
+        "35742572023552886",
+        "35742572023552887"
+      ],
+      "raw": "0x1b6647cb000000000000000000000000000000000000000000000000007efbae0cd29b76000000000000000000000000000000000000000000000000007efbae0cd29b77"
+    },
+    {
+      "name": "cancelled",
+      "what": "buying the cancelled listing",
+      "contract": "0xEae6fEa26B178eF32829F36e5219363bB30D93DB",
+      "call": "buy",
+      "revert": "ListingInvalid(Cancelled)",
+      "args": [
+        "2"
+      ],
+      "raw": "0x6cf0d4000000000000000000000000000000000000000000000000000000000000000002"
+    },
+    {
+      "name": "expired",
+      "what": "buying a listing after its deadline",
+      "contract": "0xEae6fEa26B178eF32829F36e5219363bB30D93DB",
+      "call": "buy",
+      "revert": "ListingInvalid(Expired)",
+      "args": [
+        "5"
+      ],
+      "raw": "0x6cf0d4000000000000000000000000000000000000000000000000000000000000000005"
+    },
+    {
+      "name": "keeper-outside-policy",
+      "what": "a keeper calls execute while the position is inside its policy",
+      "contract": "0x2B08BB7F73beD0FA0454907a7E7082F1a58d9AB9",
+      "call": "execute",
+      "revert": "NothingToDo(Healthy)",
+      "args": [
+        "5"
+      ],
+      "raw": "0xf8a1c2ab0000000000000000000000000000000000000000000000000000000000000005"
+    },
+    {
+      "name": "reserve-bound",
+      "what": "a buyer who requires more BTC reserve than the vault holds",
+      "contract": "0xEae6fEa26B178eF32829F36e5219363bB30D93DB",
+      "call": "buy",
+      "revert": "ReserveBelowMin(3868538365268492, 3868538365268493, 0, 0)",
+      "args": [
+        "3868538365268492",
+        "3868538365268493",
+        "0",
+        "0"
+      ],
+      "raw": "0xbb751f6e000000000000000000000000000000000000000000000000000dbe6a470fd20c000000000000000000000000000000000000000000000000000dbe6a470fd20d00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ],
+  "ctx": {
+    "id": "1",
+    "vault": "0x2B08BB7F73beD0FA0454907a7E7082F1a58d9AB9",
+    "staleListing": "{\n  \"seller\": \"0x5104C1A69242D94159Cf7151277252e568cB8F98\",\n  \"tokenId\": \"1\",\n  \"epoch\": \"1\",\n  \"startPrice\": \"100000000000000000000\",\n  \"endPrice\": \"100000000000000000000\",\n  \"startTime\": \"0\",\n  \"endTime\": \"0\",\n  \"deadline\": \"1794064712\",\n  \"nonce\": \"0\",\n  \"salt\": \"900\"\n}",
+    "staleSig": "0x8c35d7e8ee636a53946cfffaa0704fc9ea174c09e2c7845e8c48261e0f0fe4e4691e36a908d9fcb6850e04cc8c32e21f772eebfed92b3b3dfa5d2ec0e9f3307a1b",
+    "l1": "{\n  \"seller\": \"0x5104C1A69242D94159Cf7151277252e568cB8F98\",\n  \"tokenId\": \"1\",\n  \"epoch\": \"3\",\n  \"startPrice\": \"100000000000000000000\",\n  \"endPrice\": \"100000000000000000000\",\n  \"startTime\": \"0\",\n  \"endTime\": \"0\",\n  \"deadline\": \"1794066162\",\n  \"nonce\": \"0\",\n  \"salt\": \"1\"\n}",
+    "l1sig": "0x47a9e0234389da21ebe2ce76834acb0273b3bc7e801d0cfd5b61705c52ce799e71bfdb78026302494fb5c9ccfe7df4a38bc98e9de966928275182e8a64b033e91b",
+    "epochAtList": "7",
+    "l2": "{\n  \"seller\": \"0x5104C1A69242D94159Cf7151277252e568cB8F98\",\n  \"tokenId\": \"1\",\n  \"epoch\": \"5\",\n  \"startPrice\": \"150000000000000000000\",\n  \"endPrice\": \"150000000000000000000\",\n  \"startTime\": \"0\",\n  \"endTime\": \"0\",\n  \"deadline\": \"1794066235\",\n  \"nonce\": \"0\",\n  \"salt\": \"2\"\n}",
+    "l2sig": "0x76545424f233669856e31a7a152caf7e6ab0b411686519325da1079a5ce7a9d962235cd025e3962715f941b62f8042337ac7af2c1658fa59217ddddada33039e1b",
+    "l3": "{\n  \"seller\": \"0x5104C1A69242D94159Cf7151277252e568cB8F98\",\n  \"tokenId\": \"1\",\n  \"epoch\": \"5\",\n  \"startPrice\": \"100000000000000000000\",\n  \"endPrice\": \"100000000000000000000\",\n  \"startTime\": \"0\",\n  \"endTime\": \"0\",\n  \"deadline\": \"1793979937\",\n  \"nonce\": \"0\",\n  \"salt\": \"3\"\n}",
+    "l3sig": "0x596efdbd13960aab0c83774720d8b8de5517a6df6fe116d9c40b82d5cec8a42c125571e98d2bf1017353e0527d1e87e144d854adee849274f0b512caad7cd3b11b",
+    "l4": "{\n  \"seller\": \"0x5104C1A69242D94159Cf7151277252e568cB8F98\",\n  \"tokenId\": \"1\",\n  \"epoch\": \"5\",\n  \"startPrice\": \"120000000000000000000\",\n  \"endPrice\": \"60000000000000000000\",\n  \"startTime\": \"1793979950\",\n  \"endTime\": \"1793980850\",\n  \"deadline\": \"1794066350\",\n  \"nonce\": \"0\",\n  \"salt\": \"4\"\n}",
+    "l4sig": "0xa8b355dc214f26c8c665e4b611652ccfb4b95756c866136fbb83ee3af8fef42177b9b032173d57bd986f70b37df09d23c2ba9aa509ea734b312632e946402c8e1c",
+    "icrBeforeFloor": "1351665810187117513",
+    "defenseComplete": "false",
+    "l5": "{\n  \"seller\": \"0x5104C1A69242D94159Cf7151277252e568cB8F98\",\n  \"tokenId\": \"1\",\n  \"epoch\": \"7\",\n  \"startPrice\": \"100000000000000000000\",\n  \"endPrice\": \"100000000000000000000\",\n  \"startTime\": \"0\",\n  \"endTime\": \"0\",\n  \"deadline\": \"1794067504\",\n  \"nonce\": \"0\",\n  \"salt\": \"5\"\n}",
+    "l5sig": "0xfaa274b9b85e2279c0f11ca807d0c9d216ca22db9082f3d33fe3ba5245f8695827cd501d35674da0634cc01c7c22ffa6fc932de0349ba7490ed638662827f5901b",
+    "finalHolder": "0x5104C1A69242D94159Cf7151277252e568cB8F98",
+    "finalIcr": "1278488383865024046"
+  },
+  "notes": [
+    "The first keeper attempt at the ratio-floor top-up FAILED on chain: tx 0x1002b8e119c9d86d7bb25f1f70337a892ef9aa0c059eab68e584e43a8b1d2e60 (block 16612677) ran out of gas at a limit of 25,584. The node's eth_estimateGas answered about 21,300 for execute(), while the call needs about 5.6M. No funds moved and the reserve was untouched. The keeper now never sends under a 6M gas floor (the unused part of a limit is not charged), and the successful attempt below is the retry.",
+    "preview before the keeper: TopUpBtc amount 2655839984116575 tip 10000000000000",
+    "At 135% the position sat more than 100 troves from the front of the redemption queue on testnet (the walk covered 100 steps and 98 eligible troves worth 271,804 MUSD without reaching it), so the first defense attempt returned BufferUnknown and, correctly, did not act. The ratio was then lowered to move it forward; see the steps below.",
+    "The first redemption-defense attempt by the keeper FAILED on chain: tx 0xae438464f0d83b18331933235c62cc93580f12caef1c0bcd2e24b7f6ea74722c (block 16612964) used 5,584,423 gas of a 6M limit and ran out of gas, because the keeper sent no sorted-list hints and the defense adds a 100-step buffer walk (about 7.3M gas in total). No funds moved. The keeper now computes hints from the planner's amount before sending, and the successful defense below used them. Separately, one of my own proof-script transactions (the defense setPolicy) was sent with a gas limit taken from the node's estimate, which was far too low (23,092, under the chain's data-gas floor), and the node rejected it before inclusion; the script now floors every limit at 6M."
+  ],
+  "finishedAt": "2026-11-06T16:12:25.049Z"
+}
