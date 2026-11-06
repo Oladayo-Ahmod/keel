@@ -47,7 +47,9 @@ Opened with `script/open_demo.sh` at an oracle price of 82,056 USD.
 | Open tx | `0xb4dd89a469800aa39dcc62988048eb215649c748c59f518e26c7d830b3e2f244` | `0xa36744dd04e237370c3f7f6cdf23ecb0bcd52e8a39da9e72f9b418bf83ed279f` |
 | Gas | 929,518 | 900,930 |
 
-Both NFTs are held by the deployer. After the opens the wallet holds 0.018983 BTC and 3,700 MUSD. The MUSD from position 2 is what lets position 1 be closed: closing needs about 1,802 MUSD.
+**Position 1 was closed on 2026-11-06.** Its 0.039033 BTC of collateral funded the Wave 2 proof run (see the Wave 2 section). Approve tx `0x00add10ae2c98e3dabbbd3221ec282ff4776484077e385caf5b7f7899e97da5f`, close tx `0x5a9f7b359a7ebbb3b023820ef5a66b4daeacb9f7e9092c3fdf46d86eadd845e7` (block 16,611,968). Closing cost 1,802.64 MUSD, leaving the deployer 1,897.36 MUSD and 0.057016 BTC. NFT 1 still exists; its trove status is `closedByOwner`. Position 2 is unchanged and is the Wave 1 demo position from now on.
+
+Both NFTs were held by the deployer. After the opens the wallet holds 0.018983 BTC and 3,700 MUSD. The MUSD from position 2 is what lets position 1 be closed: closing needs about 1,802 MUSD.
 
 Trozu is bound to these Mezo contracts (see [VERIFICATION.md](VERIFICATION.md)): BorrowerOperations `0xCdF7028ceAB81fA0C6971208e83fa7872994beE5`, TroveManager `0xE47c80e8c23f6B4A1aE41c34837a0599D5D16bb0`, SortedTroves `0x722E4D24FD6Ff8b0AC679450F3D91294607268fA`, InterestRateManager `0xD4D6c36A592A2c5e86035A6bca1d57747a567f37`, CollSurplusPool `0xB4C35747c26E4aB5F1a7CdC7E875B5946eFa6fa9`, ActivePool `0x143A063F62340DA3A8bEA1C5642d18C6D0F7FF51`, PriceFeed `0x86bCF0841622a5dAC14A313a15f96A95421b9366`, MUSD `0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503`.
 

@@ -8,7 +8,7 @@ The wallet round trip (the prompt, the pending state, the success animation) has
 - App: `cd web && npm install --legacy-peer-deps && cp .env.example .env.local`, put your WalletConnect project id in it, `npm run dev`, open http://localhost:3000.
 - Have a second address ready that you control, for the transfer. A second wallet account is enough.
 - Open the browser console. Anything red there is worth reporting.
-- Useful ids: positions 1 and 2 are held by the deployer wallet (`0x5104…8F98`) and can be looked up without a wallet at `/?id=1` and `/?id=2`.
+- Useful ids: position 2 is held by the deployer wallet (`0x5104…8F98`) and can be looked up without a wallet at `/?id=2`. Position 1 was closed on 2026-11-06 to fund the Wave 2 proof run, so `/?id=1` now shows a closed position.
 
 ## 1. Connect
 
@@ -39,7 +39,7 @@ Use small numbers. The minimum is 1,800 MUSD including the 0.1% fee, so roughly 
 
 Do this on a position you can afford to lose control of for a minute, to your own second address.
 
-- [ ] A card you hold shows **Transfer** in its footer. A card you do not hold (look one up with `/?id=1` from a different wallet) does not.
+- [ ] A card you hold shows **Transfer** in its footer. A card you do not hold (look one up with `/?id=2` from a different wallet) does not.
 - [ ] **Transfer** opens a panel with ratio, equity, collateral, debt and locked rate, and the sentence saying the new holder gets everything.
 - [ ] A healthy position: **Continue** is enabled at once.
 - [ ] Next step: paste your second address.

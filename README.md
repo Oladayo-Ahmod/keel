@@ -202,7 +202,7 @@ npm run dev                       # http://localhost:3000
 npm test
 ```
 
-**Positions.** An animated ratio gauge with marks at 110% (liquidation) and 150%, locked versus market rate with the annual spread, equity, claimable surplus, and the redemption buffer on demand. Any position can be looked up by NFT id without a wallet (`/?id=1`).
+**Positions.** An animated ratio gauge with marks at 110% (liquidation) and 150%, locked versus market rate with the annual spread, equity, claimable surplus, and the redemption buffer on demand. Any position can be looked up by NFT id without a wallet (`/?id=2`).
 
 **Open.** Amounts and target-ratio buttons, then a review step. Sorted-list hints are computed at the confirm step, the call is simulated, and only then does the wallet prompt appear. The app blocks under 120%, warns under 150%, and checks minimum debt and a gas reserve.
 
