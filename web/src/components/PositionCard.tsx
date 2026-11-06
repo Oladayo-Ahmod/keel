@@ -6,6 +6,8 @@ import { formatBtc, formatMusd, shortAddress, toNumber } from "@/lib/format";
 import { riskOf } from "@/lib/risk";
 import type { PositionInfo } from "@/hooks/usePositions";
 import { BufferPanel } from "./BufferPanel";
+import { ManagePanel } from "./ManagePanel";
+import { Tip } from "./Tip";
 import { CountUp } from "./CountUp";
 import { RateCompare } from "./RateCompare";
 import { RiskGauge } from "./RiskGauge";
@@ -37,7 +39,7 @@ export function PositionCard({
     <article ref={ref} className={`glass card pos-card risk-${risk.level}`}>
       <header className="card-head">
         <div>
-          <h3>Position #{p.tokenId.toString()}</h3>
+          <h3>Position #{p.tokenId.toString()}<Tip term="trove" label="a trove" /></h3>
           <a className="addr" href={explorerAddress(p.vault)} target="_blank" rel="noreferrer">
             vault {shortAddress(p.vault)}
           </a>
@@ -67,7 +69,8 @@ export function PositionCard({
         risk={p.priceOk || stale ? risk : riskOf(0n, false)}
         noDebt={noDebt && p.priceOk && !stale}
       />
-      <p className="risk-hint">{stale ? risk.hint : p.priceOk ? risk.hint : "Waiting for the price feed."}</p>
+      <p className="risk-hint">
+        <span className="risk-term">Collateral ratio<Tip term="icr" label="the collateral ratio" /></span>{" "}{stale ? risk.hint : p.priceOk ? risk.hint : "Waiting for the price feed."}</p>
 
       <dl className={`stats${stale ? " stats-stale" : ""}`}>
         <div>
@@ -118,6 +121,10 @@ export function PositionCard({
           <BufferPanel tokenId={p.tokenId} active={p.active} />
           {!p.canClose && !p.recoveryMode && <p className="note">This trove cannot be closed right now.</p>}
         </>
+      )}
+
+      {mine && !transferring && (
+        <ManagePanel p={p} stale={stale} onChanged={onChanged} />
       )}
 
       {mine && transferring && (

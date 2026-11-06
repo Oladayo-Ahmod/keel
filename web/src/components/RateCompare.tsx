@@ -1,6 +1,7 @@
 "use client";
 
 import { formatBps, formatMusd } from "@/lib/format";
+import { Tip } from "./Tip";
 
 /** Locked rate against the current global rate, with what the gap is worth. */
 export function RateCompare({
@@ -20,7 +21,7 @@ export function RateCompare({
   const gap = `${(Math.abs(spreadBps) / 100).toFixed(2)} points`;
   return (
     <section className="block" aria-label="Interest rate">
-      <h4>Interest rate</h4>
+      <h4>Interest rate<Tip term="lockedRate" label="the locked rate" /></h4>
       <div className="rate-row">
         <span className="rate-name">Locked</span>
         <div className="bar">

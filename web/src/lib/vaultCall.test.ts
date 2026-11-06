@@ -48,7 +48,7 @@ describe("vault calls", () => {
     for (const c of calls) {
       expect(names.has(c.functionName as never)).toBe(true);
       const abi = positionVaultAbi.find((x) => x.type === "function" && x.name === c.functionName)!;
-      expect(c.args.length).toBe((abi as { inputs: unknown[] }).inputs.length);
+      expect(c.args.length).toBe((abi as unknown as { inputs: unknown[] }).inputs.length);
     }
   });
   it("classifies which actions need hints and which pull MUSD", () => {

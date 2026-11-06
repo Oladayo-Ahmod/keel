@@ -6,6 +6,7 @@ import { positionLensAbi } from "@/abi/keel";
 import { config } from "@/config";
 import { formatMusd } from "@/lib/format";
 import { pressPulse } from "@/lib/motion";
+import { Tip } from "./Tip";
 
 const MAX_STEPS = 100n;
 
@@ -34,7 +35,7 @@ export function BufferPanel({ tokenId, active }: { tokenId: bigint; active: bool
 
   return (
     <section className="block" aria-label="Redemption buffer">
-      <h4>Redemption buffer</h4>
+      <h4>Redemption buffer<Tip term="buffer" label="the redemption buffer" /></h4>
       {!active && <p className="note">No trove, so nothing can be redeemed.</p>}
       {active && !asked && (
         <>

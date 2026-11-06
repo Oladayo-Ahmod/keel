@@ -10,7 +10,7 @@ const dom = { name: "Mezo USD", chainId: 31611, verifyingContract: musd };
 const account = privateKeyToAccount(generatePrivateKey());
 
 const separator = hashDomain({
-  domain: permitDomain(dom),
+  domain: { ...permitDomain(dom), chainId: BigInt(dom.chainId) },
   types: { EIP712Domain: [
     { name: "name", type: "string" },
     { name: "version", type: "string" },

@@ -32,7 +32,7 @@ export function permitDomain(d: PermitDomain) {
  */
 export function domainMatches(d: PermitDomain, onChainSeparator: Hex): boolean {
   const mine = hashDomain({
-    domain: permitDomain(d),
+    domain: { ...permitDomain(d), chainId: BigInt(d.chainId) },
     types: { EIP712Domain: [
       { name: "name", type: "string" },
       { name: "version", type: "string" },
