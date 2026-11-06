@@ -1,0 +1,17 @@
+# Web threats
+
+Scope: the app in `web/`. It holds no keys and sends nothing on its own. The contract threats are in `docs/THREAT_MODEL.md`.
+
+| ID | Threat | What the app does | Residual |
+|---|---|---|---|
+| W1 | A lagging RPC node shows old balances or ratio | Every read that feeds a decision is paired with a head block and judged. Plans are not produced from stale data. `assertFresh()` runs again before any simulation or signature. | A node that is current but wrong is not detected. |
+| W2 | A bad hint or amount wastes gas or reverts | Hints are looked up at the confirm step. Every call is simulated first, and reverts show as sentences. | Hints are approximate after a repay or borrow; a poor hint costs gas, never funds. |
+| W3 | A permit signature is reused or stolen | Domain is checked against the token's `DOMAIN_SEPARATOR` before signing. Value is exact (repay, reserve, buy at `maxPrice`) and the window is ten minutes. | A signature is valid until used or expired. |
+| W4 | Close permit voided by interest | Close never uses a permit; it approves 0.1% above the cost. | The vault's `closeWithPermit` stays in the ABI and is unusable with a signed exact amount. |
+| W5 | Buyer pays for a position that changed | Bounds pin collateral, debt, rate and reserve, with headroom only for interest. The sale is simulated before the wallet opens. | Debt headroom of 0.5% is real money on a large position. |
+| W6 | Dutch price drifts against the buyer | The cap is the price one minute ago, so clock skew cannot revert a fair buy. | The buyer can pay up to one minute's worth of price drift above the live price. |
+| W7 | Malformed content file renders unsafe links | `lib/content.ts` allows https, local http and site paths only and shows a notice for a bad file. | None known. |
+| W8 | A listing is signed against a browser clock that runs ahead | The listing uses the latest block timestamp. | None known. |
+| W9 | Log scanning misses listings | The page says which block range it read. Every shown row is re-checked on chain, and `buy` re-checks again. | A missed listing is invisible, never mispriced. |
+
+Tests: `manage.test.ts`, `permit.test.ts`, `vaultCall.test.ts`, `market.test.ts`, `guardian.test.ts`, `content.test.ts`, `errors.test.ts`, `freshness.test.ts`.
