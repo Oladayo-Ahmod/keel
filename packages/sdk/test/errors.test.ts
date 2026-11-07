@@ -91,3 +91,38 @@ describe("decodeRevert", () => {
     expect(u.code).toBe("UNKNOWN");
   });
 });
+
+describe("errors that do not come from our own contracts", () => {
+  // what MUSD reverts with when a transferFrom has no allowance, as seen on matsnet (selector 0xfb8f41b2)
+  it("decodes a token error that bubbled up through a market call", async () => {
+    const m = mockChain();
+    const erc20 = [{ type: "error", name: "ERC20InsufficientAllowance", inputs: [{ name: "spender", type: "address" }, { name: "allowance", type: "uint256" }, { name: "needed", type: "uint256" }] }] as const;
+    m.contract(m.deployment.trozu.market, marketAbi as never, {
+      check: () => {
+        throw new Revert(erc20 as never, "ERC20InsufficientAllowance", [ADDR.bob, 0n, 6_000n * E18]);
+      },
+    });
+    const err = await m.client.readContract({ address: m.deployment.trozu.market, abi: marketAbi, functionName: "check", args: [sampleListing(), "0x00"] }).catch(decodeRevert);
+    expect(err).toBeInstanceOf(TrozuRevertError);
+    expect((err as TrozuRevertError).errorName).toBe("ERC20InsufficientAllowance");
+    expect((err as TrozuRevertError).source).toBe("token");
+    expect((err as TrozuError).message).toBe("The MUSD allowance is too low: 0 approved, 6000 needed. Approve it first.");
+  });
+
+  it("keeps a plain revert string in chainText, with our sentence for the ones we know", () => {
+    const known = revertFromNamed("Error", ["CollSurplusPool: No collateral available to claim"]);
+    expect(known.errorName).toBe("MezoRefusal");
+    expect(known.message).toBe("There is no leftover collateral to claim.");
+    expect(known.chainText).toBe("CollSurplusPool: No collateral available to claim");
+    const other = revertFromNamed("Error", ["something else entirely"]);
+    expect(other.errorName).toBe("Error");
+    expect(other.message).toBe("The contract refused the call with a message of its own.");
+    expect(other.message).not.toContain("something else");
+    expect(other.chainText).toBe("something else entirely");
+    expect(revertFromNamed("Error", ["BorrowerOps: Trove's net debt must be greater than minimum"]).message).toMatch(/minimum a trove must carry/);
+  });
+
+  it("turns a panic into a sentence", () => {
+    expect(revertFromNamed("Panic", [0x11n]).message).toBe("The contract hit an internal error (panic code 17).");
+  });
+});

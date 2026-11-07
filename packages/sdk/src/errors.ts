@@ -1,4 +1,4 @@
-import { BaseError, ContractFunctionRevertedError, decodeErrorResult, type Abi } from "viem";
+import { BaseError, ContractFunctionRevertedError, decodeErrorResult, parseAbi, type Abi } from "viem";
 import { factoryAbi, marketAbi, nftAbi, vaultAbi } from "./generated/abis.js";
 import { formatAmount, formatBps } from "./format.js";
 import { MARKET_STATES, type MarketState } from "./types.js";
@@ -42,7 +42,7 @@ export class TrozuRpcError extends TrozuError {
   }
 }
 
-export type RevertSource = "vault" | "market" | "factory" | "nft" | "mezo" | "unknown";
+export type RevertSource = "vault" | "market" | "factory" | "nft" | "token" | "mezo" | "unknown";
 
 /**
  * A contract refused the call. `errorName` is the custom error (or "MezoRefusal" for Mezo's string
@@ -145,7 +145,23 @@ const SENTENCES: Record<string, (a: readonly unknown[]) => string> = {
   ERC721IncorrectOwner: () => "The sender does not own this position NFT.",
   ERC721InsufficientApproval: () => "The caller is not approved to move this position NFT.",
   ERC721NonexistentToken: () => "That position does not exist.",
+  // MUSD, an OpenZeppelin ERC20: the market and vaults pull MUSD from the caller, so these bubble up unchanged
+  ERC20InsufficientAllowance: (a) => `The MUSD allowance is too low: ${amt(a[1])} approved, ${amt(a[2])} needed. Approve it first.`,
+  ERC20InsufficientBalance: (a) => `The wallet holds ${amt(a[1])} MUSD and this needs ${amt(a[2])}.`,
+  ERC20InvalidSender: () => "The MUSD sender address is not valid.",
+  ERC20InvalidReceiver: () => "The MUSD receiver address is not valid.",
+  ERC20InvalidApprover: () => "The MUSD approver address is not valid.",
+  ERC20InvalidSpender: () => "The MUSD spender address is not valid.",
 };
+
+const erc20ErrorsAbi = parseAbi([
+  "error ERC20InsufficientAllowance(address spender, uint256 allowance, uint256 needed)",
+  "error ERC20InsufficientBalance(address sender, uint256 balance, uint256 needed)",
+  "error ERC20InvalidSender(address sender)",
+  "error ERC20InvalidReceiver(address receiver)",
+  "error ERC20InvalidApprover(address approver)",
+  "error ERC20InvalidSpender(address spender)",
+]);
 
 const BOUNDS: Record<string, BoundsError["field"]> = {
   EpochMismatch: "epoch",
@@ -162,6 +178,7 @@ const sourceOf = (name: string): RevertSource => {
   if (has(vaultAbi as Abi)) return "vault";
   if (has(factoryAbi as Abi)) return "factory";
   if (has(nftAbi as Abi)) return "nft";
+  if (has(erc20ErrorsAbi as unknown as Abi)) return "token";
   return "unknown";
 };
 
@@ -169,6 +186,9 @@ const sourceOf = (name: string): RevertSource => {
 export function revertFromNamed(name: string, args: readonly unknown[] = [], cause?: unknown): TrozuRevertError {
   if (name === "ListingInvalid") return new ListingInvalidError(stateName(asBig(args[0])), args, cause);
   if (name === "BadPolicy") return new BadPolicyError(String(args[0] ?? ""), args, cause);
+  // a plain revert("text"), which is how Mezo's own contracts refuse; the text is theirs, so it is chainText
+  if (name === "Error") return fromReason(String(args[0] ?? ""), cause);
+  if (name === "Panic") return new TrozuRevertError("Panic", args, "unknown", `The contract hit an internal error (panic code ${String(args[0] ?? "?")}).`, undefined, { cause });
   const sentence = SENTENCES[name];
   const message = sentence ? sentence(args) : `The contract reverted with ${name}.`;
   const field = BOUNDS[name];
@@ -176,15 +196,24 @@ export function revertFromNamed(name: string, args: readonly unknown[] = [], cau
   return new TrozuRevertError(name, args, sourceOf(name), message, undefined, { cause });
 }
 
-const allErrorsAbi = [...vaultAbi, ...marketAbi, ...factoryAbi, ...nftAbi].filter((x) => x.type === "error") as unknown as Abi;
+const allErrorsAbi = [...vaultAbi, ...marketAbi, ...factoryAbi, ...nftAbi, ...erc20ErrorsAbi].filter((x) => x.type === "error") as unknown as Abi;
 
 /** Mezo's own contracts revert with strings, not custom errors. These are the ones worth a sentence. */
 const MEZO_TEXT: [RegExp, string][] = [
   [/TCR < CCR/, "Mezo refused it: it would push the whole system under 150% collateral. Use more collateral or borrow less."],
   [/ICR.*MCR|MCR.*ICR|below.*minimum collateral/i, "Mezo refused it: the trove would end up under 110% collateral."],
   [/net debt.*(minimum|MIN)/i, "Mezo refused it: the debt would be under the minimum a trove must carry."],
+  [/No collateral available to claim/i, "There is no leftover collateral to claim."],
   [/insufficient funds|exceeds the balance/i, "The sending wallet does not hold enough BTC for this amount plus gas."],
 ];
+
+/** A revert string: a known Mezo refusal gets our sentence, anything else a generic one. The string stays in chainText. */
+function fromReason(text: string, cause: unknown): TrozuRevertError {
+  for (const [re, sentence] of MEZO_TEXT) {
+    if (re.test(text)) return new TrozuRevertError("MezoRefusal", [], "mezo", sentence, text.slice(0, 300), { cause });
+  }
+  return new TrozuRevertError("Error", [], "unknown", "The contract refused the call with a message of its own.", text.slice(0, 300), { cause });
+}
 
 const NETWORK = /HTTP request failed|unknown RPC error|fetch failed|Failed to fetch|timed out|ECONNRESET|ECONNREFUSED|socket hang up/i;
 
@@ -199,9 +228,19 @@ export function decodeRevert(e: unknown): TrozuError {
     const reverted = e.walk((x) => x instanceof ContractFunctionRevertedError);
     if (reverted instanceof ContractFunctionRevertedError) {
       if (reverted.data) return revertFromNamed(reverted.data.errorName, reverted.data.args ?? [], e);
+      // viem only decodes errors in the called contract's ABI. A token error that bubbled up through it
+      // (MUSD's ERC20InsufficientAllowance, say) arrives as raw data, so try all the errors we know.
+      const raw = reverted.raw ?? findRevertData(e);
+      if (raw && raw !== "0x") {
+        try {
+          const d = decodeErrorResult({ abi: allErrorsAbi, data: raw });
+          return revertFromNamed(d.errorName, (d.args as readonly unknown[] | undefined) ?? [], e);
+        } catch {
+          // not one of ours
+        }
+      }
       // a plain `revert("text")` or an empty revert
-      const text = reverted.reason ?? reverted.shortMessage;
-      return mezoOrUnknown(text, e);
+      return mezoOrUnknown(reverted.reason ?? reverted.shortMessage, e);
     }
     const raw = findRevertData(e);
     if (raw) {
