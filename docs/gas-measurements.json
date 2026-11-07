@@ -1,0 +1,68 @@
+{
+  "measuredAt": "2026-11-07T14:47:56.669Z",
+  "chainId": 31611,
+  "block": "16632718",
+  "method": "smallest eth_call gas limit that succeeds, bisected to within 250 gas, then checked at +2,000 and +20,000",
+  "calibration": {
+    "approveMusd": {
+      "measured": 46455,
+      "receipt": 46242
+    },
+    "cancel": {
+      "measured": 49927,
+      "receipt": 49507
+    },
+    "announce": {
+      "measured": 99537,
+      "receipt": 99293
+    },
+    "safeTransferFrom": {
+      "measured": 98958,
+      "receipt": 86373
+    }
+  },
+  "repay": {
+    "minGas": 437989,
+    "note": "5 MUSD, hints from Mezo's HintHelpers, MUSD balance and allowance overridden"
+  },
+  "repay (no hints)": {
+    "minGas": 3465699,
+    "note": "5 MUSD, hints left out, MUSD balance and allowance overridden"
+  },
+  "refinance": {
+    "minGas": 439580,
+    "note": "market rate overridden from 100 to 50 bps (storage slot 0) so the position's rate is the higher one"
+  },
+  "refinance (no hints)": {
+    "minGas": 3509669,
+    "note": "same override, hints left out"
+  },
+  "close": {
+    "minGas": 446378,
+    "note": "MUSD balance and allowance overridden"
+  },
+  "closeWithPermit": {
+    "minGas": 486154,
+    "note": "valid permit signed for the exact cost at the pinned block (domain version 1), MUSD balance overridden"
+  },
+  "claimSurplus": {
+    "minGas": 160864,
+    "note": "0.005 BTC placed in the surplus pool's balances slot 4, its total in slot 3, and its BTC balance"
+  },
+  "fundReserveMusd": {
+    "minGas": 97801,
+    "note": "100 MUSD, MUSD balance and allowance overridden"
+  },
+  "clearPolicy": {
+    "minGas": 88544,
+    "note": "the live policy of position 1, no override"
+  },
+  "cancelAll": {
+    "minGas": 45008,
+    "note": "no override"
+  },
+  "setApprovalForAll": {
+    "minGas": 26785,
+    "note": "approve the market for all of the holder's NFTs, no override"
+  }
+}
