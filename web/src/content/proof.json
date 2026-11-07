@@ -1,4 +1,9 @@
 {
+    "wallets":  {
+                    "deployer":  "0x5104C1A69242D94159Cf7151277252e568cB8F98",
+                    "second":  "0xf8B5CF0292C4e5202CC9a9e6041FD59F692edEe2",
+                    "keeper":  "0x7a24528a52E59dF9Dde2E9655a8FC9d1E4601C5c"
+                },
     "summary":  {
                     "note":  "Foundry as forge test reports it (22 suites; the fork tests use the real MUSD contracts). It folds each suite\u0027s invariants into one result: the source has 275 test and invariant functions, 18 of them invariants (7 Wave 1, 11 Wave 2). Plus 151 web tests and 24 keeper tests, counted separately. Not audited.",
                     "tests":  259,
