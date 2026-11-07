@@ -122,6 +122,11 @@ describe("proof card", () => {
     ]);
   });
 
+  it("counts a partial match as matched, since the source does reproduce the bytecode", () => {
+    const d = { ...proof, deployments: proof.deployments.map((x) => ({ ...x, verification: "partial" as const })) };
+    expect(proofCard({ ok: true, data: d }).stats[2]).toEqual({ label: "Deployments", value: "2 of 2 source matched" });
+  });
+
   it("says not recorded and none listed for an empty file", () => {
     const c = proofCard({ ok: true, data: { updated: null, summary: { tests: null, passing: null, invariants: null, note: null }, claims: [], deployments: [] } });
     expect(c.stats.map((s) => s.value)).toEqual(["not recorded", "none listed", "none listed"]);

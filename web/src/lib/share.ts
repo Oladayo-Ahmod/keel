@@ -96,7 +96,7 @@ export function proofCard(r: { ok: true; data: Proof } | { ok: false }): Card {
   const n = (v: number | null) => (v === null ? "not recorded" : v.toLocaleString("en-US"));
   stats.push({ label: "Tests passing", value: d.summary.passing === null ? "not recorded" : `${n(d.summary.passing)} of ${n(d.summary.tests)}` });
   stats.push({ label: "Claims verified", value: d.claims.length ? `${verified} of ${d.claims.length}` : "none listed" });
-  stats.push({ label: "Deployments", value: d.deployments.length ? `${d.deployments.filter((x) => x.verification === "exact").length} of ${d.deployments.length} source matched` : "none listed" });
+  stats.push({ label: "Deployments", value: d.deployments.length ? `${d.deployments.filter((x) => x.verification !== "none").length} of ${d.deployments.length} source matched` : "none listed" });
   return {
     kind: "proof",
     title: "Trozu proof",
