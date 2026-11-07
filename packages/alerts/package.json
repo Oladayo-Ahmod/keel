@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "start": "node dist/cli.js",
     "dry-run": "node dist/cli.js --dry-run",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:live": "vitest run test/webhook.live.test.ts"
   },
   "dependencies": {
     "@trozu/sdk": "0.1.0",
