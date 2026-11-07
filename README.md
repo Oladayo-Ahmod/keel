@@ -304,7 +304,7 @@ Start with [INTEGRATIONS.md](docs/INTEGRATIONS.md), which also lists what was an
 | Suite | Count | Scope |
 |---|---|---|
 | Foundry (`forge test`) | 260 | Unit, fuzz and invariants on a local deployment of the real MUSD contracts, the market and guardian, the original vault tests re-run against the Trozu vault, fork tests on mainnet state, and the golden planner vectors |
-| Web (`npm test` in `web/`) | 299 | Gas limits, market and guardian maths, permits, error mapping, stale node detection, stats, share cards, and the what-if planner replayed against contract vectors |
+| Web (`npm test` in `web/`) | 300 | Gas limits, market and guardian maths, permits, error mapping, stale node detection, stats, share cards, and the what-if planner replayed against contract vectors |
 | Keeper (`npm test` in `keeper/`) | 24 | The keeper's discovery, retry and send logic on a mock chain |
 | SDK (`@trozu/sdk`) | 90 (+39 skipped) | Maths, builders, reads on a mock chain, gas table drift; the skipped ones are read-only matsnet checks, run on demand |
 | MCP (`@trozu/mcp`) | 78 | Tools, hostile inputs, no signing or sending, stdio handshake |

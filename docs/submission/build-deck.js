@@ -24,7 +24,7 @@ const REPO = "https://github.com/Oladayo-Ahmod/keel";
 const FACTS = {
   forgeTests: 260, // forge test, 23 suites
   invariants: 18, // invariant functions in the source
-  webTests: 299,
+  webTests: 300,
   keeperTests: 24,
   packageTests: 90 + 78 + 45, // sdk, mcp, alerts
   vectors: 503, // docs/REVIEW.md
