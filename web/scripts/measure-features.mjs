@@ -46,6 +46,20 @@ for (const width of [390, 360]) {
     await measure("proof");
     await shot("proof");
   }
+  if (want("labels")) {
+    await go("/stats", 1500);
+    console.log("     stats banner:", (await page.getByTestId("honesty").innerText()).slice(0, 140));
+    console.log("     stats other addresses tile:", await page.getByTestId("others").innerText());
+    await go("/", 3000);
+    await page.getByRole("tab", { name: "Market" }).click();
+    // the market scan reads the log in windows and can take a while on the public RPC
+    await page.getByTestId("market-notice").waitFor({ timeout: 40000 });
+    await page.waitForTimeout(1500);
+    await measure("market list");
+    await shot("market");
+    console.log("     market notice:", (await page.getByTestId("market-notice").innerText()).slice(0, 200));
+    console.log("     demo chips:", await page.getByText("Demo listing", { exact: true }).count());
+  }
   if (want("position")) {
     for (const path of ["/position/1/2", "/position/2/1"]) {
       await go(path, 6000);
