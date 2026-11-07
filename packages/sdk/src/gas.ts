@@ -7,13 +7,21 @@
  * inherits that, so every builder sets the limit and callers should send it as it is.
  *
  * Mezo charges at least half of the limit, so a generous limit is cheap but not free: 6M costs about
- * 3M gas. Rule per action: the larger of the measured gas with 30% headroom and a floor, never above
- * CAP (the chain's block limit is 10M).
+ * 3M gas. The block limit is 10M, so nothing goes above CAP.
  *
- * `measured` is gasUsed from the live proof run on matsnet (docs/PROOF.md, docs/proof.json). Because of
- * the half-limit charge a receipt never shows less than half the limit that was sent, so a measured
- * 3,000,000 is an upper bound read off a 6M limit, not an exact figure. `null` means never measured,
- * and only the floor applies. The numbers are the same ones the web app uses (web/src/lib/gas.ts).
+ * The table below is copied from web/src/lib/gas.ts, which the web app sends, and checked against the
+ * wallet round trip in docs/roundtrip.json. test/webgas.test.ts fails if the two ever differ. Each
+ * limit says what backs it:
+ *
+ *   measured    gasUsed read from a receipt in docs/proof.json, limit = the larger of that plus 30%
+ *               and the floor. (A receipt can never show less than half the limit that was sent, so a
+ *               measured 3,000,000 is an upper bound read off a 6M limit, not an exact figure.)
+ *   roundtrip   no usable measurement, but this exact limit was sent through the app on matsnet in the
+ *               wallet round trip and the transaction succeeded. Every gasUsed in that file is exactly
+ *               half its limit (the half-limit charge), so it proves the limit is enough, not what the
+ *               call really uses.
+ *   unmeasured  never run on chain. Only the floor applies, because there is nothing to add 30% to.
+ *               docs/INTEGRATIONS.md lists these.
  */
 
 export const CAP = 9_500_000;
@@ -21,54 +29,69 @@ export const CAP = 9_500_000;
 export const FLOOR_SIMPLE = 1_000_000;
 /** Any call that re-inserts the trove in the sorted list. About 0.6M with a good hint and 4.5M to 7.4M with none, measured. */
 export const FLOOR_SORTED = 6_000_000;
-const HEADROOM_PCT = 130;
 
-export interface GasRule {
-  measured: number | null;
-  floor: number;
+export type GasBasis = "measured" | "roundtrip" | "unmeasured";
+
+export interface GasEntry {
+  /** The limit the builder sends. */
+  limit: number;
+  basis: GasBasis;
+  /** Re-sorts the trove in Mezo's list, so it also gets CAP when a redemption-defense walk is on. */
+  sorted: boolean;
+  /** The receipt gasUsed behind a `measured` limit. */
+  gasUsed?: number;
+  /** Where the evidence is. */
   source: string;
 }
 
 const proof = "docs/proof.json";
-const simple = (measured: number | null): GasRule => ({ measured, floor: FLOOR_SIMPLE, source: proof });
-const sorted = (measured: number | null): GasRule => ({ measured, floor: FLOOR_SORTED, source: proof });
+const trip = "docs/roundtrip.json";
+const none = "never run on chain";
 
-/** Keyed by function name. Wave 1 and Wave 2 vaults share these names, so one rule covers both. */
-export const GAS_RULES: Record<string, GasRule> = {
+const e = (limit: number, basis: GasBasis, sorted: boolean, source: string, gasUsed?: number): GasEntry => ({ limit, basis, sorted, source, gasUsed });
+
+/**
+ * Keyed by function name. Wave 1 and Wave 2 vaults share these names, so one entry covers both.
+ * Limits are literals on purpose: they are what gets sent, and the test compares them with the web app's.
+ */
+export const GAS_TABLE: Record<string, GasEntry> = {
   // position, through the vault
-  openPosition: sorted(912_587),
-  addCollateral: sorted(null),
-  withdrawCollateral: sorted(null),
-  borrow: sorted(null),
-  repay: sorted(null),
-  repayWithPermit: sorted(null),
-  refinance: sorted(null),
-  close: sorted(null),
-  closeWithPermit: sorted(null),
-  claimSurplus: simple(null),
-  sweep: simple(null),
+  openPosition: e(6_000_000, "measured", true, proof, 912_587),
+  addCollateral: e(6_000_000, "roundtrip", true, trip),
+  withdrawCollateral: e(6_000_000, "roundtrip", true, trip),
+  borrow: e(6_000_000, "roundtrip", true, trip),
+  repay: e(6_000_000, "unmeasured", true, none),
+  repayWithPermit: e(6_000_000, "roundtrip", true, trip),
+  refinance: e(6_000_000, "unmeasured", true, none),
+  close: e(6_000_000, "unmeasured", true, none),
+  closeWithPermit: e(6_000_000, "unmeasured", true, none),
+  claimSurplus: e(1_000_000, "unmeasured", false, none),
+  sweep: e(1_000_000, "roundtrip", false, trip),
   // reserve and guardian policy
-  fundReserveBtc: simple(58_000),
-  fundReserveMusd: simple(null),
-  fundReserveMusdWithPermit: simple(null),
-  withdrawReserveBtc: simple(null),
-  withdrawReserveMusd: simple(null),
-  setPolicy: { measured: 3_000_000, floor: FLOOR_SIMPLE, source: proof },
-  clearPolicy: simple(null),
-  // the guardian's own call: 5,219,911 measured for a ratio-floor top-up with no hints
-  execute: { measured: 5_219_911, floor: FLOOR_SORTED, source: proof },
+  fundReserveBtc: e(1_000_000, "measured", false, proof, 58_000),
+  fundReserveMusd: e(1_000_000, "unmeasured", false, none),
+  fundReserveMusdWithPermit: e(1_000_000, "roundtrip", false, trip),
+  withdrawReserveBtc: e(1_000_000, "roundtrip", false, trip),
+  withdrawReserveMusd: e(1_000_000, "roundtrip", false, trip),
+  setPolicy: e(3_900_000, "measured", false, proof, 3_000_000),
+  clearPolicy: e(1_000_000, "unmeasured", false, none),
+  // the guardian's own call: 5,219,911 measured for a ratio-floor top-up with no hints. Not in the web table, which has no keeper.
+  execute: e(6_785_885, "measured", true, proof, 5_219_911),
   // market
-  announce: simple(99_293),
-  cancel: simple(49_507),
-  cancelAll: simple(null),
-  buy: { measured: 276_848, floor: 1_500_000, source: proof },
+  announce: e(1_000_000, "measured", false, proof, 99_293),
+  cancel: e(1_000_000, "measured", false, proof, 49_507),
+  cancelAll: e(1_000_000, "unmeasured", false, none),
+  buy: e(1_500_000, "measured", false, proof, 276_848),
   // tokens and the NFT
-  approve: simple(46_242),
-  setApprovalForAll: simple(null),
-  safeTransferFrom: simple(86_373),
-  transferFrom: simple(86_373),
-  transfer: simple(51_697),
+  approve: e(1_000_000, "measured", false, proof, 46_242),
+  setApprovalForAll: e(1_000_000, "unmeasured", false, none),
+  safeTransferFrom: e(1_000_000, "measured", false, proof, 86_373),
+  transferFrom: e(1_000_000, "measured", false, proof, 86_373),
+  transfer: e(1_000_000, "measured", false, proof, 51_697),
 };
+
+/** Actions in this table that the web app has no entry for, and why. The web test allows exactly these. */
+export const SDK_ONLY = ["execute"] as const;
 
 export interface GasOptions {
   /**
@@ -80,11 +103,13 @@ export interface GasOptions {
   defenseWalk?: boolean;
 }
 
-/** The gas limit for a write, as a number. Throws for a function with no rule, so a new write cannot go out without one. */
+/** The gas limit for a write. Throws for a function with no entry, so a new write cannot go out without one. */
 export function gasLimitFor(functionName: string, opts: GasOptions = {}): number {
-  const rule = GAS_RULES[functionName];
-  if (!rule) throw new Error(`no gas limit defined for ${functionName}; add it to GAS_RULES in gas.ts`);
-  if (opts.defenseWalk && rule.floor >= FLOOR_SORTED) return CAP;
-  const padded = rule.measured === null ? 0 : Math.ceil((rule.measured * HEADROOM_PCT) / 100);
-  return Math.min(CAP, Math.max(padded, rule.floor));
+  const g = GAS_TABLE[functionName];
+  if (!g) throw new Error(`no gas limit defined for ${functionName}; add it to GAS_TABLE in gas.ts`);
+  if (opts.defenseWalk && g.sorted) return CAP;
+  return Math.min(CAP, g.limit);
 }
+
+/** Function names whose limit has no measurement behind it, for the docs. */
+export const unmeasured = (): string[] => Object.entries(GAS_TABLE).filter(([, g]) => g.basis === "unmeasured").map(([n]) => n);

@@ -16,7 +16,7 @@ export {
   type TrozuErrorCode,
   type RevertSource,
 } from "./errors.js";
-export { gasLimitFor, GAS_RULES, CAP, FLOOR_SIMPLE, FLOOR_SORTED, type GasOptions, type GasRule } from "./gas.js";
+export { gasLimitFor, GAS_TABLE, SDK_ONLY, unmeasured, CAP, FLOOR_SIMPLE, FLOOR_SORTED, type GasOptions, type GasEntry, type GasBasis } from "./gas.js";
 export {
   MCR,
   CAUTION,
