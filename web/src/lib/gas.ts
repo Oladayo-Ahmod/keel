@@ -6,13 +6,15 @@
  * transaction ran out of gas or was refused (docs/DEPLOYMENTS.md, docs/DECISIONS.md). A wallet
  * that estimates for itself inherits that, so the app always sets the limit.
  *
- * Gas price on matsnet is about 146 wei, and the unused part of a limit is not charged, so a
- * generous ceiling costs nothing. Rule per action: the larger of the measured gas with 30%
+ * Gas price on matsnet is a few hundred wei, and Mezo charges at least half of the limit (checked
+ * 2026-11-07: a plain self-send with a 1M limit was charged 500,000 gas), so a generous limit is
+ * cheap but not free: 6M costs about 3M gas, under 0.000000001 BTC. Rule per action: the larger of the measured gas with 30%
  * headroom and a floor, never above CAP (the chain's block limit is 10M).
  *
- * `measured` is gasUsed from docs/proof.json (the live proof on matsnet), or from the wallet round
- * trip in docs/ROUNDTRIP.md, with the date in `source`. `null` means not measured yet, so only the
- * floor applies.
+ * `measured` is gasUsed from docs/proof.json (the live proof on matsnet). Because of the half-limit
+ * charge, a receipt can never show less than half the limit that was sent: where a number below is
+ * 3,000,000 it is an upper bound read off a 6M limit, not an exact figure. `null` means not
+ * measured, so only the floor applies.
  */
 
 export const CAP = 9_500_000;

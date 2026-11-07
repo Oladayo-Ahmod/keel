@@ -10,7 +10,7 @@ export interface KeeperOptions {
   gasBufferPct?: bigint;
   /// Never send with less than this. On Mezo testnet the node once answered eth_estimateGas for
   /// execute() with about 21,300, while the call really needs about 5.6M, and the transaction ran
-  /// out of gas. The unused part of a gas limit is not charged, so a generous floor costs nothing.
+  /// out of gas. Mezo charges at least half of the gas limit (checked 2026-11-07: a plain self-send with a 1M limit was charged 500,000 gas), so a generous limit is cheap, not free: 6M costs about 3M gas, under 0.000000001 BTC at the 292 wei seen.
   gasFloor?: bigint;
   /// Never ask for more than this; the chain's block limit is 10M.
   gasCap?: bigint;

@@ -188,7 +188,7 @@ async function main() {
     await pub.simulateContract({ ...p, account, abi: p.abi as Abi } as never);
     // The node's eth_estimateGas has returned absurdly low numbers (about 21,300 for a call that
     // needs 5.6M, and a limit under the data-gas floor), so never trust it alone: use the larger of
-    // 1.3x the estimate and 6M. The unused part of a gas limit is not charged.
+    // 1.3x the estimate and 6M. Mezo charges at least half of the gas limit (checked 2026-11-07: a plain self-send with a 1M limit was charged 500,000 gas), so a generous limit is cheap, not free: 6M costs about 3M gas, under 0.000000001 BTC at the 292 wei seen.
     let est = 0n;
     try { est = await pub.estimateContractGas({ ...p, account, abi: p.abi as Abi } as never); } catch { /* the floor covers it */ }
     const gas = est * 13n / 10n > 6_000_000n ? (est * 13n / 10n > 9_500_000n ? 9_500_000n : est * 13n / 10n) : 6_000_000n;
