@@ -3,8 +3,10 @@ import "@fontsource-variable/sora";
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
 import "./globals.css";
+import { siteUrl } from "@/lib/share";
 
 export const metadata: Metadata = {
+  metadataBase: siteUrl(),
   title: "Trozu",
   description: "Tradable MUSD positions on Mezo",
 };

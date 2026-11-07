@@ -1329,3 +1329,11 @@ small {
 .whatif-out dd .chip {
   margin-left: var(--s2);
 }
+
+/* share bar */
+.share {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s3);
+}
