@@ -26,6 +26,9 @@ jobs:
           git diff --exit-code web/src/abi/trozu.ts
       - name: Test
         run: forge test
+      # the planner vectors test rewrites the fixture the web tests replay against the TypeScript port; fail if the committed one is stale
+      - name: Planner vectors are up to date
+        run: git diff --exit-code web/src/lib/__fixtures__/planner-vectors.json
 
   web:
     runs-on: ubuntu-latest
