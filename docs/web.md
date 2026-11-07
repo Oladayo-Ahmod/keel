@@ -60,6 +60,18 @@ Both read `getStats()` in `lib/statsServer.ts`, which runs `buildSnapshot` (`lib
 - The page prints when it was updated, the block range and the age of the newest block. The proof page links to it.
 - Cross-check: on 2026-11-07 the route's counts (1 position, 10 announced, 2 cancelled, 3 sold, same volume and fee) matched a separate script reading the same logs.
 
+
+## What-if simulator on the position card
+
+`WhatIf` sits under the redemption buffer on every open position card, owned or not. Two sliders: BTC price from -80% to +50%, and redemption pressure from 0% to 150% of the buffer. The maths is `lib/whatif.ts`.
+
+- It applies the price move, then the redemption, then asks the planner what the guardian would do in the resulting state. The planner is `planGuardian`, a branch-for-branch port of `TrozuVault._plan`. The keeper does not have planner logic of its own: it asks the vault's `preview` and sends `execute` when the kind is not None. `keeperOutcome` mirrors that branch, so the simulator says whether a keeper would send or skip, with the same words (`planner says Healthy`).
+- Redemption pressure needs the buffer, so the slider is off until the buffer is checked (the same lens read as the buffer panel, so one check serves both). Pressure under 100% uses up part of the buffer. Over 100% the excess is taken from this trove at the moved price, never touching the 200 MUSD gas compensation. A buffer that is only a lower bound is never shown as reaching the trove.
+- Redemption defense is modelled with the policy's floor: under the floor with a complete walk the planner says DefendBtc, otherwise Healthy or BufferUnknown.
+- At the top of the panel it says "Model, not a prediction". Below the result it lists what it leaves out: the redemption fee, interest over time, other troves being liquidated (a price move does not change the buffer here), and Recovery Mode (the model uses 110%, the contract may ask for the system ratio).
+- Self-check: when the guardian is live, today's numbers go through the model and are compared with the contract's own `preview`; the panel says whether they agree.
+- A position with no guardian (wave 1, or no policy) still shows ratio, redemption and buffer, and says nothing would act.
+
 ## Static pages
 
 `/break-it` and `/proof` render `src/content/break-it.json` and `src/content/proof.json`, shipped empty. `lib/content.ts` validates them and only allows https, local http and site-relative links. Schemas are the types in that file.
