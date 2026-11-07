@@ -7,6 +7,10 @@ solc_version = "0.8.24"
 evm_version = "london"
 optimizer = true
 optimizer_runs = 100
+# the planner vectors test writes one fixture the web tests read
+fs_permissions = [{ access = "write", path = "web/src/lib/__fixtures__" }]
+# the planner vectors test builds hundreds of positions in one test, which is more than the default 1,073,741,824 gas
+gas_limit = 9223372036854775807
 remappings = [
   "@openzeppelin/contracts/=lib/openzeppelin-contracts/contracts/",
   "@openzeppelin/contracts-upgradeable/=lib/openzeppelin-contracts-upgradeable/contracts/",
