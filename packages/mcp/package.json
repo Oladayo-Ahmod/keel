@@ -11,6 +11,7 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit",
     "start": "node dist/cli.js",
+    "handshake": "node scripts/handshake.mjs",
     "test": "vitest run"
   },
   "dependencies": {

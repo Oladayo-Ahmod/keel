@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "trozu": {
+      "command": "node",
+      "args": ["/path/to/keel/packages/mcp/dist/cli.js"]
+    }
+  }
+}
