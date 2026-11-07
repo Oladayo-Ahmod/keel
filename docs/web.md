@@ -1,6 +1,6 @@
 # Web app: wave 2 work
 
-Area: `web/` only. Test count at this commit: 141 passing in 11 files (`npm test`), 42 of them from wave 1. Typecheck clean, production build clean.
+Area: `web/` only. Test count at this commit: 255 passing in 17 files (`npm test`), 104 of them in the five files added with the four app features (fair price, stats, stats snapshot, what-if, share). Typecheck clean, production build clean.
 
 ## Position management (wave 1 vault, also used for wave 2 vaults)
 
@@ -72,6 +72,17 @@ Both read `getStats()` in `lib/statsServer.ts`, which runs `buildSnapshot` (`lib
 - Self-check: when the guardian is live, today's numbers go through the model and are compared with the contract's own `preview`; the panel says whether they agree.
 - A position with no guardian (wave 1, or no policy) still shows ratio, redemption and buffer, and says nothing would act.
 
+
+## Share cards
+
+Two image routes, made with `next/og` at 1200x630: `/og/position/[wave]/[id]` and `/og/proof`. The position page `/position/[wave]/[id]` (wave 1 or 2, no wallet needed) carries the Open Graph and Twitter tags that point at them, with a share bar to copy the link.
+
+- A position card reads the lens on the server and shows only public on-chain values: id, risk label, collateral ratio, collateral, debt, locked rate against the market rate when it is cheaper, and the shortened vault address. The holder is left out on purpose. The card model is `lib/share.ts`, and its test checks that no holder or owner field can reach the image.
+- A stale node gives an "unverified" card, a failed read gives a card with no numbers, and an unknown id gives a 404 card. The id in the path must be plain digits, so a link cannot carry anything else.
+- The proof card is built from `src/content/proof.json` alone (tests passing, claims verified, deployments with a matching source), with no chain read. Its footer says so.
+- `ImageResponse` adds a one-year immutable `Cache-Control` and merges any header given to it, which would pin an old card in browsers. `lib/cardImage.tsx` rebuilds the response so only its own header remains: 60 seconds for a position, 15 for errors, 5 minutes for proof.
+- Absolute image URLs need `NEXT_PUBLIC_SITE_URL` (or Vercel's production domain). Without either they point at `http://localhost:3000`.
+
 ## Static pages
 
 `/break-it` and `/proof` render `src/content/break-it.json` and `src/content/proof.json`, shipped empty. `lib/content.ts` validates them and only allows https, local http and site-relative links. Schemas are the types in that file.
@@ -80,7 +91,15 @@ Both read `getStats()` in `lib/statsServer.ts`, which runs `buildSnapshot` (`lib
 
 Headless Chrome at 390 and 360 px: manage panel, all 8 tabs and an open tooltip (20 states), wave 2 fixture, buy review, and both content pages (8 states). No horizontal overflow. This found one real bug (the refinance saving sign), fixed. Scripts: `web/scripts/measure-manage.mjs`, `measure-wave2.mjs`. Fixture route: `/preview/wave2` (only with `NEXT_PUBLIC_PREVIEW=1`).
 
+Headless Chrome (Windows) at 390 and 360 px for the app features, `web/scripts/measure-features.mjs`: `/stats`, `/proof`, the live position pages `/position/1/2` and `/position/2/1` and a missing id, the what-if simulator at rest and moved (-45% price, 120% pressure), and the price estimate, all with no horizontal overflow. A reduced-motion pass checks the stats tiles are fully visible. The what-if and price estimate were checked on the fixture route with made-up numbers, and the position pages on the live testnet. Screenshots were looked at by eye, not diffed.
+
 ## Not done or not verified
+
+- The planner port in `lib/whatif.ts` was checked against the contract's logic by reading it and by tests. It was not run next to `preview()` on a fork across many states. On the live testnet the check on today's numbers agreed, but that position was Healthy, so only the "hold" branch was compared on chain.
+- The stats route was cross-checked against a separate log-reading script once (matched exactly) and run for real. It reads one RPC provider. Past keeper refusals cannot be counted from logs.
+- Share images were fetched and looked at, but no social site or chat app was asked to unfurl one. Absolute URLs need `NEXT_PUBLIC_SITE_URL` set for the real domain. The images use the default font, not Sora.
+- The price estimate's one-year horizon is an assumption, not a market fact. It was not shown inside the real sell panel with a wallet (the panel needs a connected owner); it was checked on the fixture.
+- Still true from before:
 
 - No wallet round trip was run: signing, pending and success states with a real wallet, and every transaction path, are covered by pure tests and simulation logic only. Nothing was sent.
 - Component rendering is not unit tested; the plans, calls, parsers and validators are.
