@@ -35,6 +35,18 @@ Flag: build with `NEXT_PUBLIC_WAVE2=1`. Default is off and nothing wave 2 render
 
 Policy form validates against every `BadPolicy` revert before sending. Reserve tab funds and withdraws BTC and MUSD and shows the period allowance. History tab reads `GuardianAction` logs on demand. There is no refinance anywhere in the guardian, and the panel says so.
 
+
+## Price estimate in the sell flow (behind the flag)
+
+`FairPriceHint` sits above the price field in the sell panel. The maths is `lib/fairprice.ts`, a pure function with its own tests.
+
+- Floor: equity (collateral value minus debt, from the lens) plus the guardian reserve at the BTC price. The reserve stays in the vault, so a buyer gets it.
+- Premium: principal times the gap between the market rate and the locked rate, for a horizon of one year, at today's market rate. The one-year horizon is an assumption chosen for the estimate, not a market fact; it is printed next to the result.
+- Suggested price is floor plus premium, rounded down to a cent. For a Dutch auction the suggestion is a fall from that number to the floor, and only when there is a premium to fall through.
+- A gap of zero or less gives no premium, and no discount either (a buyer could refinance). The panel says which case it is.
+- No suggestion is shown when the node is stale, the price feed is down, the trove is closed, or equity is zero or negative with nothing else to price.
+- Every input is shown. The button copies the number into the field; it never signs or lists anything.
+
 ## Static pages
 
 `/break-it` and `/proof` render `src/content/break-it.json` and `src/content/proof.json`, shipped empty. `lib/content.ts` validates them and only allows https, local http and site-relative links. Schemas are the types in that file.

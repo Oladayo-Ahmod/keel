@@ -13,5 +13,6 @@ Scope: the app in `web/`. It holds no keys and sends nothing on its own. The con
 | W7 | Malformed content file renders unsafe links | `lib/content.ts` allows https, local http and site paths only and shows a notice for a bad file. | None known. |
 | W8 | A listing is signed against a browser clock that runs ahead | The listing uses the latest block timestamp. | None known. |
 | W9 | Log scanning misses listings | The page says which block range it read. Every shown row is re-checked on chain, and `buy` re-checks again. | A missed listing is invisible, never mispriced. |
+| W10 | The price estimate is read as a valuation, or built from stale or missing data | It is labelled an estimate, lists every input, and says nobody has to pay it. It is hidden when the node is stale, the price feed is down or the trove is closed, and it only copies a number into the field. | The one-year horizon is an assumption. A seller can still list far from the estimate, and the estimate cannot know what a buyer wants. |
 
-Tests: `manage.test.ts`, `permit.test.ts`, `vaultCall.test.ts`, `market.test.ts`, `guardian.test.ts`, `content.test.ts`, `errors.test.ts`, `freshness.test.ts`.
+Tests: `fairprice.test.ts`, `manage.test.ts`, `permit.test.ts`, `vaultCall.test.ts`, `market.test.ts`, `guardian.test.ts`, `content.test.ts`, `errors.test.ts`, `freshness.test.ts`.
