@@ -85,6 +85,40 @@ What this does not protect against: a wrong RPC (the server believes the node it
 ignores the instructions and the `untrusted` marking, and a user who signs without reading the summary.
 `simulate_action` is an `eth_call` and can differ from what a real block does.
 
+## Known advisories (`npm audit`, 2026-11-07)
+
+Eight findings when I first ran it, seven after the non-breaking upgrades (vitest 2.1.8 to 2.1.9, tsx 4.19.2
+to 4.23.15, which cleared the tsx/esbuild one). Nothing was patched with `--force`.
+
+**Production: `zod` 3.25.76, high, [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5).**
+Zod's array parsing (`$ZodArray` in the v4 core, fixed in 4.6.6) records an issue for every failing element
+with no cap, so a very large array handed to an array schema can exhaust memory. Zod 3.25.x ships that v4
+core under `zod/v4`, and npm flags the whole package by version.
+- *Our schemas: not reachable.* Every tool argument is a string, number, boolean or enum, and the schemas are
+  strict objects. `test/schemas.test.ts` walks every schema we parse with, and the JSON Schema each tool
+  publishes, and fails if any array, set, map, record, tuple or open object appears.
+- *The MCP SDK's own schemas: reachable in principle.* The SDK validates incoming protocol messages with its
+  own `zod/v4` schemas, and some of them hold arrays (for example `clientInfo.icons` in `initialize`). A client
+  that sends an enormous array there could make this process run out of memory. I have not tried it.
+  The only party who can send that is whoever is on the other end of the stdio pipe, which is the client the
+  user started: there is no network listener, no key and no state to lose, so the worst case is the server
+  process dying and being restarted.
+- *Fix, not done:* move `packages/mcp` to zod 4.6.6 or later. The SDK accepts it (`^3.25 || ^4`), but
+  our schemas use zod 3 behaviour (a `.default()` on a transformed schema takes the input value in zod 3 and
+  the output value in zod 4, among others), so it needs a migration and a re-run of the tests, not a version
+  bump. Not scheduled.
+
+**Development only: vitest 2.1.9 and what it pulls in (vite 5, esbuild 0.21, tinypool, vite-node, @vitest/mocker),
+7 findings, up to critical.** They are about servers and options that `vitest run` does not use:
+the Vitest UI and API servers, Vite's dev server (path traversal, any website reading its responses, the
+`launch-editor` issues), a prototype-pollution gadget in tinypool's worker options, and mock registration. We
+never start the UI or API (`--ui`, `--api`), never run a dev server, and nothing outside our own config
+reaches tinypool's options. I did not check by port scan that no listener opens during `vitest run`. The
+suggested fix is vitest 5, a major version: also not done. Until then, do not run `vitest --ui` or
+`vitest --api` on a machine that also browses the web.
+
+None of the development packages are in `files`, so none ship with `@trozu/mcp`.
+
 ## Example
 
 Asked "how is position 1 doing, and could I defend it against redemptions?", a client calls
