@@ -48,11 +48,11 @@ The webhook URL is never printed: logs and errors name only its host.
 
 ## GitHub Actions
 
-[`github-workflow.example.yml`](github-workflow.example.yml) is a job that runs every 15 minutes, with the
+[`.github/workflows/trozu-alerts.yml`](../../.github/workflows/trozu-alerts.yml) is a job that runs every 15 minutes, with the
 webhook in a repository secret (`ALERT_WEBHOOK_URL`), the ids in a variable (`ALERT_TOKEN_IDS`) and the state
 file kept between runs with the Actions cache (the comments in the file explain the restore and save steps).
-Copy it to `.github/workflows/` to use it; it is not enabled here. It has a manual run with a dry-run switch.
-The job has never run on GitHub.
+It only acts when it is set up: a scheduled run without the secret and the variable prints one line and stops,
+and a manual run with the dry-run switch on needs only the variable. The job has never run on GitHub.
 
 ## Tests
 

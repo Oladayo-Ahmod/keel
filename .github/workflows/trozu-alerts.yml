@@ -1,12 +1,14 @@
-# Example GitHub Actions job for @trozu/alerts. Copy it to .github/workflows/trozu-alerts.yml to use it.
-# It is not enabled by default, because it needs a webhook secret and a list of positions to watch.
+# GitHub Actions job for @trozu/alerts. It reads the chain and posts to a webhook when a guarded position nears its
+# floor or the keeper acts. It only acts when it is set up: a scheduled run does nothing unless the repository secret
+# ALERT_WEBHOOK_URL and the variable ALERT_TOKEN_IDS are both set, so a fork or a fresh clone never posts or fails.
+# A manual run with the dry-run switch on needs only ALERT_TOKEN_IDS and prints the alerts instead of posting them.
 # It has never been run on GitHub: the pieces were tested separately (docs in packages/alerts/README.md).
 #
 # Setup:
 #   1. Settings -> Secrets and variables -> Actions -> New repository secret: ALERT_WEBHOOK_URL
 #      (a Slack or Discord incoming webhook, or any https endpoint that accepts a JSON POST).
 #   2. Settings -> Secrets and variables -> Actions -> Variables: ALERT_TOKEN_IDS, like "1,2".
-#   3. Copy this file and adjust the schedule.
+#   3. Adjust the schedule below if 15 minutes is too often.
 #
 # No key of any kind is needed: the job only reads the chain. Scheduled runs on GitHub can start late
 # and are paused in a repository with no activity for 60 days.
@@ -48,21 +50,43 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
+      # the gate: every step after this one is skipped unless the job has what it needs
+      - name: check setup
+        id: gate
+        env:
+          HOOK: ${{ secrets.ALERT_WEBHOOK_URL }}
+          IDS: ${{ vars.ALERT_TOKEN_IDS }}
+          DRY: ${{ inputs.dry_run }}
+        run: |
+          if [ -z "$IDS" ]; then
+            echo "ALERT_TOKEN_IDS is not set, nothing to watch. Skipping."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          elif [ -z "$HOOK" ] && [ "$DRY" != "true" ]; then
+            echo "ALERT_WEBHOOK_URL is not set, so nothing would be posted. Skipping."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
       - uses: actions/checkout@v4
+        if: steps.gate.outputs.enabled == 'true'
 
       - uses: actions/setup-node@v4
+        if: steps.gate.outputs.enabled == 'true'
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: packages/package-lock.json
 
       - name: build
+        if: steps.gate.outputs.enabled == 'true'
         working-directory: packages
         run: |
           npm ci
           npm run build -w @trozu/sdk -w @trozu/alerts
 
       - name: restore state
+        if: steps.gate.outputs.enabled == 'true'
         uses: actions/cache/restore@v4
         with:
           path: packages/.trozu-alerts
@@ -70,6 +94,7 @@ jobs:
           restore-keys: trozu-alerts-state-
 
       - name: check positions
+        if: steps.gate.outputs.enabled == 'true'
         working-directory: packages
         env:
           WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
@@ -82,7 +107,7 @@ jobs:
 
       # a dry run does not write state, and there is nothing worth saving if the check failed
       - name: save state
-        if: ${{ success() && !inputs.dry_run }}
+        if: ${{ steps.gate.outputs.enabled == 'true' && success() && !inputs.dry_run }}
         uses: actions/cache/save@v4
         with:
           path: packages/.trozu-alerts
