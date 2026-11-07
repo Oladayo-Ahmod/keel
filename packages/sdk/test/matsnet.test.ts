@@ -67,6 +67,13 @@ describe.skipIf(!on)("matsnet (read only)", () => {
     expect(feeOn(price, matsnet.market.feeBps)).toBe(onChain);
   }, 60_000);
 
+  it("simulates the guardian's execute for a stranger and gets an answer the SDK understands", async () => {
+    const tx = trozu.tx.execute({ vault: PROOF_VAULT });
+    const r = await trozu.simulate(tx, "0x00000000000000000000000000000000000000a1");
+    // either it would run, or it reverts with a typed reason; a network or unknown failure is a bug here
+    if (!r.ok) expect(r.error.code).toBe("REVERT");
+  }, 60_000);
+
   it("gets sorted-list hints from Mezo for a plausible ratio", async () => {
     const p = await trozu.lens.position(1n);
     const nicr = nicrOf(p.collateral, p.principal) ?? 10n ** 20n;
