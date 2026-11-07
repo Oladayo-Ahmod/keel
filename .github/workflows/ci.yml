@@ -73,3 +73,33 @@ jobs:
         run: npm run typecheck
       - name: Test
         run: npm test
+
+  packages:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: packages/package-lock.json
+      - name: Install
+        run: npm ci
+      # src/generated is copied from abi/v2 and deployment.v2.json; fail if it was not regenerated
+      - name: SDK files match the ABIs and the deployment
+        run: npm run sync:check -w @trozu/sdk
+      - name: Typecheck
+        run: npm run typecheck
+      - name: Build
+        run: npm run build
+      # the SDK's gas table is a copy of web/src/lib/gas.ts; this fails on any drift between the two
+      - name: Gas table matches the web app
+        run: npx vitest run test/webgas.test.ts
+        working-directory: packages/sdk
+      - name: Test
+        run: npm test
+      - name: MCP stdio handshake
+        run: npm run handshake -w @trozu/mcp
