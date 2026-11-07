@@ -1,0 +1,22 @@
+{
+  "name": "@trozu/mcp",
+  "version": "0.1.0",
+  "description": "MCP server over @trozu/sdk. Read-only plus unsigned calldata, never signs, holds no keys.",
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "bin": { "trozu-mcp": "./dist/cli.js" },
+  "main": "./dist/server.js",
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/cli.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "@trozu/sdk": "0.1.0",
+    "viem": "2.57.10",
+    "zod": "3.25.76"
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "name": "@trozu/alerts",
+  "version": "0.1.0",
+  "description": "Posts to a webhook when a guarded position nears its floor or the keeper acts. No keys.",
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "bin": { "trozu-alerts": "./dist/cli.js" },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "start": "node dist/cli.js",
+    "dry-run": "node dist/cli.js --dry-run",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@trozu/sdk": "0.1.0",
+    "viem": "2.57.10"
+  }
+}

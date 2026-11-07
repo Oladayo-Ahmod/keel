@@ -1,0 +1,5 @@
+{
+  "extends": "../tsconfig.base.json",
+  "compilerOptions": { "noEmit": true, "paths": { "@trozu/sdk": ["../sdk/src/index.ts"] } },
+  "include": ["src", "test"]
+}
