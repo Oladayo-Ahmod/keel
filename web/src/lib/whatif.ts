@@ -38,6 +38,9 @@ export interface BufferReading {
   steps: number;
 }
 
+/** What the vault's own queue check says about the redemption buffer: `PositionLens.Verdict`. */
+export type Verdict = "Above" | "Below" | "Unknown";
+
 export interface PlannerState {
   active: boolean;
   coll: bigint;
@@ -48,18 +51,59 @@ export interface PlannerState {
   /** What Mezo requires a trove's net debt to stay above. */
   minNetDebt: bigint;
   buffer: BufferReading | undefined;
-  /** The model uses 110% as the ratio an action must reach. In Recovery Mode the contract may ask for more. */
+  /**
+   * The ratio an action has to reach: 110%, or the system ratio in Recovery Mode. The app cannot know the system
+   * ratio at a price that has not happened, so it leaves this out and uses 110% (see `recoveryMode`).
+   */
+  minIcr?: bigint;
+  /** The app knows the system is in Recovery Mode but not its ratio, so the answer may differ from the contract's. */
   recoveryMode: boolean;
+  /**
+   * The verdict `PositionLens.bufferAtLeast` gives for this state, when it was read from the chain. It is exact. Without
+   * it the verdict is worked out from `buffer` (see `verdictFrom`), which is exact except in one case it reports.
+   */
+  verdict?: Verdict;
+}
+
+/** What the planner decided, with the one thing `execute` does on top of it: start a new spending window. */
+export interface Planned extends PlanView {
+  resetWindow: boolean;
+}
+
+/**
+ * The verdict `PositionLens.bufferAtLeast(token, floor, maxWalkSteps)` would give, worked out from a buffer reading
+ * made with a 100-step walk and no threshold. The contract walks the queue from its far end, adding each eligible
+ * trove's debt, and says Above the moment the sum reaches the floor, Below only if it reaches the position without
+ * getting there, and Unknown if it runs out of steps first.
+ *
+ * It is exact whenever the policy's walk is at least as long as the reading's. If the policy's walk is shorter than
+ * the reading and the reading's sum is at or above the floor, the answer depends on the running sum at a step the
+ * reading does not record (Above if it got there in time, Unknown if not). Then `exact` is false and the verdict is
+ * Unknown, the cautious one: it never lets the guardian act on a doubt.
+ */
+export function verdictFrom(b: BufferReading | undefined, floor: bigint, maxWalkSteps: number): { verdict: Verdict; exact: boolean } {
+  if (!b || !b.inList) return { verdict: "Unknown", exact: true };
+  if (maxWalkSteps >= b.steps) {
+    if (b.value >= floor) return { verdict: "Above", exact: true };
+    // the reading walked every trove ahead (complete) and the policy's walk reaches them all: a proven low buffer
+    if (b.complete) return { verdict: "Below", exact: true };
+    return { verdict: "Unknown", exact: true };
+  }
+  if (b.value < floor) return { verdict: "Unknown", exact: true };
+  return { verdict: "Unknown", exact: false };
 }
 
 /**
  * A port of `TrozuVault._plan`, branch for branch, over numbers handed in instead of read from the chain. The keeper
  * never re-derives a plan: it asks the vault's `preview` and sends `execute` when the kind is not None. This is that
  * decision, run on a state that does not exist yet. Where the contract walks the queue on chain, this takes the
- * walk's result from `buffer`.
+ * walk's verdict (`state.verdict`) or works it out from the reading (`verdictFrom`).
+ *
+ * `web/src/lib/__fixtures__/planner-vectors.json` holds hundreds of states with the contract's own answers, written by
+ * test/v2/PlannerVectors.t.sol, and `whatif.test.ts` replays every one of them against this function.
  */
-export function planGuardian(s: PlannerState, bufferAfter: BufferReading | undefined = s.buffer): PlanView {
-  const none = (reason: Reason, icr = 0n): PlanView => ({ kind: "None", reason, amount: 0n, tip: 0n, icr });
+export function planGuardian(s: PlannerState, bufferAfter: BufferReading | undefined = s.buffer): Planned {
+  const none = (reason: Reason, icr = 0n, resetWindow = false): Planned => ({ kind: "None", reason, amount: 0n, tip: 0n, icr, resetWindow });
   const g = s.guardian;
   if (!g || g.state === "none") return none("NoPolicy");
   if (g.state === "stale") return none("PolicyStale");
@@ -71,13 +115,11 @@ export function planGuardian(s: PlannerState, bufferAfter: BufferReading | undef
   if (icr >= g.targetIcr || (!belowFloor && g.bufferFloorMusd === 0n)) return none("Healthy", icr);
 
   if (!belowFloor) {
-    // redemption defense: only a complete walk that proves a low buffer may act
-    const b = bufferAfter;
-    if (!b || !b.inList) return none("BufferUnknown", icr);
-    // approximation: the contract also needs the running sum to reach the floor inside maxWalkSteps to say Above
-    const complete = b.complete && b.steps <= g.maxWalkSteps;
-    if (b.value >= g.bufferFloorMusd) return none("Healthy", icr);
-    if (!complete) return none("BufferUnknown", icr);
+    // redemption defense: only a complete walk that proves a low buffer may act. A verdict read from the chain only
+    // describes the buffer as it was read, so it is not used once the caller has changed the buffer.
+    const given = bufferAfter === s.buffer ? s.verdict : undefined;
+    const v = given ?? verdictFrom(bufferAfter, g.bufferFloorMusd, g.maxWalkSteps).verdict;
+    if (v !== "Below") return none(v === "Above" ? "Healthy" : "BufferUnknown", icr);
   }
 
   const fresh = s.now >= g.periodStart + BigInt(g.period);
@@ -85,7 +127,7 @@ export function planGuardian(s: PlannerState, bufferAfter: BufferReading | undef
   const remMusd = sub(g.periodCapMusd, fresh ? 0n : g.spentMusd);
   const tip = g.reserveBtc >= g.keeperTipBtc && remBtc >= g.keeperTipBtc ? g.keeperTipBtc : 0n;
   const tipFor = (valueBtc: bigint) => (valueBtc >= tip * MIN_ACTION_PER_TIP ? tip : 0n);
-  const minIcr = LIMITS.mcr;
+  const minIcr = s.minIcr ?? LIMITS.mcr;
   let blocked = false;
 
   // BTC first
@@ -94,7 +136,7 @@ export function planGuardian(s: PlannerState, bufferAfter: BufferReading | undef
   const btc = min(room, need);
   if (btc > 0n) {
     if (((s.coll + btc) * s.price) / s.debt >= minIcr) {
-      return { kind: belowFloor ? "TopUpBtc" : "DefendBtc", reason: "None", amount: btc, tip: tipFor(btc), icr };
+      return { kind: belowFloor ? "TopUpBtc" : "DefendBtc", reason: "None", amount: btc, tip: tipFor(btc), icr, resetWindow: fresh };
     }
     blocked = true;
   }
@@ -107,12 +149,12 @@ export function planGuardian(s: PlannerState, bufferAfter: BufferReading | undef
     const repay = min(r2, sub(s.debt, (s.coll * s.price) / g.targetIcr));
     if (repay > 0n) {
       if ((s.coll * s.price) / (s.debt - repay) >= minIcr) {
-        return { kind: "RepayMusd", reason: "None", amount: repay, tip: tipFor((repay * WAD) / s.price), icr };
+        return { kind: "RepayMusd", reason: "None", amount: repay, tip: tipFor((repay * WAD) / s.price), icr, resetWindow: fresh };
       }
       blocked = true;
     }
   }
-  return none(blocked ? "BelowMinimum" : "NoReserve", icr);
+  return none(blocked ? "BelowMinimum" : "NoReserve", icr, fresh);
 }
 
 export type BufferVerdict = "unchecked" | "not-queued" | "lower-bound" | "holds" | "below-floor" | "reached";
@@ -189,6 +231,10 @@ export function whatIf(i: WhatIfInput): WhatIfResult {
   if (i.recoveryMode) notes.push("The system is in Recovery Mode now. The contract may ask for a higher ratio than 110% before it acts, which this model does not know.");
   if (liquidatable) notes.push("Under 110% anyone can liquidate the trove. The guardian cannot add enough to bring it back above that line, so it holds.");
 
+  const g2 = i.guardian;
+  if (g2 && g2.state === "live" && g2.bufferFloorMusd > 0n && bufferAfter && !verdictFrom(bufferAfter, g2.bufferFloorMusd, g2.maxWalkSteps).exact) {
+    notes.push("The queue check walked further than your policy lets the guardian walk, so the model cannot tell whether the guardian would see the buffer fall under the floor in time. It assumes it would not, and holds.");
+  }
   const plan = planGuardian({ ...i, coll, debt, price }, bufferAfter);
   return { price, coll, debt, icr, icrBefore, liquidatable, redeemedMusd, redeemedBtc, bufferAfter, verdict, plan, keeper: keeperOutcome(i.guardian?.state, plan), notes };
 }

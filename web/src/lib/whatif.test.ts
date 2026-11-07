@@ -1,5 +1,7 @@
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { agreesWithPreview, keeperOutcome, planGuardian, whatIf, type GuardianSetup, type PlannerState, type WhatIfInput } from "./whatif";
+import { kindName, reasonName } from "./guardian";
+import { agreesWithPreview, keeperOutcome, planGuardian, verdictFrom, whatIf, type GuardianSetup, type PlannerState, type Verdict, type WhatIfInput } from "./whatif";
 
 const e18 = (n: number) => BigInt(Math.round(n * 1e6)) * 10n ** 12n;
 
@@ -264,5 +266,119 @@ describe("keeper outcome and preview check", () => {
     expect(agreesWithPreview(act, { ...act, icr: 0n }).agree).toBe(true);
     expect(agreesWithPreview(act, hold).agree).toBe(false);
     expect(agreesWithPreview(act, undefined).agree).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------------------------------------------------
+// Golden vectors: states the contract itself was asked about. test/v2/PlannerVectors.t.sol builds each one on the local
+// MUSD deployment, calls TrozuVault.preview() and writes the state and the answer; every one is replayed here.
+// ---------------------------------------------------------------------------------------------------------------------
+
+interface RawVector {
+  id: number;
+  mode: number;
+  tags: string;
+  state: {
+    active: boolean; coll: string; debt: string; price: string; now: string; minNetDebt: string; minIcr: string;
+    policyState: "none" | "stale" | "live";
+    policy: Record<string, string | number>;
+    buffer: { inList: boolean; value: string; complete: boolean; steps: number } | null;
+    verdict: Verdict | "None";
+  };
+  expected: { kind: number; reason: number; amount: string; tip: string; icr: string; resetWindow: boolean };
+}
+
+const vectors = JSON.parse(readFileSync(new URL("./__fixtures__/planner-vectors.json", import.meta.url), "utf8")) as RawVector[];
+
+function stateOf(v: RawVector): PlannerState {
+  const p = v.state.policy;
+  const big = (k: string) => BigInt(p[k] as string);
+  return {
+    active: v.state.active,
+    coll: BigInt(v.state.coll),
+    debt: BigInt(v.state.debt),
+    price: BigInt(v.state.price),
+    now: BigInt(v.state.now),
+    minNetDebt: BigInt(v.state.minNetDebt),
+    minIcr: BigInt(v.state.minIcr),
+    recoveryMode: false,
+    buffer: v.state.buffer ? { inList: v.state.buffer.inList, value: BigInt(v.state.buffer.value), complete: v.state.buffer.complete, steps: v.state.buffer.steps } : undefined,
+    guardian: {
+      state: v.state.policyState,
+      floorIcr: big("floorIcr"), targetIcr: big("targetIcr"), maxActionBtc: big("maxActionBtc"), maxActionMusd: big("maxActionMusd"),
+      periodCapBtc: big("periodCapBtc"), periodCapMusd: big("periodCapMusd"), keeperTipBtc: big("keeperTipBtc"), bufferFloorMusd: big("bufferFloorMusd"),
+      period: Number(p.period), maxWalkSteps: Number(p.maxWalkSteps),
+      reserveBtc: big("reserveBtc"), reserveMusd: big("reserveMusd"), spentBtc: big("spentBtc"), spentMusd: big("spentMusd"), periodStart: big("periodStart"),
+    },
+  };
+}
+
+const answerOf = (v: RawVector) => ({
+  kind: kindName(v.expected.kind), reason: reasonName(v.expected.reason),
+  amount: BigInt(v.expected.amount), tip: BigInt(v.expected.tip), icr: BigInt(v.expected.icr), resetWindow: v.expected.resetWindow,
+});
+const fmt = (a: object) => JSON.stringify(a, (_k, x) => (typeof x === "bigint" ? x.toString() : x));
+
+describe("planner port against the contract's golden vectors", () => {
+  it("has enough vectors, and every branch the port has to match is among them", () => {
+    expect(vectors.length).toBeGreaterThanOrEqual(400);
+    const tags = new Set(vectors.flatMap((v) => v.tags.split(",").filter(Boolean)));
+    for (const t of [
+      "kind-topup", "kind-repay", "kind-defend", "hold-healthy", "reason-below-minimum", "reason-no-reserve", "reason-buffer-unknown",
+      "reason-no-policy", "reason-stale", "reason-inactive", "verdict-above", "verdict-below", "verdict-unknown", "bind-need", "bind-reserve",
+      "bind-period", "bind-maxaction", "bind-mindebt", "tip-paid", "tip-dust", "tip-reserve-short", "recovery-mode",
+    ]) expect(tags.has(t), t).toBe(true);
+  });
+
+  it("gives the contract's answer for every vector when the contract's own redemption verdict is supplied", () => {
+    const wrong: string[] = [];
+    for (const v of vectors) {
+      const st = stateOf(v);
+      const got = planGuardian({ ...st, verdict: v.state.verdict === "None" ? undefined : v.state.verdict });
+      const want = answerOf(v);
+      if (fmt(got) !== fmt(want)) wrong.push(`vector ${v.id} (${v.tags}): contract ${fmt(want)}, port ${fmt(got)}`);
+    }
+    expect(wrong.slice(0, 5)).toEqual([]);
+    expect(wrong.length).toBe(0);
+  });
+
+  it("works out the redemption verdict from a buffer reading exactly, except in the one case it says it cannot", () => {
+    let exact = 0;
+    let doubtful = 0;
+    const wrong: string[] = [];
+    for (const v of vectors) {
+      if (v.state.verdict === "None" || !v.state.buffer) continue;
+      const g = stateOf(v).guardian!;
+      const d = verdictFrom(stateOf(v).buffer, g.bufferFloorMusd, g.maxWalkSteps);
+      if (d.exact) {
+        exact++;
+        if (d.verdict !== v.state.verdict) wrong.push(`vector ${v.id}: contract ${v.state.verdict}, derived ${d.verdict}`);
+      } else {
+        doubtful++;
+        // the cautious answer, and the contract can only have said Above or Unknown here, never Below
+        if (d.verdict !== "Unknown" || v.state.verdict === "Below") wrong.push(`vector ${v.id}: doubtful case came out ${d.verdict} against the contract's ${v.state.verdict}`);
+      }
+    }
+    expect(wrong.slice(0, 5)).toEqual([]);
+    expect(exact).toBeGreaterThan(100);
+    console.log(`verdicts derived from a buffer reading: ${exact} exact, ${doubtful} doubtful (all cautious)`);
+  });
+
+  it("without the contract's verdict, only a doubtful verdict can make the port differ, and then only towards holding", () => {
+    let differ = 0;
+    for (const v of vectors) {
+      const st = stateOf(v);
+      const got = planGuardian(st);
+      const want = answerOf(v);
+      if (fmt(got) === fmt(want)) continue;
+      differ++;
+      const g = st.guardian!;
+      const d = verdictFrom(st.buffer, g.bufferFloorMusd, g.maxWalkSteps);
+      expect(d.exact, `vector ${v.id} differs for a reason other than the verdict: ${fmt(want)} vs ${fmt(got)}`).toBe(false);
+      expect(got.kind, `vector ${v.id}: the port acted where the contract did not`).toBe("None");
+      expect(got.reason).toBe("BufferUnknown");
+      expect(want.kind === "None" ? want.reason : "acted").not.toBe("BufferUnknown");
+    }
+    console.log(`vectors where the derived verdict changes the answer: ${differ} of ${vectors.length}`);
   });
 });
