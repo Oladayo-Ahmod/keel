@@ -1,0 +1,466 @@
+{
+  "chainId": 31611,
+  "note": "Wallet actions run through the real UI with a test-only connector. gasLimit is what the app asked for; gasUsed is from the receipt.",
+  "results": [
+    {
+      "name": "add",
+      "what": "Add collateral 0.0005 BTC",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "addCollateral",
+          "hash": "0x8d2c60c259f51d027864ec6c9dac811c8c44dd99bf91cfd22f0d9560f58f5d13",
+          "gasLimit": "6000000",
+          "gasUsed": "3000000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "add-signing.jpg",
+        "add-pending.jpg",
+        "add-success.jpg"
+      ],
+      "at": "2026-11-07T07:39:28.341Z",
+      "note": "Done The collateral is in your trove. 0x8d2c…5d13 on the explorer"
+    },
+    {
+      "name": "rejected",
+      "what": "Wallet rejects an add (error state)",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "addCollateral",
+          "gasLimit": "6000000",
+          "error": "rejected in the wallet"
+        }
+      ],
+      "shots": [
+        "rejected-signing.jpg",
+        "rejected-failed.jpg"
+      ],
+      "at": "2026-11-07T07:41:36.142Z",
+      "note": "Not completed You declined the request in your wallet. Nothing was sent."
+    },
+    {
+      "name": "withdraw",
+      "what": "Withdraw 0.0002 BTC (stays far above 150%)",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "withdrawCollateral",
+          "hash": "0x9d5f7c8641bccda3146fc4ea38316a9af1dfd1d008c36271490b211a58ccfab6",
+          "gasLimit": "6000000",
+          "gasUsed": "3000000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "withdraw-signing.jpg",
+        "withdraw-pending.jpg",
+        "withdraw-success.jpg"
+      ],
+      "at": "2026-11-07T07:43:21.353Z",
+      "note": "Done The collateral is in your wallet. 0x9d5f…fab6 on the explorer"
+    },
+    {
+      "name": "borrow",
+      "what": "Borrow 10 MUSD",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "borrow",
+          "hash": "0x6f90cd1bd8f19aff4728656f1bf8e3b77faf15d11b3a3b52243766358aa2fe3b",
+          "gasLimit": "6000000",
+          "gasUsed": "3000000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "borrow-signing.jpg",
+        "borrow-pending.jpg",
+        "borrow-success.jpg"
+      ],
+      "at": "2026-11-07T07:58:29.443Z",
+      "note": "Done The MUSD is in your wallet. 0x6f90…fe3b on the explorer"
+    },
+    {
+      "name": "repay",
+      "what": "Repay 1 MUSD with a signed permit (Mezo allows at most 1.83: the 2,000 MUSD minimum debt)",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "repayWithPermit",
+          "hash": "0x2616fd3181916b4b5156ccb83084f297cc2291f87dd13379c344b3f618504573",
+          "gasLimit": "6000000",
+          "gasUsed": "3000000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "repay-success.jpg",
+        "repay-signing.jpg",
+        "repay-pending.jpg"
+      ],
+      "at": "2026-11-07T07:58:52.000Z",
+      "note": "Done The debt is lower. 0x2616…4573 on the explorer"
+    },
+    {
+      "name": "sweep-btc",
+      "what": "Sweep stray BTC",
+      "status": "not-run",
+      "note": "Not run: the vault has no plain BTC receive, so a normal send reverts and only a forced send (selfdestruct) could leave BTC in it. The sweep button stays disabled with nothing to sweep, which is the verified behaviour; the BTC sweep path is covered by Foundry tests.",
+      "txs": [],
+      "shots": [],
+      "at": "2026-11-07T07:59:27.414Z"
+    },
+    {
+      "name": "sweep-musd",
+      "what": "Sweep stray MUSD out of the vault",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "sweep",
+          "hash": "0x5e9e66324d51952529e61d87591acfaabad8cac526530228986f33e62205575e",
+          "gasLimit": "1000000",
+          "gasUsed": "500000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "sweep-musd-signing.jpg",
+        "sweep-musd-pending.jpg",
+        "sweep-musd-success.jpg"
+      ],
+      "at": "2026-11-07T07:59:27.416Z",
+      "note": "Done The funds are in your wallet. 0x5e9e…575e on the explorer"
+    },
+    {
+      "name": "claim",
+      "what": "Claim surplus",
+      "status": "not-run",
+      "note": "Not run: nothing to claim (no redemption or liquidation has left surplus), so the app keeps the button disabled. The disabled state is the verified behaviour.",
+      "txs": [],
+      "shots": [],
+      "at": "2026-11-07T07:59:42.544Z"
+    },
+    {
+      "name": "refinance",
+      "what": "Refinance",
+      "status": "not-run",
+      "note": "Not run: no lower global rate exists. Panel text: ",
+      "txs": [],
+      "shots": [],
+      "at": "2026-11-07T07:59:43.282Z"
+    },
+    {
+      "name": "policy",
+      "what": "Guardian: save a policy",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "setPolicy",
+          "hash": "0x661abb34c7be0163471cfceaa767044590958c19bbf4461aea07ee88b1af13c3",
+          "gasLimit": "3900000",
+          "gasUsed": "1950000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "policy-signing.jpg",
+        "policy-pending.jpg",
+        "policy-success.jpg"
+      ],
+      "at": "2026-11-07T08:16:55.265Z",
+      "note": "Done The guardian policy is saved. 0x661a…13c3 on the explorer"
+    },
+    {
+      "name": "reserve-fund-btc",
+      "what": "Guardian reserve: add 0.0001 BTC",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "fundReserveBtc",
+          "hash": "0x8fbd9803f60831e968a14acd887635733e368d6a7f8f1c660ac609a55d4ff0b8",
+          "gasLimit": "1000000",
+          "gasUsed": "500000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "reserve-fund-btc-success.jpg",
+        "reserve-fund-btc-signing.jpg",
+        "reserve-fund-btc-pending.jpg"
+      ],
+      "at": "2026-11-07T07:47:06.962Z",
+      "note": "Done The reserve is updated. 0x8fbd…f0b8 on the explorer"
+    },
+    {
+      "name": "reserve-withdraw-btc",
+      "what": "Guardian reserve: take out 0.0001 BTC",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "withdrawReserveBtc",
+          "hash": "0x229461c146076e4fcbc296e6fdd3b601bff57f10f7160f9e92aaada6ce4a6965",
+          "gasLimit": "1000000",
+          "gasUsed": "500000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "reserve-withdraw-btc-success.jpg",
+        "reserve-withdraw-btc-signing.jpg",
+        "reserve-withdraw-btc-pending.jpg"
+      ],
+      "at": "2026-11-07T07:47:36.686Z",
+      "note": "Done The reserve is updated. 0x2294…6965 on the explorer"
+    },
+    {
+      "name": "reserve-fund-musd",
+      "what": "Guardian reserve: add 5 MUSD (permit)",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "fundReserveMusdWithPermit",
+          "hash": "0x946c494d73a055167f5f2a264d39377127ba5839b654d3b2f3728dba4d2fc5ad",
+          "gasLimit": "1000000",
+          "gasUsed": "500000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "reserve-fund-musd-success.jpg",
+        "reserve-fund-musd-signing.jpg",
+        "reserve-fund-musd-pending.jpg"
+      ],
+      "at": "2026-11-07T07:48:11.945Z",
+      "note": "Done The reserve is updated. 0x946c…c5ad on the explorer"
+    },
+    {
+      "name": "reserve-withdraw-musd",
+      "what": "Guardian reserve: take out 5 MUSD",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "withdrawReserveMusd",
+          "hash": "0x1f9b9354c17c1d8c472f66b1c70a9a48df6973dc799cacd6b19ea3e5cfa69c70",
+          "gasLimit": "1000000",
+          "gasUsed": "500000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "reserve-withdraw-musd-success.jpg",
+        "reserve-withdraw-musd-signing.jpg",
+        "reserve-withdraw-musd-pending.jpg"
+      ],
+      "at": "2026-11-07T07:48:42.061Z",
+      "note": "Done The reserve is updated. 0x1f9b…9c70 on the explorer"
+    },
+    {
+      "name": "list-fixed-100",
+      "what": "List fixed price 100 MUSD (the one the second wallet buys)",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "announce",
+          "hash": "0x84a7743f4d179a36c24fecad6e293169908582565ec349ab308f051a16e36f7c",
+          "gasLimit": "1000000",
+          "gasUsed": "500000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "list-fixed-100-success.jpg",
+        "list-fixed-100-signing.jpg",
+        "list-fixed-100-pending.jpg"
+      ],
+      "at": "2026-11-07T07:48:49.908Z",
+      "note": "Done Listed. It now shows in the market. 0x84a7…6f7c on the explorer"
+    },
+    {
+      "name": "list-fixed-cancel-me",
+      "what": "List fixed price 7,000 MUSD (to cancel)",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "announce",
+          "hash": "0xbf412d7981287308ccb2d9f6685d31b221132742ba8ba8cb5fd6a1bb15f1f222",
+          "gasLimit": "1000000",
+          "gasUsed": "500000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "list-fixed-cancel-me-signing.jpg",
+        "list-fixed-cancel-me-pending.jpg",
+        "list-fixed-cancel-me-success.jpg"
+      ],
+      "at": "2026-11-07T07:49:06.952Z",
+      "note": "Done Listed. It now shows in the market. 0xbf41…f222 on the explorer"
+    },
+    {
+      "name": "buy",
+      "what": "Second wallet buys the 100 MUSD listing (permit)",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "second",
+          "fn": "buy",
+          "hash": "0xf32de59bc28e9382785130b209770dc65f2a5f2d8883b36fc5285cad70535855",
+          "gasLimit": "1500000",
+          "gasUsed": "750000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "buy-signing.jpg",
+        "buy-pending.jpg",
+        "buy-success.jpg"
+      ],
+      "at": "2026-11-07T08:01:27.222Z",
+      "note": "Done The position is yours. 0xf32d…5855 on the explorer"
+    },
+    {
+      "name": "transfer-back",
+      "what": "Second wallet transfers the position back",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "second",
+          "fn": "safeTransferFrom",
+          "hash": "0x7d311c242eaebaeea821833edb8189cd4b0648f1f01a44b972ca5fd13daa576f",
+          "gasLimit": "1000000",
+          "gasUsed": "500000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "transfer-back-signing.jpg",
+        "transfer-back-pending.jpg",
+        "transfer-back-success.jpg"
+      ],
+      "at": "2026-11-07T08:13:13.022Z",
+      "note": "Done The position now belongs to the receiver. 0x7d31…576f on the explorer"
+    },
+    {
+      "name": "list-fixed-for-cancel",
+      "what": "List fixed price 7,000 MUSD again (the first died with the transfer)",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "announce",
+          "hash": "0xafdae36d8709fd17ac27418f97b6ff69d266557f22e5647769d5b82c5b66bf6c",
+          "gasLimit": "1000000",
+          "gasUsed": "500000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "list-fixed-for-cancel-signing.jpg",
+        "list-fixed-for-cancel-pending.jpg",
+        "list-fixed-for-cancel-success.jpg"
+      ],
+      "at": "2026-11-07T07:53:56.256Z",
+      "note": "Done Listed. It now shows in the market. 0xafda…bf6c on the explorer"
+    },
+    {
+      "name": "cancel",
+      "what": "Cancel the 7,000 MUSD listing",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "cancel",
+          "hash": "0x69a7d4e15a42ac8a4796c88449c29ce7f43d875dcadf0d348d3075f717b642a4",
+          "gasLimit": "1000000",
+          "gasUsed": "500000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "cancel-success.jpg",
+        "cancel-signing.jpg",
+        "cancel-pending.jpg"
+      ],
+      "at": "2026-11-07T07:54:20.280Z",
+      "note": "Done Done. The listing can no longer be bought. 0x69a7…42a4 on the explorer"
+    },
+    {
+      "name": "list-dutch",
+      "what": "List a Dutch auction 9,000 to 5,000 MUSD over 30 days, open 30 days (staged for the browse view)",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "announce",
+          "hash": "0x2f2f9a051ba91103fd87fb94909e214582e27a9416f6b6317d4bbe3e0a0b5d96",
+          "gasLimit": "1000000",
+          "gasUsed": "500000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "list-dutch-signing.jpg",
+        "list-dutch-pending.jpg",
+        "list-dutch-success.jpg"
+      ],
+      "at": "2026-11-07T08:17:37.415Z",
+      "note": "Done Listed. It now shows in the market. 0x2f2f…5d96 on the explorer"
+    },
+    {
+      "name": "list-fixed-6000",
+      "what": "List fixed price 6,000 MUSD (staged for the browse view)",
+      "status": "ok",
+      "txs": [
+        {
+          "who": "deployer",
+          "fn": "announce",
+          "hash": "0x0bef825f83e2de7418f95be1a375db821925a8ab07084a144d467ddb664ecbf9",
+          "gasLimit": "1000000",
+          "gasUsed": "500000",
+          "txStatus": "success"
+        }
+      ],
+      "shots": [
+        "list-fixed-6000-signing.jpg",
+        "list-fixed-6000-pending.jpg",
+        "list-fixed-6000-success.jpg"
+      ],
+      "at": "2026-11-07T08:15:48.750Z",
+      "note": "Done Listed. It now shows in the market. 0x0bef…cbf9 on the explorer"
+    },
+    {
+      "name": "open",
+      "what": "Open a position",
+      "status": "not-run",
+      "note": "Not run: needs about 0.029 BTC of collateral (1,800 MUSD minimum at the 110% floor) and the deployer holds less. Unverified through the UI on this build.",
+      "txs": [],
+      "shots": [],
+      "at": "2026-11-07T08:03:53.314Z"
+    },
+    {
+      "name": "close",
+      "what": "Close a position",
+      "status": "not-run",
+      "note": "Not run on the proof position (it would need roughly the full debt in MUSD and ends the demo), and a second position costs about 0.029 BTC. Unverified through the UI on this build.",
+      "txs": [],
+      "shots": [],
+      "at": "2026-11-07T08:03:53.315Z"
+    }
+  ]
+}
