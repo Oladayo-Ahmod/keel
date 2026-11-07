@@ -1,0 +1,107 @@
+{
+  "ranAt": "2026-11-07T15:20:49.621Z",
+  "base": "http://127.0.0.1:3100",
+  "account": "0x5104C1A69242D94159Cf7151277252e568cB8F98",
+  "checks": [
+    {
+      "name": "the proof position (v2 NFT 1) is in the held list, as the deployer",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the hint says it is an estimate and shows equity, both rates and the horizon",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "a locked rate equal to the market gives no premium and says so",
+      "ok": true,
+      "detail": "Price estimate | Estimate | EQUITY | 1,264.00 MUSD | GUARDIAN RESERVE | 90.00 MUSD | LOCKED RATE | 1.00% | MARKET RATE | 1.00% | PRINCIPAL | 2,010.84 MUSD | RAT"
+    },
+    {
+      "name": "it suggests a price",
+      "ok": true,
+      "detail": "suggested 1,354.00"
+    },
+    {
+      "name": "Use as price fills the field with the suggestion and sends nothing",
+      "ok": true,
+      "detail": "field 1354"
+    },
+    {
+      "name": "with no premium there is no auction range, and it says use a fixed price",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "the simulator is marked a model, not a prediction",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "at rest the model agrees with the contract's own preview",
+      "ok": true,
+      "detail": "At today's numbers the model gives the same answer as the contract's own preview."
+    },
+    {
+      "name": "the redemption slider is off until the buffer is checked",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "checking the buffer shows it and enables the slider",
+      "ok": true,
+      "detail": "Buffer now: at least 276,262."
+    },
+    {
+      "name": "a 45% drop with 120% pressure changes the ratio and shows a guardian line",
+      "ok": true,
+      "detail": "BTC PRICE | $41,677.22 | COLLATERAL RATIO | 89.5%Liquidatable was 162.8% | COLLATERAL | 0.04321 BTC | DEBT | 2,010.86 MUSD | REDEMPTION BUFFER | ≥ 0.00 MUSD left. The queue check was cut short, so redemption cannot be shown to reach this po"
+    },
+    {
+      "name": "the share page shows the position and the share bar",
+      "ok": true,
+      "detail": ""
+    },
+    {
+      "name": "Copy link copies this page's address",
+      "ok": true,
+      "detail": "Link copied. / http://127.0.0.1:3100/position/2/1"
+    },
+    {
+      "name": "the page carries an absolute og:image and a large twitter card",
+      "ok": true,
+      "detail": "https://trozu-e2e.example/og/position/2/1 summary_large_image"
+    },
+    {
+      "name": "the image route returns a PNG with a short cache",
+      "ok": true,
+      "detail": "{\"status\":200,\"type\":\"image/png\",\"cache\":\"public, s-maxage=60, stale-while-revalidate=120\",\"bytes\":113705,\"png\":true}"
+    },
+    {
+      "name": "the wallet was never asked to send a transaction",
+      "ok": true,
+      "detail": "0 requests"
+    },
+    {
+      "name": "no page error",
+      "ok": true,
+      "detail": ""
+    }
+  ],
+  "priceHint": "Price estimate | Estimate | EQUITY | 1,264.00 MUSD | GUARDIAN RESERVE | 90.00 MUSD | LOCKED RATE | 1.00% | MARKET RATE | 1.00% | PRINCIPAL | 2,010.84 MUSD | RATE ADVANTAGE A YEAR | none | HORIZON | 1 year | Suggested price | 1,354.00 MUSD | Your locked rate equals the market rate, so there is no premium to ask for. The price is equity only. Equity is collateral value minus debt, read from the chain. This is an estimate. It is not a valuation, and nobody has to pay it. | Use as price",
+  "whatIfAtRest": "BTC PRICE | $75,776.77 | COLLATERAL RATIO | 162.8%Healthy was 162.8% | COLLATERAL | 0.04321 BTC | DEBT | 2,010.86 MUSD | REDEMPTION BUFFER | Check the buffer to model redemptions. | GUARDIAN | The ratio is at or above the floor. Nothing to do. | A keeper skips it: the planner says Healthy.",
+  "buffer": "Buffer now: at least 276,262.",
+  "whatIfMoved": "BTC PRICE | $41,677.22 | COLLATERAL RATIO | 89.5%Liquidatable was 162.8% | COLLATERAL | 0.04321 BTC | DEBT | 2,010.86 MUSD | REDEMPTION BUFFER | ≥ 0.00 MUSD left. The queue check was cut short, so redemption cannot be shown to reach this position. | GUARDIAN | Every action the policy allows would still leave the position too low for Mezo to accept. It waits. | A keeper skips it: the planner says BelowMinimum.",
+  "meta": {
+    "ogImage": "https://trozu-e2e.example/og/position/2/1",
+    "twitterCard": "summary_large_image"
+  },
+  "image": {
+    "status": 200,
+    "type": "image/png",
+    "cache": "public, s-maxage=60, stale-while-revalidate=120",
+    "bytes": 113705,
+    "png": true
+  }
+}
