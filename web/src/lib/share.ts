@@ -43,6 +43,7 @@ export interface Card {
 
 const NET = "Mezo testnet";
 const FOOT = "Public on-chain values only. Testnet only. Not audited.";
+const FOOT_PROOF = "Figures from the project's own proof file. Testnet only. Not audited.";
 
 /** The share card for one position, from numbers the lens returned. `stale` means the answering node was behind. */
 export function positionCard(p: CardSource, wave: Wave, stale: boolean): Card {
@@ -86,7 +87,7 @@ export function missingCard(id: bigint): Card {
 /** The proof page card: counts taken from the proof file, never typed here. A file that failed its checks gives a plain card. */
 export function proofCard(r: { ok: true; data: Proof } | { ok: false }): Card {
   if (!r.ok) {
-    return { kind: "proof", title: "Trozu proof", subtitle: "Each claim, how it was checked, and the evidence.", stats: [], foot: FOOT };
+    return { kind: "proof", title: "Trozu proof", subtitle: "Each claim, how it was checked, and the evidence.", stats: [], foot: FOOT_PROOF };
   }
   const d = r.data;
   const verified = d.claims.filter((c) => c.status === "verified").length;
@@ -100,7 +101,7 @@ export function proofCard(r: { ok: true; data: Proof } | { ok: false }): Card {
     title: "Trozu proof",
     subtitle: `${NET} · each claim, how it was checked, and the evidence`,
     stats,
-    foot: FOOT,
+    foot: FOOT_PROOF,
   };
 }
 
