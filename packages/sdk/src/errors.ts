@@ -183,6 +183,7 @@ const MEZO_TEXT: [RegExp, string][] = [
   [/TCR < CCR/, "Mezo refused it: it would push the whole system under 150% collateral. Use more collateral or borrow less."],
   [/ICR.*MCR|MCR.*ICR|below.*minimum collateral/i, "Mezo refused it: the trove would end up under 110% collateral."],
   [/net debt.*(minimum|MIN)/i, "Mezo refused it: the debt would be under the minimum a trove must carry."],
+  [/insufficient funds|exceeds the balance/i, "The sending wallet does not hold enough BTC for this amount plus gas."],
 ];
 
 const NETWORK = /HTTP request failed|unknown RPC error|fetch failed|Failed to fetch|timed out|ECONNRESET|ECONNREFUSED|socket hang up/i;

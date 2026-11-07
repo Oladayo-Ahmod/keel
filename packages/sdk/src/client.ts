@@ -5,8 +5,9 @@ import { guardianReads } from "./guardian.js";
 import { computeHints } from "./hints.js";
 import { lensReads } from "./lens.js";
 import { marketReads } from "./market.js";
+import { simulate } from "./simulate.js";
 import { txBuilders } from "./tx.js";
-import type { Deployment } from "./types.js";
+import type { Deployment, UnsignedTx } from "./types.js";
 
 /** The Mezo testnet (matsnet) deployment this package was built against. */
 export const matsnet: Deployment = matsnetDeployment;
@@ -35,6 +36,8 @@ export function createTrozu(o: TrozuOptions = {}) {
     market: marketReads(ctx),
     guardian: guardianReads(ctx),
     tx: txBuilders(deployment),
+    /** Dry-runs an unsigned transaction as `from` with an eth_call. Sends nothing. */
+    simulate: (tx: UnsignedTx, from: string) => simulate(ctx, tx, from),
     /** The vault behind a position id, from the NFT. */
     vaultOf: (tokenId: bigint) => vaultOfNft(ctx, tokenId),
     /** Sorted-list hints for a trove with this NICR, to cut gas on any call that moves it. */

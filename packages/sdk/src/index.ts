@@ -42,4 +42,5 @@ export { MAX_WALK } from "./lens.js";
 export { LOG_WINDOW, type ListingsOptions } from "./market.js";
 export { kindName, reasonName } from "./guardian.js";
 export { txBuilders, type TxBuilders } from "./tx.js";
+export { type Simulation } from "./simulate.js";
 export { lensAbi, factoryAbi, marketAbi, nftAbi, vaultAbi } from "./generated/abis.js";
