@@ -1,6 +1,21 @@
 # Test plan
 
-Status: 90 tests, all passing, `forge test` (83 unit and fuzz tests, 7 invariants). Coverage from `forge coverage --ir-minimum`:
+Status (counted 2026-11-07, one reconciled number): **`forge test` reports 259 passing, 0 failed, 0 skipped** across 22 suites, **151 web tests** (`npm test` in `web/`, 12 files) and **24 keeper tests** (`npm test` in `keeper/`). They are three separate suites and are not added together here.
+
+Why the older numbers differed: **90 and 84 were the same Wave 1 suite counted two ways.** 90 is 83 unit and fuzz tests plus 7 invariants, counted one by one. 84 is what `forge test` prints for it: 83 plus one result, because forge folds each suite's invariants into a single result. Wave 2 then added the market, the guardian, the v2 invariants and a mechanical re-run of the Wave 1 vault tests against the v2 vault (`test/v2/regression/`). Counted one by one the source has 275 test and invariant functions, 18 of them invariants (7 in Wave 1's suite, 11 in Wave 2's); counted as forge reports them it is 259. This document uses the forge number, 259, and says so wherever it quotes it.
+
+| Foundry suite group | Tests as forge reports them |
+|---|---|
+| Wave 1 (`test/unit`, `test/fuzz`, `test/invariant`) | 84 |
+| Wave 2 market and guardian (`test/v2/Market`, `Guardian`) | 88 |
+| Wave 2 deploy and invariants (`test/v2/DeployV2`, `invariant`) | 5 |
+| Wave 1 vault tests re-run against the v2 vault (`test/v2/regression`) | 75 |
+| Fork tests on mainnet state (`test/fork`) | 7 |
+| **Total** | **259** |
+
+Web tests by file are in `web/src/lib/*.test.ts` (gas limits, market and guardian maths, permits, vault calls, error text, content files). The wallet round trip in [ROUNDTRIP.md](ROUNDTRIP.md) is a live run, not a test in these counts.
+
+Coverage from `forge coverage --ir-minimum` (Wave 1, taken before Wave 2):
 
 | File | Lines | Statements | Branches | Functions |
 |---|---|---|---|---|
