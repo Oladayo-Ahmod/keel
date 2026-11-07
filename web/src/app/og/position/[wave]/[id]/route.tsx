@@ -21,10 +21,10 @@ export async function GET(_req: Request, { params }: { params: { wave: string; i
   const lens = wave === "2" ? wave2.lens : config.keel.lens;
   try {
     const r = await freshRead((c) => c.readContract({ address: lens, abi: positionLensAbi, functionName: "positionInfo", args: [id] }));
-    return renderCard(positionCard(r.data as unknown as CardSource, wave, r.freshness.stale), r.freshness.stale ? SHORT : FRESH);
+    return await renderCard(positionCard(r.data as unknown as CardSource, wave, r.freshness.stale), r.freshness.stale ? SHORT : FRESH);
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
-    if (NONEXISTENT.test(msg)) return renderCard(missingCard(id), SHORT, 404);
-    return renderCard(unavailableCard(id), SHORT);
+    if (NONEXISTENT.test(msg)) return await renderCard(missingCard(id), SHORT, 404);
+    return await renderCard(unavailableCard(id), SHORT);
   }
 }

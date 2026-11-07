@@ -1,4 +1,5 @@
 import { ImageResponse } from "next/og";
+import { loadCardFonts } from "./cardFonts";
 import type { Card } from "./share";
 import type { Risk } from "./risk";
 
@@ -16,14 +17,15 @@ const TONE: Record<Risk, { fg: string; bg: string }> = {
 };
 
 /** Renders one card as a 1200x630 PNG. `cache` is the Cache-Control value, since the numbers behind a card move. */
-export function renderCard(card: Card, cache: string, status = 200): Response {
+export async function renderCard(card: Card, cache: string, status = 200): Promise<Response> {
+  const fonts = await loadCardFonts();
   const tone = card.chip ? TONE[card.chip.level] : undefined;
   const image = new ImageResponse(
     (
       <div
         style={{
           width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between",
-          padding: 56, color: INK, fontSize: 28,
+          padding: 56, color: INK, fontSize: 28, fontFamily: fonts ? "Sora" : undefined,
           background: "linear-gradient(135deg, #dbe8f4 0%, #f4f6f8 55%, #f1efe6 100%)",
         }}
       >
@@ -68,8 +70,10 @@ export function renderCard(card: Card, cache: string, status = 200): Response {
         <div style={{ display: "flex", fontSize: 22, color: MUTED }}>{card.foot}</div>
       </div>
     ),
-    CARD_SIZE,
+    fonts ? { ...CARD_SIZE, fonts } : CARD_SIZE,
   );
   // ImageResponse adds a one-year immutable Cache-Control of its own and merges ours into it, which would pin a stale card in browsers
-  return new Response(image.body, { status, headers: { "Content-Type": "image/png", "Cache-Control": cache } });
+  // read it all here: a render error inside the stream would otherwise leave a 200 with an empty body
+  const png = await image.arrayBuffer();
+  return new Response(png, { status, headers: { "Content-Type": "image/png", "Cache-Control": cache } });
 }

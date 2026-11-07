@@ -7,6 +7,13 @@ const nextConfig = {
   // connector module instead of leaving a runtime check that keeps it in the bundle
   env: { NEXT_PUBLIC_E2E: process.env.NEXT_PUBLIC_E2E === "1" ? "1" : "0" },
   reactStrictMode: true,
+  // the share image routes read the Sora files from disk, so the file tracer has to ship them with the routes
+  experimental: {
+    outputFileTracingIncludes: {
+      "/og/proof": ["./src/assets/fonts/**/*"],
+      "/og/position/[wave]/[id]": ["./src/assets/fonts/**/*"],
+    },
+  },
   // the wallet round trip builds a test-only variant next to the real one
   distDir: process.env.NEXT_DIST_DIR || ".next",
   // Passport and the orangekit packages it builds on ship some TypeScript source,
