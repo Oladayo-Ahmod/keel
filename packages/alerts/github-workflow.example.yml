@@ -1,0 +1,76 @@
+# Example GitHub Actions job for @trozu/alerts. Copy it to .github/workflows/trozu-alerts.yml to use it.
+# It is not enabled by default, because it needs a webhook secret and a list of positions to watch.
+#
+# Setup:
+#   1. Settings -> Secrets and variables -> Actions -> New repository secret: ALERT_WEBHOOK_URL
+#      (a Slack or Discord incoming webhook, or any https endpoint that accepts a JSON POST).
+#   2. Settings -> Secrets and variables -> Actions -> Variables: ALERT_TOKEN_IDS, like "1,2".
+#   3. Copy this file and adjust the schedule.
+#
+# No key of any kind is needed: the job only reads the chain. Scheduled runs on GitHub can start late
+# and are paused in a repository with no activity for 60 days.
+
+name: trozu alerts
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Print the alerts instead of posting them"
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: trozu-alerts
+  cancel-in-progress: false
+
+jobs:
+  alerts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: packages/package-lock.json
+
+      - name: build
+        working-directory: packages
+        run: |
+          npm ci
+          npm run build -w @trozu/sdk -w @trozu/alerts
+
+      # the state file remembers the last block read and when each alert was sent, so a run does not repeat the last one
+      - name: restore state
+        uses: actions/cache/restore@v4
+        with:
+          path: packages/alerts/state.json
+          key: trozu-alerts-state-${{ github.run_id }}
+          restore-keys: trozu-alerts-state-
+
+      - name: check positions
+        working-directory: packages
+        env:
+          WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+          TOKEN_IDS: ${{ vars.ALERT_TOKEN_IDS }}
+          MARGIN_POINTS: ${{ vars.ALERT_MARGIN_POINTS || '10' }}
+          STATE_FILE: alerts/state.json
+          # about 15 minutes of blocks, used only on the first run, before there is a state file
+          LOOKBACK_BLOCKS: "3000"
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+        run: node alerts/dist/cli.js
+
+      - name: save state
+        if: ${{ !inputs.dry_run }}
+        uses: actions/cache/save@v4
+        with:
+          path: packages/alerts/state.json
+          key: trozu-alerts-state-${{ github.run_id }}
