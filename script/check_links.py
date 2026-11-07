@@ -102,7 +102,7 @@ def check(url):
     if code == 200:
         note = "" if final == url else f"redirects to {final}"
         return url, "ok", note
-    if RPC_HINT.search(url) and code in (400, 404, 405):
+    if RPC_HINT.search(url) and code in (204, 400, 404, 405):
         return url, "info", f"{code} on GET, expected for an rpc or api base"
     return url, "FAIL", f"{code or 'no response'} {body.decode('utf8', 'ignore')[:80] if code == 0 else ''}".strip()
 
