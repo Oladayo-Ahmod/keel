@@ -41,7 +41,7 @@ claude mcp add trozu -- node /path/to/keel/packages/mcp/dist/cli.js
 ```
 
 or commit the same JSON as `.mcp.json` at the root of a project. To use a different RPC, add
-`-e TROZU_RPC_URL=https://...` before the name (`claude mcp add -e TROZU_RPC_URL=... trozu -- node ...`), or an
+`-e TROZU_RPC_URL=<your rpc url>` before the name (`claude mcp add -e TROZU_RPC_URL=... trozu -- node ...`), or an
 `"env": { "TROZU_RPC_URL": "..." }` entry in the JSON. `claude mcp list` shows whether it connected.
 
 The JSON above is also kept as [`examples/claude_desktop_config.json`](examples/claude_desktop_config.json).
