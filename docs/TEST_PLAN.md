@@ -1,8 +1,8 @@
 # Test plan
 
-Status (counted 2026-11-07, one reconciled number): **`forge test` reports 259 passing, 0 failed, 0 skipped** across 22 suites, **151 web tests** (`npm test` in `web/`, 12 files) and **24 keeper tests** (`npm test` in `keeper/`). They are three separate suites and are not added together here.
+Status (counted 2026-11-07, reconciled): **`forge test` reports 260 passing, 0 failed, 0 skipped** across 23 suites. **Web 299 tests** in 23 files (`npm test` in `web/`). **Keeper 24** (`npm test` in `keeper/`). **SDK 90** passing plus 39 read-only matsnet tests that are skipped unless run with `npm run test:matsnet -w @trozu/sdk` (11 files, one of them that skipped file). **MCP 78** (6 files). **Alerts 45** passing plus 1 opt-in live webhook test that is skipped (4 files). `npm test` in `packages/` runs the last three. They are separate suites and are not added together here.
 
-Why the older numbers differed: **90 and 84 were the same Wave 1 suite counted two ways.** 90 is 83 unit and fuzz tests plus 7 invariants, counted one by one. 84 is what `forge test` prints for it: 83 plus one result, because forge folds each suite's invariants into a single result. Wave 2 then added the market, the guardian, the v2 invariants and a mechanical re-run of the Wave 1 vault tests against the v2 vault (`test/v2/regression/`). Counted one by one the source has 275 test and invariant functions, 18 of them invariants (7 in Wave 1's suite, 11 in Wave 2's); counted as forge reports them it is 259. This document uses the forge number, 259, and says so wherever it quotes it.
+Why the older numbers differed: **90 and 84 were the same Wave 1 suite counted two ways.** 90 is 83 unit and fuzz tests plus 7 invariants, counted one by one. 84 is what `forge test` prints for it: 83 plus one result, because forge folds each suite's invariants into a single result. Wave 2 then added the market, the guardian, the v2 invariants and a mechanical re-run of the Wave 1 vault tests against the v2 vault (`test/v2/regression/`). Counted one by one the source has 276 test and invariant functions, 18 of them invariants (7 in Wave 1's suite, 11 in Wave 2's); counted as forge reports them it is 260. This document uses the forge number, 260, and says so wherever it quotes it.
 
 | Foundry suite group | Tests as forge reports them |
 |---|---|
@@ -11,9 +11,10 @@ Why the older numbers differed: **90 and 84 were the same Wave 1 suite counted t
 | Wave 2 deploy and invariants (`test/v2/DeployV2`, `invariant`) | 5 |
 | Wave 1 vault tests re-run against the v2 vault (`test/v2/regression`) | 75 |
 | Fork tests on mainnet state (`test/fork`) | 7 |
-| **Total** | **259** |
+| Golden planner vectors (`test/v2/PlannerVectors`): one test that builds 503 states, writes them for the web tests and fails if a guardian branch is never reached | 1 |
+| **Total** | **260** |
 
-Web tests by file are in `web/src/lib/*.test.ts` (gas limits, market and guardian maths, permits, vault calls, error text, content files). The wallet round trip in [ROUNDTRIP.md](ROUNDTRIP.md) is a live run, not a test in these counts.
+Packages: `packages/sdk/test` (maths, gas table against the web table and the round trip, errors, builders, lens, guardian and market reads on a mock chain, generated files against the ABIs), `packages/mcp/test` (tool schemas, hostile chain data and arguments, a check that the source cannot sign or send, a stdio handshake) and `packages/alerts/test` (rules, state and cooldown, webhook posting against a stubbed fetch). The SDK's matsnet tests simulate every builder with `eth_call` only (docs/INTEGRATIONS.md has the results). Web tests by file are in `web/src/lib/*.test.ts` (gas limits, market and guardian maths, permits, vault calls, error text, content files). The wallet round trip in [ROUNDTRIP.md](ROUNDTRIP.md) is a live run, not a test in these counts.
 
 Coverage from `forge coverage --ir-minimum` (Wave 1, taken before Wave 2):
 
@@ -82,7 +83,7 @@ Not done:
 
 ## Web app
 
-`npm test` in `web/`: 42 tests, all passing. They cover amount and ICR formatting, risk levels, the gauge range, sorted-list hint computation (call order, nothing cached, the NICR value measured on matsnet), the open plan checks (ICR floor, minimum net debt, gas reserve, missing price, collateral never under the target), error mapping, the transfer receiver and risk checks, the stale node assessment (lag behind the newest block, old head, retry until fresh, flag after the last attempt, rethrow after repeated failures) and the rule that stale data never reads as healthy.
+`npm test` in `web/`: 299 tests, all passing (the first 42 came with Wave 1). They cover amount and ICR formatting, risk levels, the gauge range, sorted-list hint computation (call order, nothing cached, the NICR value measured on matsnet), the open plan checks (ICR floor, minimum net debt, gas reserve, missing price, collateral never under the target), error mapping, the transfer receiver and risk checks, the stale node assessment (lag behind the newest block, old head, retry until fresh, flag after the last attempt, rethrow after repeated failures) and the rule that stale data never reads as healthy. Since then: gas limits (tied to `docs/gas-measurements.json`), market and guardian maths, permits, vault calls, content files, the stats tally and snapshot, the fair-price estimate, share cards, the site URL check, team wallets, demo labels, the bundled font, the RPC transport, and the what-if planner port replayed against 503 golden vectors the contract produced (`web/src/lib/__fixtures__/planner-vectors.json`).
 
 Not covered by automated tests: the components themselves and the wallet round trip. What was checked by hand:
 - stale RPC in a real browser: `web/scripts/stale-check.mjs` fakes an old head block. With every answer old, the app shows the warning, a "Stale data" chip, the header pill warns, and nothing says Healthy. With three old answers then real ones, the app retries by itself and ends up showing the real ratio;

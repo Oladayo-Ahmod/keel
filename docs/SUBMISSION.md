@@ -39,7 +39,7 @@ How MUSD is used. Trozu calls the real MUSD contracts: BorrowerOperations to ope
 
 Viability. Hypothesis, not yet tested: DAOs, treasuries, funds and OTC desks that borrow MUSD need to hand over or settle positions without unwinding them, and a below-market locked rate has value that cannot move with the position today. Next come a marketplace where the buyer commits to bounds, so a seller cannot empty a position between listing and sale, and a guardian with on-chain policy bounds. There is no user or revenue data yet.
 
-Today: deployed on Mezo testnet, contracts verified on Sourcify, live app, and a position transferred to a second address and back on chain. 259 Foundry tests as `forge test` reports them (18 invariant functions, folded into the count), 151 web tests and 24 keeper tests, with fork tests against the real MUSD contracts. Not audited.
+Today: deployed on Mezo testnet, contracts verified on Sourcify, live app, and a position transferred to a second address and back on chain. 260 Foundry tests as `forge test` reports them (18 invariant functions, folded into the count), 299 web tests, 24 keeper tests and 213 package tests (SDK, MCP, alerts), with fork tests against the real MUSD contracts. Not audited.
 ```
 
 ## Target group
@@ -143,6 +143,6 @@ It follows slides 2 to 8 of the deck. The same lines are in the speaker notes.
 | 0:42 to 1:02 | 5 | Here it is live on Mezo testnet. I sent position two to a second address. The old holder's call reverts with NotHolder. The same call from the new holder succeeds. Both transactions are on the explorer, and the hashes are on screen. |
 | 1:02 to 1:22 | 6 | This is the live app. The gauge shows the collateral ratio next to the locked and market rates, and the redemption buffer on demand. You open a position from a form, and transfer it through a review step that shows ratio and equity first. |
 | 1:22 to 1:46 | 7 | It runs on the real MUSD contracts. The vault is the trove's borrower. Mezo's own refinance can raise your rate, so the wrapper only allows a lower one. Reads use getEntireDebtAndColl, so interest and redistribution are included. Hints are looked up right before sending. |
-| 1:46 to 2:00 | 8 | 259 Foundry tests, 18 invariants and a state-machine fuzz run against the real MUSD contracts. Three broken vaults were each caught. It is testnet only and not audited. |
+| 1:46 to 2:00 | 8 | 260 Foundry tests, 18 invariants and a state-machine fuzz run against the real MUSD contracts. Three broken vaults were each caught. It is testnet only and not audited. |
 
 Do not say: that it is audited, that it is on mainnet, that a marketplace or guardian exists, or any user, volume or revenue number. None of those are true yet.

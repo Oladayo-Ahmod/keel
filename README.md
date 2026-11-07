@@ -222,8 +222,12 @@ Pending, success and failure states link the transaction hash to the explorer. M
 
 | Suite | Count | Scope |
 |---|---|---|
-| Foundry (`forge test`) | 90 | Unit, fuzz and 7 invariants on a local deployment of the real MUSD contracts; hostile-holder reentrancy tests; deploy script checks |
-| Web (`npm test` in `web/`) | 42 | Formatting, risk levels, hint computation, open and transfer checks, error mapping, stale node detection |
+| Foundry (`forge test`) | 260 | Unit, fuzz and invariants on a local deployment of the real MUSD contracts, the market and guardian, Wave 1 tests re-run against the v2 vault, fork tests on mainnet state, and the golden planner vectors |
+| Web (`npm test` in `web/`) | 299 | Gas limits, market and guardian maths, permits, error mapping, stale node detection, stats, share cards, and the what-if planner replayed against contract vectors |
+| Keeper (`npm test` in `keeper/`) | 24 | The keeper's discovery, retry and send logic on a mock chain |
+| SDK (`@trozu/sdk`) | 90 (+39 skipped) | Maths, builders, reads on a mock chain, gas table drift; the skipped ones are read-only matsnet checks, run on demand |
+| MCP (`@trozu/mcp`) | 78 | Tools, hostile inputs, no signing or sending, stdio handshake |
+| Alerts (`@trozu/alerts`) | 45 (+1 skipped) | Rules, state, webhook posting on a stubbed fetch; the skipped one is an opt-in live webhook test |
 
 Line coverage of the contracts is 99% and branch coverage is about 89%, measured with `--ir-minimum`, so treat the branch figure as approximate. A deeper invariant profile (256 runs, depth 200) also passes:
 
@@ -231,7 +235,7 @@ Line coverage of the contracts is 99% and branch coverage is about 89%, measured
 FOUNDRY_PROFILE=deep forge test --match-contract Invariants
 ```
 
-What is not covered, and why, is listed in [docs/TEST_PLAN.md](docs/TEST_PLAN.md).
+The counts are separate suites and are not added together. What is not covered, and why, is listed in [docs/TEST_PLAN.md](docs/TEST_PLAN.md).
 
 ## Repository layout
 

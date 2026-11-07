@@ -1,6 +1,6 @@
 # Web app: wave 2 work
 
-Area: `web/` only. Test count at this commit: 285 passing in 21 files (`npm test`). Typecheck clean, production build clean (with `NEXT_PUBLIC_SITE_URL` set, see Share cards).
+Area: `web/` only. Test count at this commit: 299 passing in 23 files (`npm test`). Typecheck clean, production build clean (with `NEXT_PUBLIC_SITE_URL` set, see Share cards).
 
 ## Position management (wave 1 vault, also used for wave 2 vaults)
 
