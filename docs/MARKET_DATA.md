@@ -29,9 +29,9 @@ What the data does support is the redemption story below.
 
 | Trove owner | Locked rate | Collateral (BTC) | Debt (MUSD) |
 |---|---|---|---|
-| `0x593câ€¦5bb5` | 100 bps | 16.5892 | 14,493.94 |
-| `0x467fâ€¦3fb4` | 100 bps | 0.0356 | 2,058.20 |
-| `0xa7f5â€¦8738` | 100 bps | 0.8428 | 55,144.06 |
+| `0x593c…5bb5` | 100 bps | 16.5892 | 14,493.94 |
+| `0x467f…3fb4` | 100 bps | 0.0356 | 2,058.20 |
+| `0xa7f5…8738` | 100 bps | 0.8428 | 55,144.06 |
 
 Distribution of per-trove rates against the global rate: three of three sit at exactly the global rate, spread zero.
 
