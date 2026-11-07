@@ -164,6 +164,7 @@ export function ManagePanel({ p, stale = false, v2 = false, onChanged }: { p: Po
       }
 
       let permit: PermitSig | undefined;
+      let approvedForClose = false;
       const pulled = kind === "repay" ? amount : kind === "close" ? (plan as ClosePlan).cost : undefined;
       if (pulled !== undefined && pulled > 0n) {
         const domain = { name: data.permit.name, chainId: config.chainId, verifyingContract: config.mezo.musd };
@@ -193,6 +194,7 @@ export function ManagePanel({ p, stale = false, v2 = false, onChanged }: { p: Po
             setBusy(false);
             return;
           }
+          approvedForClose = kind === "close";
         }
       }
 
@@ -212,6 +214,11 @@ export function ManagePanel({ p, stale = false, v2 = false, onChanged }: { p: Po
       setBusy(false);
       const receipt = await tx.send(params);
       if (receipt) {
+        // a close approves a little more than it takes, so clear what is left; the position is already closed if this is refused
+        if (approvedForClose) {
+          setNote("Closed. Clearing the leftover MUSD approval so the vault holds none.");
+          await approveTx.send({ address: config.mezo.musd, abi: erc20Abi, functionName: "approve", args: [p.vault, 0n], chainId: config.chainId });
+        }
         void qc.invalidateQueries({ queryKey: ["preflight"] });
         onChanged?.();
       }
