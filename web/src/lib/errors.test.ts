@@ -18,6 +18,12 @@ describe("friendlyError", () => {
     expect(friendlyError(withCause("DebtCapExceeded(1, 0)")).message).toMatch(/caps how much/);
     expect(friendlyError(withCause("FeeTooHigh(2, 1)")).message).toMatch(/borrowing fee rose/);
   });
+  it("says a dropped node request is a network problem, not an unknown error", () => {
+    const r = friendlyError(withCause("An unknown RPC error occurred."));
+    expect(r.message).toMatch(/network node did not answer/);
+    expect(friendlyError(withCause("HTTP request failed.")).message).toMatch(/explorer/);
+    expect(r.rejected).toBe(false);
+  });
   it("falls back to the first line, cut to a sensible length", () => {
     const r = friendlyError(withCause("x".repeat(500)));
     expect(r.message.length).toBeLessThanOrEqual(220);

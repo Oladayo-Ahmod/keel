@@ -56,6 +56,10 @@ export function friendlyError(e: unknown): FriendlyError {
   if (/ERC721InvalidReceiver|ERC721IncorrectOwner|ERC721InsufficientApproval/.test(text)) {
     return { message: "The NFT could not be moved. The receiver may be a contract that cannot hold NFTs.", rejected: false };
   }
+  // the public node drops requests now and then; say so instead of "unknown RPC error"
+  if (/HTTP request failed|unknown RPC error|fetch failed|Failed to fetch|timed out/i.test(text)) {
+    return { message: "The network node did not answer. If a transaction was sent it may still land, so check the explorer before trying again.", rejected: false };
+  }
   const first = links.find((l) => l.shortMessage)?.shortMessage ?? links[0]?.message ?? "Unknown error";
   return { message: first.split("\n")[0].slice(0, 220), rejected: false };
 }
