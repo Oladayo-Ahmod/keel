@@ -46,6 +46,17 @@ for (const width of [390, 360]) {
     await measure("proof");
     await shot("proof");
   }
+  if (want("position")) {
+    for (const path of ["/position/1/2", "/position/2/1"]) {
+      await go(path, 6000);
+      await measure(`position page ${path}`);
+      await shot(`position-${path.replaceAll("/", "_")}`);
+    }
+    await go("/position/1/99999", 5000);
+    await measure("position page, no such id");
+    await go("/position/3/1", 800);
+    console.log("     bad wave status text:", (await page.locator("body").innerText()).slice(0, 60).replaceAll(String.fromCharCode(10), " | "));
+  }
   if (want("whatif")) {
     await go("/preview/wave2", 2500);
     const sec = page.getByTestId("whatif-fixture");
