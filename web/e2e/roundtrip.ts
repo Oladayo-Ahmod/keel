@@ -1,6 +1,7 @@
 // TEST ONLY. Runs each wallet action once through the real UI against the proof position on matsnet,
 // using burner keys from .env (never printed). Needs the e2e build served on :3100:
-//   NEXT_PUBLIC_E2E=1 NEXT_PUBLIC_WAVE2=1 NEXT_DIST_DIR=.next-e2e next build && next start -p 3100
+//   NEXT_PUBLIC_E2E=1 NEXT_PUBLIC_WAVE2=1 NEXT_PUBLIC_SITE_URL=https://trozu-e2e.example NEXT_DIST_DIR=.next-e2e next build && next start -p 3100
+//   (a production build refuses a missing or local site URL, so the e2e build sets a placeholder too)
 //   npx tsx e2e/roundtrip.ts [--only=add,repay] [--redo]
 // Writes docs/roundtrip.json and 390 px screenshots to docs/roundtrip/.
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";

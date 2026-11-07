@@ -46,8 +46,12 @@ jobs:
         run: npm run typecheck
       - name: Test
         run: npm test
+      # a production build refuses a missing or local site URL, so share images never point at localhost.
+      # This is a placeholder for CI; the deployed site sets its own (see docs/web.md, Share cards).
       - name: Build
         run: npm run build
+        env:
+          NEXT_PUBLIC_SITE_URL: https://trozu-ci.example
       - name: No test-only wallet in the production build
         run: npm run check:no-e2e
 
