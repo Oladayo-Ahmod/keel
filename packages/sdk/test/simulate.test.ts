@@ -38,3 +38,14 @@ describe("simulate", () => {
     await expect(trozu.simulate(trozu.tx.execute({ vault: ADDR.vault }), "bob")).rejects.toBeInstanceOf(TrozuValidationError);
   });
 });
+
+describe("simulate with a state override", () => {
+  it("passes the override to eth_call, and sends nothing else", async () => {
+    const { m, trozu } = setup(() => [0, 0n, 0n]);
+    const override = [{ address: ADDR.bob, balance: 5n }];
+    await trozu.simulate(trozu.tx.execute({ vault: ADDR.vault }), ADDR.alice, { stateOverride: override });
+    const call = m.requests.find((r) => r.method === "eth_call")!.params as unknown[];
+    expect(call[2]).toEqual({ [ADDR.bob]: { balance: "0x5" } });
+    expect(m.requests.every((r) => r.method === "eth_call" || r.method === "eth_chainId")).toBe(true);
+  });
+});
