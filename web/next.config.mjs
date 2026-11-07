@@ -1,3 +1,6 @@
+import { PHASE_PRODUCTION_BUILD } from "next/constants.js";
+import { resolveSiteUrl } from "./scripts/site-url.mjs";
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // always inline the test-wallet flag ("0" unless a test build sets it), so a normal build removes the
@@ -23,4 +26,8 @@ const nextConfig = {
   },
 };
 
-export default nextConfig;
+// a production build without a real public address would ship share images that point at localhost, so it stops here
+export default function config(phase) {
+  if (phase === PHASE_PRODUCTION_BUILD) resolveSiteUrl(process.env, true);
+  return nextConfig;
+}
