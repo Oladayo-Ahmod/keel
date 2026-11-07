@@ -1,7 +1,8 @@
 import { createTrozu, type Trozu } from "@trozu/sdk";
 import { createPublicClient, getAddress, http, isAddress, type PublicClient } from "viem";
 import { collectAlerts, type Alert } from "./check.js";
-import { isCoolingDown, loadState, saveState } from "./state.js";
+import { resolve } from "node:path";
+import { DEFAULT_STATE_FILE, isCoolingDown, loadState, saveState } from "./state.js";
 import { buildPayload, hostOf, post, urlProblem, type PostOptions, type WebhookFormat } from "./webhook.js";
 
 export interface Config {
@@ -27,7 +28,7 @@ const num = (name: string, v: string | undefined, dflt: number, min: number, max
 };
 
 /** Settings come from the environment (the webhook URL is a secret, so never from a flag) plus `--dry-run`. */
-export function parseConfig(env: Record<string, string | undefined>, argv: string[]): Config {
+export function parseConfig(env: Record<string, string | undefined>, argv: string[], cwd = process.cwd()): Config {
   const tokenIds = (env.TOKEN_IDS ?? "")
     .split(",")
     .map((s) => s.trim())
@@ -64,7 +65,8 @@ export function parseConfig(env: Record<string, string | undefined>, argv: strin
     marginPoints: num("MARGIN_POINTS", env.MARGIN_POINTS, 10, 0, 500),
     lookbackBlocks: BigInt(num("LOOKBACK_BLOCKS", env.LOOKBACK_BLOCKS, 3_000, 1, 200_000)),
     cooldownSeconds: num("COOLDOWN_MINUTES", env.COOLDOWN_MINUTES, 360, 0, 10_080) * 60,
-    stateFile: env.STATE_FILE || undefined,
+    // on by default, so scheduled runs do not repeat themselves; STATE_FILE=none turns it off
+    stateFile: env.STATE_FILE === "none" ? undefined : resolve(cwd, env.STATE_FILE || DEFAULT_STATE_FILE),
     webhookUrl,
     format,
     dryRun,
@@ -80,6 +82,8 @@ export interface Deps {
   makeChain?: (cfg: Config) => { trozu: Trozu; client: PublicClient };
   post?: PostOptions;
   now?: () => number;
+  /** Where a relative STATE_FILE (and the default) is resolved. Default: the process's working directory. */
+  cwd?: string;
 }
 
 function defaultChain(cfg: Config) {
@@ -95,7 +99,7 @@ function defaultChain(cfg: Config) {
 export async function run(d: Deps): Promise<number> {
   let cfg: Config;
   try {
-    cfg = parseConfig(d.env, d.argv);
+    cfg = parseConfig(d.env, d.argv, d.cwd);
   } catch (e) {
     d.err(`config: ${(e as Error).message}`);
     return 2;

@@ -1,4 +1,12 @@
-import { readFileSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname } from "node:path";
+
+/**
+ * Where the state lives when STATE_FILE is not set: a relative path under the working directory, so a
+ * workflow can cache it with `path: .trozu-alerts` (actions/cache needs a path inside the workspace).
+ * Set STATE_FILE=none to run without one.
+ */
+export const DEFAULT_STATE_FILE = ".trozu-alerts/state.json";
 
 /** What a run remembers for the next one: how far it read, and when it last told someone about each alert. */
 export interface State {
@@ -23,7 +31,9 @@ export function loadState(path: string | undefined): State {
 }
 
 export function saveState(path: string | undefined, s: State): void {
-  if (path) writeFileSync(path, JSON.stringify(s, null, 2));
+  if (!path) return;
+  mkdirSync(dirname(path), { recursive: true });
+  writeFileSync(path, JSON.stringify(s, null, 2));
 }
 
 /** Drops a near-floor alert that was sent inside the cooldown. Keeper actions are one-off events and always pass. */
