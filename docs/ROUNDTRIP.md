@@ -2,7 +2,7 @@
 
 Run on 2026-11-07 against Mezo testnet (chain 31611) and the Wave 2 contracts, with a test-only wagmi connector (`web/src/e2e/config.ts`) whose wallet is a burner key held by the test runner (`web/e2e/roundtrip.ts`). The key comes from `.env` and is never printed or shipped; `npm run check:no-e2e` fails if the connector reaches a production build. Every action below went through the app's own components and `useTx`, at a 390 px viewport. Raw data: [roundtrip.json](roundtrip.json); screenshots of the signing, pending, success and error states: [roundtrip/](roundtrip/).
 
-**Reading the gas columns.** The limit is what the app asked for. Mezo charges at least half of the limit, so a receipt never shows less than half of it: a `used` value of exactly half the limit means the real use was at or below that. Only the upper bound is known for those; it is not a measurement of the call.
+**Reading the gas columns.** The limit is what the app asked for. Mezo charges at least half of the limit, so a receipt never shows less than half of it: a `used` value of exactly half the limit means the real use was at or below that. Only the upper bound is known for those; it is not a measurement of the call. **`gasUsed` in `docs/roundtrip.json` is not a measurement either**: it is the half-limit charge. The measured minimums are in `docs/gas-measurements.json`, found by bisecting `eth_call` gas (see `docs/INTEGRATIONS.md`).
 
 | Action | Result | Transaction | Gas limit | Gas used |
 |---|---|---|---|---|

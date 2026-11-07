@@ -95,17 +95,40 @@ because Mezo's `eth_estimateGas` is unreliable (docs/PROOF.md): send the limit a
 `packages/sdk/test/webgas.test.ts` fails if any action differs from it or is missing. Each limit is labelled in
 `packages/sdk/src/gas.ts`:
 
-- *measured*: a receipt `gasUsed` in `docs/proof.json`, plus 30% (never under the floor): `openPosition`,
+- *measured* (receipt): a receipt `gasUsed` in `docs/proof.json`, plus 30% (never under the floor): `openPosition`,
   `fundReserveBtc`, `setPolicy`, `execute`, `announce`, `cancel`, `buy`, `approve`, `safeTransferFrom`,
   `transferFrom`, `transfer`.
+- *measured* (bisected): the nine actions that had no evidence were measured by bisecting `eth_call` gas, and their limit is
+  twice the minimum, rounded up to 5,000: `repay`, `refinance`, `close`, `closeWithPermit`, `claimSurplus`,
+  `fundReserveMusd`, `clearPolicy`, `cancelAll`, `setApprovalForAll`. The numbers and how each state was prepared:
+
+| Action | Least gas that succeeds | Limit sent (2x, rounded up to 5,000) | How the state was prepared |
+|---|---|---|---|
+| `repay` (5 MUSD, with hints) | 437,989 | 880,000 | MUSD balance and allowance overridden |
+| `repay` (no hints) | 3,465,699 | 9,500,000 (the cap) | same |
+| `refinance` (with hints) | 439,580 | 880,000 | market rate overridden to 0.50% so the position's 1.00% is the higher one |
+| `refinance` (no hints) | 3,509,669 | 9,500,000 (the cap) | same |
+| `close` | 446,378 | 895,000 | MUSD balance and allowance overridden |
+| `closeWithPermit` | 486,154 | 975,000 | a valid permit signed for the exact cost at the pinned block, MUSD balance overridden |
+| `claimSurplus` | 160,864 | 325,000 | 0.005 BTC placed in Mezo's surplus pool for the vault |
+| `fundReserveMusd` (100 MUSD) | 97,801 | 200,000 | MUSD balance and allowance overridden |
+| `clearPolicy` | 88,544 | 180,000 | none, the live policy of position 1 |
+| `cancelAll` | 45,008 | 95,000 | none |
+| `setApprovalForAll` | 26,785 | 55,000 | none |
+
+**Method.** `packages/sdk/scripts/measure-gas.ts` bisects the gas of an `eth_call` at one pinned block of matsnet (block 16632718) and takes the smallest limit that succeeds, within 250 gas, then checks it still succeeds 2,000 and 20,000 above. An `eth_call` has no half-limit charge, so the result is the true minimum, unlike a receipt. It was calibrated first against calls whose receipts are known: MUSD `approve` 46,455 against a receipt of 46,242, `cancel` 49,927 against 49,507, `announce` 99,537 against 99,293, all within about 1%. A transfer of the position came out at 98,958 against 86,373 (about 15% more) because the probe sends it to a wallet that has never held the NFT, so it writes a fresh balance slot. Where a precondition was missing on the real position, a state override supplied it for that one call; the override changes what the wallet holds or what the market rate is, not what the contract does with it. The raw results are in `docs/gas-measurements.json`.
+
+  `repay` and `refinance` re-insert the trove in Mezo's sorted list, so what they cost depends on the hints: about
+  0.44M with the pair the app computes right before sending, about 3.5M with none. The builders therefore use the
+  limit above only when the call carries hints, and the 9.5M cap when it carries none (or zero addresses).
 - *roundtrip*: no usable measurement, but that limit was sent through the app on matsnet in the wallet round
   trip (`docs/roundtrip.json`) and succeeded: `addCollateral`, `withdrawCollateral`, `borrow`,
   `repayWithPermit`, `sweep`, `fundReserveMusdWithPermit`, `withdrawReserveBtc`, `withdrawReserveMusd`.
-  Every `gasUsed` in that file is exactly half its limit (Mezo charges at least half), so it shows the limit is
-  enough, not what the call uses.
-- **Unmeasured** (never sent on chain; only the floor applies, 6M for calls that re-sort the trove and 1M for
-  the rest): `repay`, `refinance`, `close`, `closeWithPermit`, `claimSurplus`, `fundReserveMusd`,
-  `clearPolicy`, `cancelAll`, `setApprovalForAll`. For these, a guess.
+  **The `gasUsed` in `docs/roundtrip.json` is not a measurement.** Mezo charges at least half of the limit, so every
+  receipt there shows exactly half the limit that was sent. It proves the limit was enough, nothing about what the call
+  uses.
+- Nothing is left unmeasured (`unmeasured()` returns an empty list), but the table still holds one number per action
+  taken at one state. See KNOWN_LIMITATIONS for what that does not cover.
 
 A position with a redemption-defense policy needs more than the floor (a defense `execute` needs about 7.3M),
 so pass `gas: { defenseWalk: true }`, which uses the 9.5M cap. The MCP server does that itself.
