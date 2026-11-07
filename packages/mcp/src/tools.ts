@@ -221,6 +221,34 @@ const actionSchemas = {
   cancel_all_listings: z.object({}),
 } satisfies Record<Action, z.ZodTypeAny>;
 
+/**
+ * The strict schemas the read tools parse their arguments with. Exported so a test can walk them: none of
+ * them may hold an array, set, map, record or tuple (see the zod advisory in README.md).
+ */
+export const toolInputs = {
+  get_position: z
+    .object({
+      tokenId: tokenIdIn.optional(),
+      holder: addressIn.optional(),
+      bufferThresholdMusd: amountIn.optional(),
+      positions: z.coerce.number().int().min(1).max(MAX_HOLDER_POSITIONS).default(3),
+    })
+    .strict(),
+  list_listings: z
+    .object({
+      tokenId: tokenIdIn.optional(),
+      onlyOpen: z.boolean().default(true),
+      limit: z.coerce.number().int().min(1).max(MAX_LISTINGS).default(10),
+      lookbackBlocks: z.coerce.number().int().min(1).max(200_000).default(50_000),
+    })
+    .strict(),
+  quote_listing: z.object(listingRef).strict(),
+  guardian_status: z.object({ ...tok, marginPoints: z.coerce.number().min(0).max(500).default(10) }).strict(),
+} as const;
+
+/** The per-action schemas, for the same test. */
+export { actionSchemas };
+
 /** What the model is shown for build_tx and simulate_action. Everything is a string or a number; the real checks run per action. */
 export const actionInputShape = {
   action: z.enum(ACTIONS).describe("What to build. Only unsigned calldata is returned."),
@@ -375,15 +403,7 @@ export function createHandlers(trozu: Trozu) {
   return {
     async get_position(args: { tokenId?: unknown; holder?: unknown; bufferThresholdMusd?: unknown; positions?: unknown }): Promise<ToolResult> {
       try {
-        const a = z
-          .object({
-            tokenId: tokenIdIn.optional(),
-            holder: addressIn.optional(),
-            bufferThresholdMusd: amountIn.optional(),
-            positions: z.coerce.number().int().min(1).max(MAX_HOLDER_POSITIONS).default(3),
-          })
-          .strict()
-          .parse(Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined)));
+        const a = toolInputs.get_position.parse(Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined)));
         if ((a.tokenId === undefined) === (a.holder === undefined)) throw new TrozuValidationError(["give exactly one of tokenId and holder"]);
 
         const one = async (id: bigint) => {
@@ -416,15 +436,7 @@ export function createHandlers(trozu: Trozu) {
 
     async list_listings(args: { tokenId?: unknown; onlyOpen?: unknown; limit?: unknown; lookbackBlocks?: unknown }): Promise<ToolResult> {
       try {
-        const a = z
-          .object({
-            tokenId: tokenIdIn.optional(),
-            onlyOpen: z.boolean().default(true),
-            limit: z.coerce.number().int().min(1).max(MAX_LISTINGS).default(10),
-            lookbackBlocks: z.coerce.number().int().min(1).max(200_000).default(50_000),
-          })
-          .strict()
-          .parse(Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined)));
+        const a = toolInputs.list_listings.parse(Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined)));
         const views = await trozu.market.listings({ tokenId: a.tokenId, onlyOpen: a.onlyOpen, limit: a.limit, lookbackBlocks: a.lookbackBlocks });
         return ok({ count: Math.min(views.length, a.limit), listings: views.slice(0, a.limit).map(listingOut) });
       } catch (e) {
@@ -434,7 +446,7 @@ export function createHandlers(trozu: Trozu) {
 
     async quote_listing(args: { tokenId?: unknown; listingHash?: unknown }): Promise<ToolResult> {
       try {
-        const a = z.object(listingRef).strict().parse(Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined)));
+        const a = toolInputs.quote_listing.parse(Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined)));
         const v = await resolveListing(a, false);
         const q = await trozu.market.quote(v.listing, v.signature);
         return ok({
@@ -468,10 +480,7 @@ export function createHandlers(trozu: Trozu) {
 
     async guardian_status(args: { tokenId?: unknown; marginPoints?: unknown }): Promise<ToolResult> {
       try {
-        const a = z
-          .object({ ...tok, marginPoints: z.coerce.number().min(0).max(500).default(10) })
-          .strict()
-          .parse(Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined)));
+        const a = toolInputs.guardian_status.parse(Object.fromEntries(Object.entries(args).filter(([, v]) => v !== undefined)));
         return ok(guardianOut(await trozu.guardian.status(a.tokenId), a.marginPoints));
       } catch (e) {
         return fail(e);
