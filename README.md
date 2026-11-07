@@ -14,7 +14,7 @@ Put a trove inside a vault, represent the vault as an ERC-721, and move collater
 ![EVM london](https://img.shields.io/badge/evm-london-363636.svg)
 ![Network: Mezo testnet](https://img.shields.io/badge/network-Mezo%20testnet-orange.svg)
 
-[Live app](https://keel-two-roan.vercel.app/) · [Architecture](docs/ARCHITECTURE.md) · [Threat model](docs/THREAT_MODEL.md) · [Deployments](docs/DEPLOYMENTS.md)
+[Live app](https://keel-two-roan.vercel.app/) · [Architecture](docs/ARCHITECTURE.md) · [Threat model](docs/THREAT_MODEL.md) · [Deployments](docs/DEPLOYMENTS.md) · [Packages](packages/) · [Integrations](docs/INTEGRATIONS.md)
 
 </div>
 
@@ -214,6 +214,10 @@ Pending, success and failure states link the transaction hash to the explorer. M
 
 `web/scripts/demo.ts` drives the same contracts from a terminal (status, open, close, transfer), reading the key from `ETH_PRIVATE_KEY` so it never appears on a command line. A manual wallet checklist is in [docs/MANUAL_TEST.md](docs/MANUAL_TEST.md).
 
+**Packages.** [`packages/`](packages/) holds three TypeScript packages that sit next to the app: [`@trozu/sdk`](packages/sdk/README.md) reads positions, listings and guardians and builds unsigned transactions (it never signs), [`@trozu/mcp`](packages/mcp/README.md) exposes the SDK to Claude Desktop and Claude Code as read-only tools, and [`@trozu/alerts`](packages/alerts/README.md) posts to a webhook when a guarded position nears its floor. Start with [INTEGRATIONS.md](docs/INTEGRATIONS.md).
+
+**Deploying the app.** A production build needs `NEXT_PUBLIC_SITE_URL` (the public address, used for share images), or Vercel's `VERCEL_PROJECT_PRODUCTION_URL`; it stops on a missing or local one. See [docs/web.md](docs/web.md).
+
 ## Testing
 
 | Suite | Count | Scope |
@@ -237,8 +241,10 @@ script/         Deploy script, bytecode check and live measurement tools
 test/           Unit, fuzz and invariant tests, with their helpers and handler
 lib/            Pinned MUSD source and OpenZeppelin (git submodules)
 web/            Next.js app, deployment config, demo script
+keeper/         Guardian keeper and the live proof run
+packages/       TypeScript SDK (@trozu/sdk), MCP server (@trozu/mcp) and webhook alerts (@trozu/alerts)
 docs/           Architecture, threat model, decisions, verification, deployments
-.github/        CI workflow
+.github/        CI, keeper and alerts workflows
 ```
 
 ## Documentation
@@ -249,6 +255,7 @@ docs/           Architecture, threat model, decisions, verification, deployments
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Threats, mitigations and the tests that cover them |
 | [DECISIONS.md](docs/DECISIONS.md) | Design decisions and reasons |
 | [VERIFICATION.md](docs/VERIFICATION.md) | What the MUSD contracts do, with file and line references, plus live measurements |
+| [INTEGRATIONS.md](docs/INTEGRATIONS.md) | Using Trozu from code: the SDK, the MCP server for Claude Desktop and Claude Code, and webhook alerts, with what was and was not tested |
 | [KNOWN_LIMITATIONS.md](docs/KNOWN_LIMITATIONS.md) | What Trozu does not do or cannot control |
 | [TEST_PLAN.md](docs/TEST_PLAN.md) | Test layers, coverage and open items |
 | [DEPLOYMENTS.md](docs/DEPLOYMENTS.md) | Addresses, transactions, verification and runbook |
