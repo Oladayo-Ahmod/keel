@@ -12,6 +12,7 @@ export function ContentPage({ title, lead, children }: { title: string; lead: st
           <a className="tab" href="/">App</a>
           <a className="tab" href="/break-it">Break it</a>
           <a className="tab" href="/proof">Proof</a>
+          <a className="tab" href="/stats">Stats</a>
         </nav>
       </header>
       <section className="hero">

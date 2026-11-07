@@ -26,6 +26,11 @@ export default function Page() {
             {r.data.summary.note && <p className="note">{r.data.summary.note}</p>}
           </section>
 
+          <p className="note">
+            Numbers that change, such as positions created, sales and keeper actions, are on the{" "}
+            <a className="link" href="/stats">live stats page</a>, read from the contract logs on each load.
+          </p>
+
           <section className="grid-stack" aria-label="Claims">
             <h2>Claims</h2>
             {r.data.claims.length === 0 && <Empty title="No claims recorded yet" body="This fills in from src/content/proof.json." />}
