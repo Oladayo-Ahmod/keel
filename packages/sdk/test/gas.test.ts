@@ -1,5 +1,11 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { CAP, FLOOR_SIMPLE, FLOOR_SORTED, GAS_TABLE, gasLimitFor, unmeasured } from "../src/gas.js";
+
+const record = JSON.parse(readFileSync(join(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "docs", "gas-measurements.json"), "utf8")) as Record<string, { minGas: number }>;
+const NINE = ["repay", "refinance", "close", "closeWithPermit", "claimSurplus", "fundReserveMusd", "clearPolicy", "cancelAll", "setApprovalForAll"];
 
 describe("gas limits", () => {
   it("sends the table's literal limits", () => {
@@ -10,7 +16,7 @@ describe("gas limits", () => {
   });
 
   it("puts every call that re-sorts the trove on the sorted floor or above", () => {
-    for (const f of ["openPosition", "addCollateral", "withdrawCollateral", "borrow", "repay", "refinance", "close"]) {
+    for (const f of ["openPosition", "addCollateral", "withdrawCollateral", "borrow"]) {
       expect(gasLimitFor(f)).toBeGreaterThanOrEqual(FLOOR_SORTED);
     }
   });
@@ -32,7 +38,29 @@ describe("gas limits", () => {
     }
   });
 
-  it("names the unmeasured actions, which is what docs/INTEGRATIONS.md lists", () => {
-    expect(unmeasured().sort()).toEqual(["cancelAll", "claimSurplus", "clearPolicy", "close", "closeWithPermit", "fundReserveMusd", "refinance", "repay", "setApprovalForAll"]);
+  it("leaves no action unmeasured", () => {
+    expect(unmeasured()).toEqual([]);
+  });
+
+  it("measures the nine former gaps from docs/gas-measurements.json, and sends about twice the minimum", () => {
+    for (const f of NINE) {
+      const g = GAS_TABLE[f]!;
+      expect(g.basis, f).toBe("measured");
+      expect(g.gasUsed, f).toBe(record[f]!.minGas);
+      expect(g.source, f).toBe("docs/gas-measurements.json");
+      expect(g.limit, f).toBeGreaterThanOrEqual(2 * record[f]!.minGas);
+      expect(g.limit, f).toBeLessThan(2 * record[f]!.minGas + 5_000);
+    }
+  });
+
+  it("uses the cap for repay and refinance when the caller gives no hints, which cost about 3.5M, and never otherwise", () => {
+    expect(record["repay (no hints)"]!.minGas).toBeGreaterThan(3_000_000);
+    expect(record["refinance (no hints)"]!.minGas).toBeGreaterThan(3_000_000);
+    for (const f of ["repay", "refinance"]) {
+      expect(gasLimitFor(f, { hinted: false }), f).toBe(CAP);
+      expect(gasLimitFor(f, { hinted: true }), f).toBe(gasLimitFor(f));
+      expect(gasLimitFor(f, { hinted: false }), f).toBeGreaterThan(2 * record[`${f} (no hints)`]!.minGas);
+    }
+    expect(gasLimitFor("close", { hinted: false })).toBe(gasLimitFor("close"));
   });
 });

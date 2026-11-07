@@ -16,6 +16,11 @@
  *   measured    gasUsed read from a receipt in docs/proof.json, limit = the larger of that plus 30%
  *               and the floor. (A receipt can never show less than half the limit that was sent, so a
  *               measured 3,000,000 is an upper bound read off a 6M limit, not an exact figure.)
+ *   measured    (also) the least gas an eth_call needs at one pinned block, bisected by scripts/measure-gas.ts and
+ *               recorded in docs/gas-measurements.json, with limit = twice that rounded up to 5,000. An eth_call has no
+ *               half-limit charge, so this is the true minimum; calibrated against receipts it agrees within about 1%.
+ *               `gasUsed` holds the minimum. For the calls that re-sort the trove and take optional hints, `unhinted` is
+ *               the limit when the caller gives none (about 3.5M measured against about 0.44M with hints).
  *   roundtrip   no usable measurement, but this exact limit was sent through the app on matsnet in the
  *               wallet round trip and the transaction succeeded. Every gasUsed in that file is exactly
  *               half its limit (the half-limit charge), so it proves the limit is enough, not what the
@@ -40,6 +45,8 @@ export interface GasEntry {
   sorted: boolean;
   /** The receipt gasUsed behind a `measured` limit. */
   gasUsed?: number;
+  /** The limit when the caller gives no sorted-list hints, for the calls where that costs far more. */
+  unhinted?: number;
   /** Where the evidence is. */
   source: string;
 }
@@ -48,7 +55,8 @@ const proof = "docs/proof.json";
 const trip = "docs/roundtrip.json";
 const none = "never run on chain";
 
-const e = (limit: number, basis: GasBasis, sorted: boolean, source: string, gasUsed?: number): GasEntry => ({ limit, basis, sorted, source, gasUsed });
+const e = (limit: number, basis: GasBasis, sorted: boolean, source: string, gasUsed?: number, unhinted?: number): GasEntry => ({ limit, basis, sorted, source, gasUsed, unhinted });
+const bis = "docs/gas-measurements.json";
 
 /**
  * Keyed by function name. Wave 1 and Wave 2 vaults share these names, so one entry covers both.
@@ -60,31 +68,31 @@ export const GAS_TABLE: Record<string, GasEntry> = {
   addCollateral: e(6_000_000, "roundtrip", true, trip),
   withdrawCollateral: e(6_000_000, "roundtrip", true, trip),
   borrow: e(6_000_000, "roundtrip", true, trip),
-  repay: e(6_000_000, "unmeasured", true, none),
+  repay: e(880000, "measured", true, bis, 437989, CAP),
   repayWithPermit: e(6_000_000, "roundtrip", true, trip),
-  refinance: e(6_000_000, "unmeasured", true, none),
-  close: e(6_000_000, "unmeasured", true, none),
-  closeWithPermit: e(6_000_000, "unmeasured", true, none),
-  claimSurplus: e(1_000_000, "unmeasured", false, none),
+  refinance: e(880000, "measured", true, bis, 439580, CAP),
+  close: e(895000, "measured", true, bis, 446378),
+  closeWithPermit: e(975000, "measured", true, bis, 486154),
+  claimSurplus: e(325000, "measured", false, bis, 160864),
   sweep: e(1_000_000, "roundtrip", false, trip),
   // reserve and guardian policy
   fundReserveBtc: e(1_000_000, "measured", false, proof, 58_000),
-  fundReserveMusd: e(1_000_000, "unmeasured", false, none),
+  fundReserveMusd: e(200000, "measured", false, bis, 97801),
   fundReserveMusdWithPermit: e(1_000_000, "roundtrip", false, trip),
   withdrawReserveBtc: e(1_000_000, "roundtrip", false, trip),
   withdrawReserveMusd: e(1_000_000, "roundtrip", false, trip),
   setPolicy: e(3_900_000, "measured", false, proof, 3_000_000),
-  clearPolicy: e(1_000_000, "unmeasured", false, none),
+  clearPolicy: e(180000, "measured", false, bis, 88544),
   // the guardian's own call: 5,219,911 measured for a ratio-floor top-up with no hints. Not in the web table, which has no keeper.
   execute: e(6_785_885, "measured", true, proof, 5_219_911),
   // market
   announce: e(1_000_000, "measured", false, proof, 99_293),
   cancel: e(1_000_000, "measured", false, proof, 49_507),
-  cancelAll: e(1_000_000, "unmeasured", false, none),
+  cancelAll: e(95000, "measured", false, bis, 45008),
   buy: e(1_500_000, "measured", false, proof, 276_848),
   // tokens and the NFT
   approve: e(1_000_000, "measured", false, proof, 46_242),
-  setApprovalForAll: e(1_000_000, "unmeasured", false, none),
+  setApprovalForAll: e(55000, "measured", false, bis, 26785),
   safeTransferFrom: e(1_000_000, "measured", false, proof, 86_373),
   transferFrom: e(1_000_000, "measured", false, proof, 86_373),
   transfer: e(1_000_000, "measured", false, proof, 51_697),
@@ -94,6 +102,11 @@ export const GAS_TABLE: Record<string, GasEntry> = {
 export const SDK_ONLY = ["execute"] as const;
 
 export interface GasOptions {
+  /**
+   * Whether the call carries sorted-list hints. Left out means yes. Set false for a call without them: Mezo then
+   * walks the list from its head, which is several times the gas, so the entry's `unhinted` limit is used.
+   */
+  hinted?: boolean;
   /**
    * The position has a redemption-defense policy set. The defense adds a buffer walk of up to 100 troves:
    * the keeper's first defense `execute` ran out at 6M and needs about 7.3M (docs/PROOF.md), and a
@@ -108,6 +121,7 @@ export function gasLimitFor(functionName: string, opts: GasOptions = {}): number
   const g = GAS_TABLE[functionName];
   if (!g) throw new Error(`no gas limit defined for ${functionName}; add it to GAS_TABLE in gas.ts`);
   if (opts.defenseWalk && g.sorted) return CAP;
+  if (opts.hinted === false && g.unhinted !== undefined) return Math.min(CAP, g.unhinted);
   return Math.min(CAP, g.limit);
 }
 

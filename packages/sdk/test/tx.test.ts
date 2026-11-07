@@ -33,9 +33,9 @@ describe("every builder returns only unsigned fields with an explicit gas limit"
     tx.addCollateral({ vault, amount: E18 }),
     tx.withdrawCollateral({ vault, amount: E18 }),
     tx.borrow({ vault, amount: E18, maxFee: E18 }),
-    tx.repay({ vault, amount: E18 }),
+    tx.repay({ vault, amount: E18, hints: [ADDR.alice, ADDR.bob] }),
     tx.repayWithPermit({ vault, amount: E18, permit: { deadline: 9n, v: 27, r: zeroHash, s: zeroHash } }),
-    tx.refinance({ vault, maxFee: E18 }),
+    tx.refinance({ vault, maxFee: E18, hints: [ADDR.alice, ADDR.bob] }),
     tx.close({ vault }),
     tx.closeWithPermit({ vault, permit: { deadline: 9n, v: 27, r: zeroHash, s: zeroHash } }),
     tx.claimSurplus({ vault }),
@@ -64,6 +64,32 @@ describe("every builder returns only unsigned fields with an explicit gas limit"
       expect(t.gas).toBe(BigInt(gasLimitFor(t.functionName)));
       expect(t.data).toMatch(/^0x[0-9a-f]{8}/);
     }
+  });
+});
+
+describe("the limit follows the hints", () => {
+  const hints = [ADDR.alice, ADDR.bob] as const;
+  const ZERO = "0x0000000000000000000000000000000000000000" as const;
+
+  it("is about twice the measured minimum with hints, and the cap without them, for repay and refinance", () => {
+    expect(tx.repay({ vault, amount: E18, hints }).gas).toBe(880_000n);
+    expect(tx.refinance({ vault, maxFee: E18, hints }).gas).toBe(880_000n);
+    expect(tx.repay({ vault, amount: E18 }).gas).toBe(9_500_000n);
+    expect(tx.refinance({ vault, maxFee: E18 }).gas).toBe(9_500_000n);
+  });
+
+  it("treats zero-address hints as no hints", () => {
+    expect(tx.repay({ vault, amount: E18, hints: [ZERO, ZERO] }).gas).toBe(9_500_000n);
+    expect(tx.repay({ vault, amount: E18, hints: [ADDR.alice, ZERO] }).gas).toBe(880_000n);
+  });
+
+  it("still lifts a hinted call to the cap when a redemption-defense walk is on", () => {
+    expect(tx.repay({ vault, amount: E18, hints, gas: { defenseWalk: true } }).gas).toBe(9_500_000n);
+  });
+
+  it("does not change the limit of a call that takes no hints", () => {
+    expect(tx.close({ vault }).gas).toBe(895_000n);
+    expect(tx.cancelAll().gas).toBe(95_000n);
   });
 });
 

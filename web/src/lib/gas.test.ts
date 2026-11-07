@@ -71,12 +71,50 @@ describe("gas limits", () => {
   });
 
   it("calls that touch the sorted list start from the keeper's 6M floor, the rest from 1M", () => {
-    for (const fn of ["openPosition", "addCollateral", "withdrawCollateral", "borrow", "repay", "repayWithPermit", "refinance", "close", "closeWithPermit"]) {
+    for (const fn of ["openPosition", "addCollateral", "withdrawCollateral", "borrow", "repayWithPermit"]) {
       expect(gasLimitFor(fn), fn).toBeGreaterThanOrEqual(FLOOR_SORTED);
     }
-    for (const fn of ["announce", "cancel", "approve", "safeTransferFrom", "claimSurplus", "sweep"]) {
+    for (const fn of ["announce", "cancel", "approve", "safeTransferFrom", "sweep"]) {
       expect(GAS_RULES[fn].floor, fn).toBe(FLOOR_SIMPLE);
     }
+  });
+
+  // the nine actions that had no evidence were measured by bisecting eth_call gas; docs/gas-measurements.json is that record
+  const NINE = ["repay", "refinance", "close", "closeWithPermit", "claimSurplus", "fundReserveMusd", "clearPolicy", "cancelAll", "setApprovalForAll"];
+  const record = JSON.parse(readFileSync(join(__dirname, "..", "..", "..", "docs", "gas-measurements.json"), "utf8")) as Record<string, { minGas: number }>;
+
+  it("the nine measured actions use the minimum recorded in docs/gas-measurements.json", () => {
+    for (const fn of NINE) {
+      expect(GAS_RULES[fn].measured, fn).toBe(record[fn].minGas);
+      expect(GAS_RULES[fn].source, fn).toMatch(/gas-measurements/);
+    }
+  });
+
+  it("their limit is about twice that minimum: at least 2x, and under 2x plus one rounding step", () => {
+    for (const fn of NINE) {
+      const min = record[fn].minGas;
+      const limit = gasLimitFor(fn);
+      expect(limit, fn).toBeGreaterThanOrEqual(2 * min);
+      expect(limit, fn).toBeLessThan(2 * min + 5_000);
+      expect(limit % 5_000, fn).toBe(0);
+    }
+    expect([gasLimitFor("repay"), gasLimitFor("close"), gasLimitFor("cancelAll")]).toEqual([880_000, 895_000, 95_000]);
+  });
+
+  it("is never below what the call needs: every limit clears its measured minimum with room", () => {
+    for (const fn of NINE) expect(gasLimitFor(fn) / record[fn].minGas, fn).toBeGreaterThan(1.9);
+  });
+
+  it("repay and refinance use the cap when the caller has no sorted-list hints, which cost several times more", () => {
+    expect(record["repay (no hints)"].minGas).toBeGreaterThan(3_000_000);
+    expect(record["refinance (no hints)"].minGas).toBeGreaterThan(3_000_000);
+    for (const fn of ["repay", "refinance"]) {
+      expect(gasLimitFor(fn, { hinted: false }), fn).toBe(CAP);
+      expect(gasLimitFor(fn, { hinted: false }), fn).toBeGreaterThan(record[`${fn} (no hints)`].minGas * 2);
+      expect(gasLimitFor(fn, { hinted: true }), fn).toBe(gasLimitFor(fn));
+    }
+    // a rule without an unhinted limit ignores the flag
+    expect(gasLimitFor("close", { hinted: false })).toBe(gasLimitFor("close"));
   });
 
   it("withGas sets the limit as a bigint and replaces any other value", () => {

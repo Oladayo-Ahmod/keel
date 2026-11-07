@@ -57,6 +57,8 @@ export function txBuilders(deployment: Deployment) {
     return result as T;
   }
 
+  /** Hints that actually point somewhere. Zero addresses are what a caller passes to say "no hints". */
+  const hasHints = (h: Hints | undefined) => !!h && (h[0].toLowerCase() !== ZERO || h[1].toLowerCase() !== ZERO);
   const hintPair = (h: Hints | undefined): [Address, Address] => (h ? [toAddress("upperHint", h[0]), toAddress("lowerHint", h[1])] : [ZERO, ZERO]);
   const positive = (name: string, v: bigint, bad: (m: string) => void) => {
     if (v === 0n) bad(`${name} has to be above zero`);
@@ -116,7 +118,7 @@ export function txBuilders(deployment: Deployment) {
         const amount = toUint("amount", a.amount);
         positive("amount", amount, bad);
         const [up, lo] = hintPair(a.hints);
-        return make(vault, vaultAbi, "repay", [amount, up, lo], `Repay ${musd(amount)} on the position at ${short(vault)}.`, { gas: a.gas });
+        return make(vault, vaultAbi, "repay", [amount, up, lo], `Repay ${musd(amount)} on the position at ${short(vault)}.`, { gas: { ...a.gas, hinted: hasHints(a.hints) } });
       });
     },
 
@@ -139,7 +141,7 @@ export function txBuilders(deployment: Deployment) {
         const drop = toUint("minRateDropBps", a.minRateDropBps ?? 0, U16);
         const [up, lo] = hintPair(a.hints);
         void bad;
-        return make(vault, vaultAbi, "refinance", [up, lo, maxFee, Number(drop)], `Refinance the position at ${short(vault)} to the current market rate, fee at most ${musd(maxFee)}.`, { gas: a.gas });
+        return make(vault, vaultAbi, "refinance", [up, lo, maxFee, Number(drop)], `Refinance the position at ${short(vault)} to the current market rate, fee at most ${musd(maxFee)}.`, { gas: { ...a.gas, hinted: hasHints(a.hints) } });
       });
     },
 
