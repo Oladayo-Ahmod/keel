@@ -23,11 +23,22 @@ describe("links", () => {
 });
 
 describe("the files as shipped", () => {
-  it("are valid and empty, so no page invents a number", () => {
+  it("are valid, every entry carries evidence, and nothing is a bare number", () => {
     const b = parseBreakIt(breakIt);
     const p = parseProof(proof);
-    expect(b.ok && b.data.attempts.length === 0 && b.data.updated === null).toBe(true);
-    expect(p.ok && p.data.claims.length === 0 && p.data.summary.tests === null && p.data.deployments.length === 0).toBe(true);
+    expect(b.ok).toBe(true);
+    expect(p.ok).toBe(true);
+    if (!b.ok || !p.ok) return;
+    expect(b.data.attempts.length).toBeGreaterThan(0);
+    for (const a of b.data.attempts) expect(a.evidence.length, a.id).toBeGreaterThan(0);
+    for (const c of p.data.claims) expect(c.evidence.length, c.id).toBeGreaterThan(0);
+    // every shipped transaction link points at the testnet explorer with a full 32-byte hash
+    const txLinks = p.data.claims.flatMap((c) => c.evidence.map((e) => e.href)).filter((h) => h.includes("/tx/"));
+    expect(txLinks.length).toBeGreaterThan(0);
+    for (const h of txLinks) expect(h).toMatch(/^https:\/\/explorer\.test\.mezo\.org\/tx\/0x[0-9a-f]{64}$/);
+    expect(p.data.deployments.length).toBe(5);
+    expect(p.data.summary.tests).toBe(259);
+    expect(p.data.claims.some((c) => c.status === "open")).toBe(true);
   });
 });
 

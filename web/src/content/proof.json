@@ -1,6 +1,188 @@
 {
-  "updated": null,
-  "summary": { "tests": null, "passing": null, "invariants": null, "note": null },
-  "claims": [],
-  "deployments": []
+    "summary":  {
+                    "note":  "Foundry as forge test reports it (22 suites; the fork tests use the real MUSD contracts). It folds each suite\u0027s invariants into one result: the source has 275 test and invariant functions, 18 of them invariants (7 Wave 1, 11 Wave 2). Plus 151 web tests and 24 keeper tests, counted separately. Not audited.",
+                    "tests":  259,
+                    "passing":  259,
+                    "invariants":  18
+                },
+    "claims":  [
+                   {
+                       "status":  "verified",
+                       "claim":  "A position opens through the Trozu factory as one NFT holding the whole trove.",
+                       "evidence":  [
+                                        {
+                                            "href":  "https://explorer.test.mezo.org/tx/0x3c8456df1c02b699565fed0076fb02bc8970ff495b7b7bd198f4e76e33dc2c15",
+                                            "label":  "Open (live proof)"
+                                        }
+                                    ],
+                       "id":  "open",
+                       "how":  "Opened on Mezo testnet by the live proof run; the lens read back token 1, its vault and a ratio of 134.88%."
+                   },
+                   {
+                       "status":  "verified",
+                       "claim":  "The NFT can be moved away and back, and a guardian policy does not survive the move.",
+                       "evidence":  [
+                                        {
+                                            "href":  "https://explorer.test.mezo.org/tx/0x5a5f35a22f294e7331b5710bf55f70729d8ca75bb173df159a2269db02076c70",
+                                            "label":  "Transfer away"
+                                        },
+                                        {
+                                            "href":  "https://explorer.test.mezo.org/tx/0x51a4e06ee1f7084028a7fceac2db0f533d2e2b2c1b8d133ee7032308939e6abc",
+                                            "label":  "Transfer back"
+                                        }
+                                    ],
+                       "id":  "transfer",
+                       "how":  "Moved to a second wallet and back on chain. A keeper call on the old policy was then refused with NothingToDo(PolicyStale)."
+                   },
+                   {
+                       "status":  "verified",
+                       "claim":  "A fixed-price sale settles in one transaction with the market fee taken.",
+                       "evidence":  [
+                                        {
+                                            "href":  "https://explorer.test.mezo.org/tx/0x54932e1a3ab207156f0bab7a2fe607a65ee5444bd957e684f6b69323d334d9d1",
+                                            "label":  "Fixed-price sale"
+                                        }
+                                    ],
+                       "id":  "fixed-sale",
+                       "how":  "The second wallet bought for 100 MUSD with a signed permit and no prior approval; the fee was 0.25 MUSD (25 bps). The seller is also the fee recipient in this run, so the fee is evidenced by the MUSD Transfer logs and the Sold event, not by a balance change."
+                   },
+                   {
+                       "status":  "verified",
+                       "claim":  "A Dutch auction sells at the price the curve gives at that moment.",
+                       "evidence":  [
+                                        {
+                                            "href":  "https://explorer.test.mezo.org/tx/0xab73ced51e6870a30d1aa4b4d28a25a326d711a78745eaee73c3426fa0e555de",
+                                            "label":  "Dutch sale"
+                                        }
+                                    ],
+                       "id":  "dutch-sale",
+                       "how":  "A 120 MUSD start falling to 60 over 15 minutes sold at 115.67 MUSD."
+                   },
+                   {
+                       "status":  "verified",
+                       "claim":  "A seller can cancel a listing, and a cancelled listing cannot be bought.",
+                       "evidence":  [
+                                        {
+                                            "href":  "https://explorer.test.mezo.org/tx/0xe3f10614c2c99050b099ac8f4a765678a7af512d12b8bcb87daa3a18111bd60c",
+                                            "label":  "Cancel"
+                                        }
+                                    ],
+                       "id":  "cancel",
+                       "how":  "Cancelled on chain; buying it afterwards reverts with ListingInvalid(Cancelled)."
+                   },
+                   {
+                       "status":  "verified",
+                       "claim":  "A keeper can top a position up when its ratio falls under the holder\u0027s floor, and only then.",
+                       "evidence":  [
+                                        {
+                                            "href":  "https://explorer.test.mezo.org/tx/0x7d2280786535e8ce51456007e12073906266a3afc39a8e6341ac90763a309335",
+                                            "label":  "Keeper top-up"
+                                        }
+                                    ],
+                       "id":  "keeper-floor",
+                       "how":  "The vault\u0027s own planner said act; the keeper added collateral, ratio 135.07% to 145.17%, tip 0.00001 BTC. Called inside the policy it is refused with NothingToDo(Healthy). The first attempt ran out of gas and is recorded in PROOF.md."
+                   },
+                   {
+                       "status":  "verified",
+                       "claim":  "Redemption defense acts only after a complete sorted-list walk proves the buffer is under the floor.",
+                       "evidence":  [
+                                        {
+                                            "href":  "https://explorer.test.mezo.org/tx/0xbc7158fe8ceb62a08a4360d6d407eca5463640fb3a946950edfa5fd80a83ac3d",
+                                            "label":  "Redemption-defense top-up"
+                                        }
+                                    ],
+                       "id":  "keeper-defense",
+                       "how":  "Ran after the position was lowered to about 118% so it sat within the 100-step walk. Further from the front of the queue the verdict is unknown and the guardian does nothing, which is a limit of the product."
+                   },
+                   {
+                       "status":  "verified",
+                       "claim":  "The app\u0027s own screens can add collateral, withdraw, borrow, repay with a permit, sweep, list fixed and Dutch, buy, cancel, transfer, set a guardian policy and fund or withdraw the reserve.",
+                       "evidence":  [
+                                        {
+                                            "href":  "https://explorer.test.mezo.org/tx/0x8d2c60c259f51d027864ec6c9dac811c8c44dd99bf91cfd22f0d9560f58f5d13",
+                                            "label":  "Add collateral"
+                                        },
+                                        {
+                                            "href":  "https://explorer.test.mezo.org/tx/0x2616fd3181916b4b5156ccb83084f297cc2291f87dd13379c344b3f618504573",
+                                            "label":  "Repay with permit"
+                                        },
+                                        {
+                                            "href":  "https://explorer.test.mezo.org/tx/0xf32de59bc28e9382785130b209770dc65f2a5f2d8883b36fc5285cad70535855",
+                                            "label":  "Buy"
+                                        },
+                                        {
+                                            "href":  "https://explorer.test.mezo.org/tx/0x69a7d4e15a42ac8a4796c88449c29ce7f43d875dcadf0d348d3075f717b642a4",
+                                            "label":  "Cancel"
+                                        },
+                                        {
+                                            "href":  "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/ROUNDTRIP.md",
+                                            "label":  "ROUNDTRIP.md"
+                                        }
+                                    ],
+                       "id":  "ui-roundtrip",
+                       "how":  "Each run once at 390 px through a test-only wallet connector on Mezo testnet. Claim, refinance, open and close could not be run and are listed as unverified in ROUNDTRIP.md."
+                   },
+                   {
+                       "status":  "open",
+                       "claim":  "Opening and closing a position through the app work end to end on testnet.",
+                       "evidence":  [
+                                        {
+                                            "href":  "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/ROUNDTRIP.md",
+                                            "label":  "ROUNDTRIP.md"
+                                        }
+                                    ],
+                       "id":  "ui-open-close",
+                       "how":  "Not run through the UI: it needs about 0.029 BTC for a second position. Opening is covered by the live proof run through the factory; closing by Foundry tests."
+                   },
+                   {
+                       "status":  "open",
+                       "claim":  "The contracts have had an independent audit.",
+                       "evidence":  [
+                                        {
+                                            "href":  "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/REVIEW.md",
+                                            "label":  "REVIEW.md"
+                                        }
+                                    ],
+                       "id":  "audit",
+                       "how":  "No. One AI-assisted adversarial review found three issues, all fixed with regression tests. That is not an audit and no human third party has reviewed the code."
+                   }
+               ],
+    "updated":  "2026-11-07",
+    "deployments":  [
+                        {
+                            "explorer":  "https://repo.sourcify.dev/31611/0x70791379537cB14981AA7114678663164141eC31",
+                            "name":  "TrozuFactory",
+                            "note":  "Sourcify exact runtime match",
+                            "address":  "0x70791379537cB14981AA7114678663164141eC31",
+                            "verification":  "exact"
+                        },
+                        {
+                            "explorer":  "https://repo.sourcify.dev/31611/0xd53f649e4df31351De8935De9cA7110888F055b8",
+                            "name":  "TrozuNFT",
+                            "note":  "Sourcify exact runtime match",
+                            "address":  "0xd53f649e4df31351De8935De9cA7110888F055b8",
+                            "verification":  "exact"
+                        },
+                        {
+                            "explorer":  "https://repo.sourcify.dev/31611/0xCCF8c5aFe7473eC41F64906071e1bE497872004C",
+                            "name":  "PositionLens (Trozu)",
+                            "note":  "Sourcify exact runtime match",
+                            "address":  "0xCCF8c5aFe7473eC41F64906071e1bE497872004C",
+                            "verification":  "exact"
+                        },
+                        {
+                            "explorer":  "https://repo.sourcify.dev/31611/0x6ef4395325828083672FFe836d6Bc80Bf22cACFE",
+                            "name":  "TrozuVault implementation",
+                            "note":  "Sourcify exact runtime match",
+                            "address":  "0x6ef4395325828083672FFe836d6Bc80Bf22cACFE",
+                            "verification":  "exact"
+                        },
+                        {
+                            "explorer":  "https://repo.sourcify.dev/31611/0xEae6fEa26B178eF32829F36e5219363bB30D93DB",
+                            "name":  "TrozuMarket",
+                            "note":  "Sourcify exact runtime match",
+                            "address":  "0xEae6fEa26B178eF32829F36e5219363bB30D93DB",
+                            "verification":  "exact"
+                        }
+                    ]
 }

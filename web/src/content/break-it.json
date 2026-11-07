@@ -1,5 +1,107 @@
 {
-  "updated": null,
-  "intro": null,
-  "attempts": []
+  "updated": "2026-11-07",
+  "intro": "These are attacks that were tried against Trozu and what happened. The first three came from a one-pass AI-assisted review (not an independent audit; no human third party has reviewed these contracts). Each worked against the commit that was reviewed, and each was fixed in its own commit with a regression test. The rest are refusals recorded on Mezo testnet from the live proof run, with the contract's real revert, and the invariants the fuzzer checks.",
+  "attempts": [
+    {
+      "id": "review-1",
+      "title": "Guardian top-up in recovery mode",
+      "attack": "The system falls into recovery mode and the vault's trove sits far under the system ratio. Two execute() calls move reserve BTC into it. It is still liquidatable, so the liquidator receives the money.",
+      "result": "succeeded",
+      "why": "It worked against the reviewed commit (Medium). Fixed: in recovery mode an action must lift the trove to the system ratio or 110%, whichever is higher, or execute() is not offered and preview() says BelowMinimum. In a deep crash the guardian will often do nothing, which is a limit of the product.",
+      "evidence": [
+        { "label": "REVIEW.md, finding 1", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/REVIEW.md" },
+        { "label": "Exploit tests kept as text", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/review/Exploits.t.sol.txt" }
+      ]
+    },
+    {
+      "id": "review-2",
+      "title": "Dust actions turned the allowance into keeper tips",
+      "attack": "After one legitimate top-up, interest keeps the ratio a hair under the target. A keeper calls execute() every block, each time moving almost nothing and collecting the full tip.",
+      "result": "succeeded",
+      "why": "It worked against the reviewed commit (Medium): 148 tipped actions paid 0.0148 BTC of tips for about 0.00000006 BTC of collateral. Fixed: an action must move at least 10 times its tip in value or it pays no tip. Dust actions can still run and use part of the period cap, but cost the holder no tips.",
+      "evidence": [
+        { "label": "REVIEW.md, finding 2", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/REVIEW.md" }
+      ]
+    },
+    {
+      "id": "review-3",
+      "title": "Seller empties the reserve after listing",
+      "attack": "The guardian reserve travels with the position, but the buyer's bounds did not cover it. The seller front-runs buy() with withdrawReserveBtc and keeps the BTC.",
+      "result": "succeeded",
+      "why": "It worked against the reviewed commit (Low). Fixed: the buyer's bounds now include a minimum BTC and MUSD reserve, checked in the same transaction as the payment. A pending surplus claim is not pinned; a buyer should read it before buying.",
+      "evidence": [
+        { "label": "REVIEW.md, finding 3", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/REVIEW.md" }
+      ]
+    },
+    {
+      "id": "refusal-old-holder",
+      "title": "Old holder acts after the position moved",
+      "attack": "After selling, the seller calls withdrawCollateral on the vault they no longer hold.",
+      "result": "blocked",
+      "why": "The vault is controlled by whoever holds the NFT. The call reverts with NotHolder. Recorded as an eth_call on testnet against the live proof position.",
+      "evidence": [
+        { "label": "PROOF.md, refusals", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/PROOF.md" }
+      ]
+    },
+    {
+      "id": "refusal-stale-epoch",
+      "title": "Replay a listing signed before the position moved",
+      "attack": "Sign a listing, move the position away and back, then ask a buyer to settle the old listing.",
+      "result": "blocked",
+      "why": "Every transfer bumps the position's transfer epoch, which the listing is stamped with. buy() reverts with ListingInvalid(StaleEpoch).",
+      "evidence": [
+        { "label": "PROOF.md, refusals", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/PROOF.md" }
+      ]
+    },
+    {
+      "id": "refusal-stale-policy",
+      "title": "Keeper uses a guardian policy from a previous holder",
+      "attack": "A policy is set, the position moves away and back, and a keeper calls execute() on the old policy.",
+      "result": "blocked",
+      "why": "Policies are stamped with the transfer epoch too. execute() reverts with NothingToDo(PolicyStale). A new holder starts with no guardian acting for them.",
+      "evidence": [
+        { "label": "PROOF.md, refusals", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/PROOF.md" }
+      ]
+    },
+    {
+      "id": "refusal-bounds",
+      "title": "Buy a position that is not what the buyer checked",
+      "attack": "A buyer asks for one wei more collateral than the position holds, or more BTC reserve than the vault has. A seller who changed the position after signing would be caught the same way.",
+      "result": "blocked",
+      "why": "The buyer's bounds are read from the chain in the same transaction as the payment. buy() reverts with CollateralBelowMin or ReserveBelowMin and the buyer loses nothing but gas.",
+      "evidence": [
+        { "label": "PROOF.md, refusals", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/PROOF.md" }
+      ]
+    },
+    {
+      "id": "refusal-cancelled-expired",
+      "title": "Buy a cancelled or expired listing",
+      "attack": "Settle a listing after the seller cancelled it, or after its deadline.",
+      "result": "blocked",
+      "why": "buy() reverts with ListingInvalid(Cancelled) and ListingInvalid(Expired).",
+      "evidence": [
+        { "label": "PROOF.md, refusals", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/PROOF.md" }
+      ]
+    },
+    {
+      "id": "refusal-keeper-outside-policy",
+      "title": "Keeper acts when the holder's policy says not to",
+      "attack": "A keeper calls execute() while the position is inside its policy.",
+      "result": "blocked",
+      "why": "The vault's own planner decides, and execute() reverts with NothingToDo(Healthy). A keeper can only do what the holder's policy allows, and tips are capped in code.",
+      "evidence": [
+        { "label": "PROOF.md, refusals", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/PROOF.md" }
+      ]
+    },
+    {
+      "id": "invariants",
+      "title": "State-machine fuzzing against the real MUSD contracts",
+      "attack": "Random sequences of opens, adjustments, transfers, listings, sales, reserve moves, keeper calls and oracle price moves, with independent oracles checking the result after every call.",
+      "result": "blocked",
+      "why": "Invariants checked include: only the current holder moves funds; permissions and policies clear on transfer; the guardian stays inside the policy; the market is atomic and holds nothing between calls; a vault holds exactly its reserve; the lens agrees with Mezo. Fuzzing found a real planner bug during the build (it offered actions Mezo rejects below 110%) and that bug is fixed. Fuzzing is not a proof.",
+      "evidence": [
+        { "label": "Wave 2 invariants", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/test/v2/invariant/Invariants.t.sol" }
+      ]
+    }
+  ]
 }
