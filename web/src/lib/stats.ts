@@ -29,6 +29,8 @@ export interface Tally {
     expired: number;
     /** Cancelled in bulk by raising the seller's nonce. */
     revoked: number;
+    /** Announced by one of the team's own wallets, whatever happened to it since. */
+    announcedByTeam: number;
     /** Announced and none of the above. The market can still refuse one for other reasons, see `check`. */
     openByLogs: number;
     candidates: OpenCandidate[];
@@ -41,11 +43,17 @@ export interface Tally {
     tips: bigint;
     keepers: number;
   };
+  /**
+   * Addresses that appear as a participant in these logs: position holders, listing sellers, buyers and recipients, keepers.
+   * `others` are the ones that are not the team's. Only what the logs show: someone who only viewed, or only moved an NFT, is not here.
+   */
+  participants: { distinct: number; team: number; others: number };
   /** Logs from addresses that are not factory vaults and so were ignored. Anyone can emit these topics. */
   ignoredVaultLogs: number;
 }
 
 const lower = (a: unknown) => String(a).toLowerCase();
+const ZERO = "0x0000000000000000000000000000000000000000";
 const order = (a: StatLog, b: StatLog) => (a.blockNumber === b.blockNumber ? a.logIndex - b.logIndex : a.blockNumber < b.blockNumber ? -1 : 1);
 
 /** Kind enum of the vault, as emitted in GuardianAction. */
@@ -56,11 +64,18 @@ const KIND = ["other", "TopUpBtc", "RepayMusd", "DefendBtc"] as const;
  * checked against a fixture. Vault events are only trusted from addresses the factory created, because anything can
  * emit a `PolicySet` or `GuardianAction` topic.
  */
-export function tally(input: { factory: StatLog[]; market: StatLog[]; vaults: StatLog[]; nowSeconds: bigint }): Tally {
+export function tally(input: { factory: StatLog[]; market: StatLog[]; vaults: StatLog[]; nowSeconds: bigint; team?: Iterable<string> }): Tally {
+  const team = new Set([...(input.team ?? [])].map(lower));
+  const people = new Set<string>();
+  const see = (a: unknown) => {
+    const x = lower(a);
+    if (x !== ZERO) people.add(x);
+  };
   const created = new Map<string, Hex>();
   for (const l of input.factory) {
     if (l.eventName !== "PositionCreated") continue;
     created.set(lower(l.args.vault), l.args.vault as Hex);
+    see(l.args.holder);
   }
 
   // market
@@ -75,6 +90,7 @@ export function tally(input: { factory: StatLog[]; market: StatLog[]; vaults: St
     const a = l.args;
     switch (l.eventName) {
       case "ListingAnnounced": {
+        see(a.seller);
         const listing = a.listing as { nonce: bigint; deadline: bigint; seller: Hex; tokenId: bigint };
         announced.set(lower(a.hash), {
           hash: a.hash as Hex, seller: a.seller as Hex, tokenId: a.tokenId as bigint,
@@ -83,15 +99,20 @@ export function tally(input: { factory: StatLog[]; market: StatLog[]; vaults: St
         break;
       }
       case "ListingCancelled":
+        see(a.seller);
         cancelled.add(lower(a.hash));
         break;
       case "AllListingsCancelled": {
+        see(a.seller);
         const s = lower(a.seller);
         const n = a.newNonce as bigint;
         if (n > (revokedBelow.get(s) ?? 0n)) revokedBelow.set(s, n);
         break;
       }
       case "Sold":
+        see(a.seller);
+        see(a.buyer);
+        see(a.recipient);
         salesCount++;
         sold.add(lower(a.hash));
         volume += a.price as bigint;
@@ -99,9 +120,10 @@ export function tally(input: { factory: StatLog[]; market: StatLog[]; vaults: St
         break;
     }
   }
-  let nSold = 0, nCancelled = 0, nExpired = 0, nRevoked = 0;
+  let nSold = 0, nCancelled = 0, nExpired = 0, nRevoked = 0, byTeam = 0;
   const candidates: OpenCandidate[] = [];
   for (const [key, c] of announced) {
+    if (team.has(lower(c.seller))) byTeam++;
     // one reason each, in the order the market checks them
     if (sold.has(key)) nSold++;
     else if (cancelled.has(key)) nCancelled++;
@@ -129,6 +151,7 @@ export function tally(input: { factory: StatLog[]; market: StatLog[]; vaults: St
       actions++;
       tips += l.args.tip as bigint;
       keepers.add(lower(l.args.keeper));
+      see(l.args.keeper);
       byKind[KIND[Number(l.args.kind)] ?? "other"]++;
     }
   }
@@ -137,12 +160,13 @@ export function tally(input: { factory: StatLog[]; market: StatLog[]; vaults: St
   return {
     positionsCreated: created.size,
     listings: {
-      announced: announced.size, sold: nSold, cancelled: nCancelled, expired: nExpired, revoked: nRevoked,
+      announced: announced.size, announcedByTeam: byTeam, sold: nSold, cancelled: nCancelled, expired: nExpired, revoked: nRevoked,
       openByLogs: candidates.length, candidates,
     },
     sales: { count: salesCount, volume, fees },
     policies: { set: live.length, vaultsWithHistory: state.size, vaults: live },
     keeper: { actions, byKind, tips, keepers: keepers.size },
+    participants: { distinct: people.size, team: [...people].filter((p) => team.has(p)).length, others: [...people].filter((p) => !team.has(p)).length },
     ignoredVaultLogs: ignored,
   };
 }

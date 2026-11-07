@@ -186,6 +186,26 @@ describe("stats snapshot", () => {
     expect((await buildSnapshot(refused.chain, undefined, opts())).snapshot.activeListings).toMatchObject({ count: 0, exact: true });
   });
 
+  it("marks open listings from the team as demo listings and counts other addresses, shown even at zero", async () => {
+    const mk = (h: number, seller: number) => ({ ...announce(h), args: { ...announce(h).args, seller: addr(seller), listing: { nonce: 0n, deadline: BigInt(NOW_MS / 1000 + 1000), seller: addr(seller), tokenId: 1n } } });
+    const only = fake({ market: [mk(1, 50), mk(2, 50)], checkState: 0 });
+    const a = (await buildSnapshot(only.chain, undefined, opts({ team: [addr(50).toUpperCase().replace("0X", "0x")] }))).snapshot;
+    expect(a.activeListings).toMatchObject({ count: 2, demo: 2 });
+    expect(a.listings.announcedByTeam).toBe(2);
+    expect(a.participants).toEqual({ distinct: 1, team: 1, others: 0 });
+
+    const mixed = fake({ market: [mk(1, 50), mk(2, 99)], checkState: 0 });
+    const b = (await buildSnapshot(mixed.chain, undefined, opts({ team: [addr(50)] }))).snapshot;
+    expect(b.activeListings).toMatchObject({ count: 2, demo: 1 });
+    expect(b.participants).toEqual({ distinct: 2, team: 1, others: 1 });
+  });
+
+  it("counts demo listings only among the ones the market would settle", async () => {
+    const m = fake({ market: [announce(1)], checkState: 8 });
+    const s = (await buildSnapshot(m.chain, undefined, opts({ team: [addr(50)] }))).snapshot;
+    expect(s.activeListings).toMatchObject({ count: 0, demo: 0 });
+  });
+
   it("falls back to the log count, flagged inexact, when there are too many listings to check", async () => {
     const m = fake({ market: Array.from({ length: 12 }, (_, i) => announce(i + 1)) });
     const { snapshot } = await buildSnapshot(m.chain, undefined, opts({ maxChecks: 10 }));

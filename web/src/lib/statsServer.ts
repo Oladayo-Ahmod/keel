@@ -1,6 +1,7 @@
 import { createPublicClient, type AbiEvent, type Log } from "viem";
 import { trozuFactoryAbi, trozuMarketAbi, trozuVaultAbi } from "@/abi/trozu";
 import { LOG_WINDOW, wave2 } from "@/config/wave2";
+import { teamSet } from "@/config/team";
 import { createTracker } from "./freshness";
 import { mezoTestnetChain, makeTransport } from "./rpc";
 import type { StatLog } from "./stats";
@@ -62,6 +63,7 @@ async function compute(): Promise<StatsSnapshot> {
     budgetMs: 6_000,
     maxChecks: 40,
     maxPreviews: 25,
+    team: teamSet(),
     tracker,
   });
   scanState = r.state;

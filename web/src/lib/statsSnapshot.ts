@@ -33,6 +33,8 @@ export interface SnapshotOptions {
   budgetMs: number;
   maxChecks: number;
   maxPreviews: number;
+  /** The team's own wallets, lowercase or not. Listings from them are demo listings, and they are not counted as other people. */
+  team?: Iterable<string>;
   tracker: Tracker;
   now?: () => number;
   sleep?: (ms: number) => Promise<void>;
@@ -49,8 +51,11 @@ export interface StatsSnapshot {
   /** Set when this is an older snapshot served because the read just failed. */
   degraded?: string;
   positionsCreated: number;
-  listings: { announced: number; sold: number; cancelled: number; expired: number; revoked: number };
-  activeListings: { count: number; exact: boolean; checked: number; note: string };
+  listings: { announced: number; announcedByTeam: number; sold: number; cancelled: number; expired: number; revoked: number };
+  /** `demo` is how many of `count` were announced by the team's own wallets. */
+  activeListings: { count: number; demo: number; exact: boolean; checked: number; note: string };
+  /** Distinct addresses in the logs, split into the team's and everyone else's. `others` is shown even when it is zero. */
+  participants: { distinct: number; team: number; others: number };
   sales: { count: number; volumeWei: string; feesWei: string };
   policies: { set: number };
   keeper: { actions: number; byKind: Tally["keeper"]["byKind"]; tipsWei: string; keepers: number };
@@ -138,20 +143,24 @@ export async function buildSnapshot(chain: StatsChain, state: ScanState | undefi
     s = { ...s, to: hi, factory: [...s.factory, ...r.factory], market: [...s.market, ...r.market], vaults: [...s.vaults, ...r.vaults] };
   }
 
-  const t = tally({ factory: s.factory, market: s.market, vaults: s.vaults, nowSeconds: head.timestamp });
+  const team = [...(o.team ?? [])].map((a) => a.toLowerCase());
+  const t = tally({ factory: s.factory, market: s.market, vaults: s.vaults, nowSeconds: head.timestamp, team });
+  const isDemo = (c: OpenCandidate) => team.includes(c.seller.toLowerCase());
 
   // which open-looking listings the market would still settle
   let active: StatsSnapshot["activeListings"];
   if (t.listings.candidates.length <= o.maxChecks) {
     const states = await Promise.allSettled(t.listings.candidates.map((c) => chain.checkListing(c)));
-    const ok = states.filter((x) => x.status === "fulfilled" && stateName(x.value) === "Ok").length;
+    const okIdx = states.flatMap((x, i) => (x.status === "fulfilled" && stateName(x.value) === "Ok" ? [i] : []));
+    const ok = okIdx.length;
+    const demo = okIdx.filter((i) => isDemo(t.listings.candidates[i])).length;
     const failed = states.filter((x) => x.status === "rejected").length;
     active = failed
-      ? { count: ok, exact: false, checked: states.length - failed, note: `${failed} listing${failed === 1 ? "" : "s"} could not be checked, so this may be low.` }
-      : { count: ok, exact: true, checked: states.length, note: "Each listing was checked with the market's own check()." };
+      ? { count: ok, demo, exact: false, checked: states.length - failed, note: `${failed} listing${failed === 1 ? "" : "s"} could not be checked, so this may be low.` }
+      : { count: ok, demo, exact: true, checked: states.length, note: "Each listing was checked with the market's own check()." };
   } else {
     active = {
-      count: t.listings.openByLogs, exact: false, checked: 0,
+      count: t.listings.openByLogs, demo: t.listings.candidates.filter(isDemo).length, exact: false, checked: 0,
       note: `More than ${o.maxChecks} listings look open in the logs, so they were not checked one by one. Some may no longer be able to settle.`,
     };
   }
@@ -179,8 +188,9 @@ export async function buildSnapshot(chain: StatsChain, state: ScanState | undefi
     stale: freshness.stale,
     ...(freshness.stale ? { staleReason: freshness.reason } : {}),
     positionsCreated: t.positionsCreated,
-    listings: { announced: t.listings.announced, sold: t.listings.sold, cancelled: t.listings.cancelled, expired: t.listings.expired, revoked: t.listings.revoked },
+    listings: { announced: t.listings.announced, announcedByTeam: t.listings.announcedByTeam, sold: t.listings.sold, cancelled: t.listings.cancelled, expired: t.listings.expired, revoked: t.listings.revoked },
     activeListings: active,
+    participants: t.participants,
     sales: { count: t.sales.count, volumeWei: t.sales.volume.toString(), feesWei: t.sales.fees.toString() },
     policies: { set: t.policies.set },
     keeper: { actions: t.keeper.actions, byKind: t.keeper.byKind, tipsWei: t.keeper.tips.toString(), keepers: t.keeper.keepers },

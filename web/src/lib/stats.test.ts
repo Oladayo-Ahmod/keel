@@ -134,6 +134,57 @@ describe("stats tally", () => {
   });
 });
 
+describe("participants and demo listings", () => {
+  const TEAM = [addr(50), addr(60), addr(70)];
+  const runT = (p: Partial<{ factory: StatLog[]; market: StatLog[]; vaults: StatLog[] }>, team: string[] = TEAM) =>
+    tally({ factory: [], market: [], vaults: [], nowSeconds: NOW, team, ...p });
+
+  it("shows zero other addresses when only the team took part", () => {
+    const t = runT({
+      factory: [log("PositionCreated", addr(1), { vault: addr(10), tokenId: 1n, holder: addr(50) })],
+      market: [announce(1, 50), sale(1, 10n, 1n)],
+      vaults: [action(10, 1, 1n, 70)],
+    });
+    expect(t.participants).toEqual({ distinct: 3, team: 3, others: 0 });
+  });
+
+  it("counts an outside buyer, seller, holder or keeper once each", () => {
+    const t = runT({
+      factory: [log("PositionCreated", addr(1), { vault: addr(10), tokenId: 1n, holder: addr(200) })],
+      market: [
+        announce(1, 201),
+        log("Sold", MARKET, { hash: hash(1), seller: addr(201), buyer: addr(202), tokenId: 1n, recipient: addr(203), price: 1n, fee: 0n }),
+        log("Sold", MARKET, { hash: hash(2), seller: addr(201), buyer: addr(202), tokenId: 2n, recipient: addr(202), price: 1n, fee: 0n }),
+      ],
+      vaults: [action(10, 1, 1n, 204)],
+    });
+    expect(t.participants.others).toBe(5);
+    expect(t.participants.team).toBe(0);
+  });
+
+  it("does not count the zero address", () => {
+    const t = runT({ market: [log("Sold", MARKET, { hash: hash(1), seller: addr(50), buyer: addr(0), tokenId: 1n, recipient: addr(0), price: 1n, fee: 0n })] });
+    expect(t.participants).toEqual({ distinct: 1, team: 1, others: 0 });
+  });
+
+  it("matches the team case-insensitively", () => {
+    const upper = "0x" + "AB".repeat(20);
+    const t = runT({ market: [announce(1, 50), log("ListingCancelled", MARKET, { hash: hash(1), seller: upper, tokenId: 1n })] }, [upper.toLowerCase(), addr(50)]);
+    expect(t.participants.others).toBe(0);
+  });
+
+  it("is all zeros with no logs, and with no team given everyone is an other", () => {
+    expect(runT({}).participants).toEqual({ distinct: 0, team: 0, others: 0 });
+    expect(runT({ market: [announce(1, 50)] }, []).participants).toEqual({ distinct: 1, team: 0, others: 1 });
+  });
+
+  it("counts listings announced by the team", () => {
+    const t = runT({ market: [announce(1, 50), announce(2, 50), announce(3, 99)] });
+    expect(t.listings.announcedByTeam).toBe(2);
+    expect(t.listings.announced).toBe(3);
+  });
+});
+
 describe("scan window helpers", () => {
   it("cuts a range into windows that never exceed the size", () => {
     const w = windows(0n, 25n, 10n);
