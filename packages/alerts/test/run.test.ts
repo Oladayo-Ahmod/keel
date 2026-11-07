@@ -8,7 +8,7 @@ import { ADDR, chain, E18 } from "./fixture.js";
 const SECRET = "https://hooks.example.com/services/T000/B000/s3cr3t-token";
 const pct = (n: number) => (BigInt(Math.round(n * 100)) * E18) / 10_000n;
 
-function harness(env: Record<string, string>, o: Parameters<typeof chain>[0] = {}, argv: string[] = [], fetchImpl?: typeof fetch) {
+function harness(env: Record<string, string>, o: Parameters<typeof chain>[0] = {}, argv: string[] = [], fetchImpl?: typeof fetch, cwd = mkdtempSync(join(tmpdir(), "alerts-cwd-"))) {
   const c = chain(o);
   const out: string[] = [];
   const err: string[] = [];
@@ -22,8 +22,9 @@ function harness(env: Record<string, string>, o: Parameters<typeof chain>[0] = {
       makeChain: () => ({ trozu: c.trozu, client: c.client }),
       post: { fetchImpl: f, backoffMs: 0 },
       now: () => 1_800_000_000_000,
+      cwd,
     });
-  return { c, out, err, f: f as unknown as ReturnType<typeof vi.fn>, code };
+  return { c, out, err, f: f as unknown as ReturnType<typeof vi.fn>, code, cwd };
 }
 
 describe("config", () => {
@@ -162,5 +163,57 @@ describe("state", () => {
     const h = harness({ TOKEN_IDS: "7", WEBHOOK_URL: SECRET, STATE_FILE: file }, { icr: pct(135) });
     expect(await h.code()).toBe(0);
     expect(h.f).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("the default state file", () => {
+  const SECRET_ENV = { TOKEN_IDS: "7", WEBHOOK_URL: SECRET };
+
+  it("is a relative path under the working directory, which is what actions/cache can save", () => {
+    const c = parseConfig(SECRET_ENV, [], "/work/packages");
+    expect(c.stateFile).toBe("/work/packages/.trozu-alerts/state.json");
+    expect(parseConfig({ ...SECRET_ENV, STATE_FILE: "mine/s.json" }, [], "/work").stateFile).toBe("/work/mine/s.json");
+    expect(parseConfig({ ...SECRET_ENV, STATE_FILE: "none" }, [], "/work").stateFile).toBeUndefined();
+  });
+
+  it("is created on the first run, with the directory, and holds only block numbers and times", async () => {
+    const h = harness(SECRET_ENV, { icr: pct(135) });
+    await h.code();
+    const file = join(h.cwd, ".trozu-alerts", "state.json");
+    expect(existsSync(file)).toBe(true);
+    const saved = JSON.parse(readFileSync(file, "utf8"));
+    expect(Object.keys(saved).sort()).toEqual(["lastBlock", "sent", "version"]);
+    expect(JSON.stringify(saved)).not.toContain("s3cr3t");
+    expect(JSON.stringify(saved)).not.toContain("hooks.example.com");
+  });
+
+  it("stops a second run in the same directory repeating the first: a near-floor alert and a keeper action", async () => {
+    const cwd = mkdtempSync(join(tmpdir(), "alerts-cwd-"));
+    const first = harness({ ...SECRET_ENV, LOOKBACK_BLOCKS: "2000" }, { icr: pct(135) }, [], undefined, cwd);
+    first.c.action(1, E18 / 20n, 0n, pct(129), 16_699_500n);
+    expect(await first.code()).toBe(0);
+    const sent1 = JSON.parse(first.f.mock.calls[0]![1].body).alerts.map((a: { key: string }) => a.key).sort();
+    expect(sent1).toHaveLength(2);
+    expect(sent1[0]).toMatch(/^keeper:/);
+    expect(sent1[1]).toBe("near-floor:7");
+
+    // same chain, same position, same directory, a minute later: nothing new to say
+    const second = harness({ ...SECRET_ENV, LOOKBACK_BLOCKS: "2000" }, { icr: pct(135) }, [], undefined, cwd);
+    second.c.action(1, E18 / 20n, 0n, pct(129), 16_699_500n);
+    expect(await second.code()).toBe(0);
+    expect(second.f).not.toHaveBeenCalled();
+    expect(second.out).toEqual(["no alerts"]);
+  });
+
+  it("with STATE_FILE=none every run says everything again", async () => {
+    const cwd = mkdtempSync(join(tmpdir(), "alerts-cwd-"));
+    const env = { ...SECRET_ENV, STATE_FILE: "none" };
+    const a = harness(env, { icr: pct(135) }, [], undefined, cwd);
+    await a.code();
+    const b = harness(env, { icr: pct(135) }, [], undefined, cwd);
+    await b.code();
+    expect(a.f).toHaveBeenCalledTimes(1);
+    expect(b.f).toHaveBeenCalledTimes(1);
+    expect(existsSync(join(cwd, ".trozu-alerts"))).toBe(false);
   });
 });
