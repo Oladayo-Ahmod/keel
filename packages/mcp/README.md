@@ -15,15 +15,52 @@ node mcp/dist/cli.js            # speaks MCP over stdio
 The only setting is `TROZU_RPC_URL` (default: the public Mezo testnet RPC). There is no key, account or
 signer setting, and the code reads no other environment variable.
 
-Claude Desktop, or any client that takes a command:
+## Connect a client
+
+Build first (`npm run build` in `packages/`), then replace `/path/to/keel` with the absolute path of your
+checkout. Use an absolute path: clients start the command from their own working directory.
+
+**Claude Desktop.** Add this to `claude_desktop_config.json` (Settings, Developer, Edit Config), then restart
+the app:
 
 ```json
 {
   "mcpServers": {
-    "trozu": { "command": "node", "args": ["/path/to/keel/packages/mcp/dist/cli.js"] }
+    "trozu": {
+      "command": "node",
+      "args": ["/path/to/keel/packages/mcp/dist/cli.js"]
+    }
   }
 }
 ```
+
+**Claude Code.** One command (add `--scope user` to have it in every project):
+
+```sh
+claude mcp add trozu -- node /path/to/keel/packages/mcp/dist/cli.js
+```
+
+or commit the same JSON as `.mcp.json` at the root of a project. To use a different RPC, add
+`-e TROZU_RPC_URL=https://...` before the name (`claude mcp add -e TROZU_RPC_URL=... trozu -- node ...`), or an
+`"env": { "TROZU_RPC_URL": "..." }` entry in the JSON. `claude mcp list` shows whether it connected.
+
+The JSON above is also kept as [`examples/claude_desktop_config.json`](examples/claude_desktop_config.json).
+
+**What has been checked.** `npm run handshake -w @trozu/mcp` reads that example file, starts the server with
+exactly its `command` and `args`, and runs a full handshake with the MCP SDK's own stdio client:
+`initialize`, `tools/list`, then a real `get_position` call for position 1 on matsnet. It passed on
+2026-11-07:
+
+```
+initialize ok: server "trozu" 0.1.0
+tools/list ok: build_tx, get_position, guardian_status, list_listings, quote_listing, simulate_action
+tools/call get_position ok: position #1, vault 0x2B08...9AB9, risk safe, ratio 162.81%, ...
+handshake ok
+```
+
+That shows the command speaks MCP over stdio. It does **not** show that Claude Desktop or Claude Code loads it:
+neither app was started, and I did not run `claude mcp add` or `claude mcp list`. The Claude Code command and
+the Claude Desktop path are from their documentation, not from a run.
 
 ## Tools
 
