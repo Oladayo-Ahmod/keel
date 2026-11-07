@@ -1,6 +1,7 @@
 import { formatBps, formatBtc, formatIcr, formatMusd } from "./format";
 import { riskOf, type Risk } from "./risk";
 import type { Proof } from "./content";
+import { resolveSiteUrl } from "../../scripts/site-url.mjs";
 
 export type Wave = "1" | "2";
 
@@ -105,14 +106,10 @@ export function proofCard(r: { ok: true; data: Proof } | { ok: false }): Card {
   };
 }
 
-/** Absolute base for share links. Set NEXT_PUBLIC_SITE_URL in production; on Vercel the project's own domain is used. */
+/**
+ * Absolute base for share links and preview tags. See scripts/site-url.mjs: in a production build it is never localhost,
+ * and the build itself refuses to run without a real address.
+ */
 export function siteUrl(env: Record<string, string | undefined> = process.env): URL {
-  const explicit = env.NEXT_PUBLIC_SITE_URL;
-  const vercel = env.VERCEL_PROJECT_PRODUCTION_URL;
-  const raw = explicit || (vercel ? `https://${vercel}` : "http://localhost:3000");
-  try {
-    return new URL(raw);
-  } catch {
-    return new URL("http://localhost:3000");
-  }
+  return resolveSiteUrl(env, env.NODE_ENV === "production");
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { missingCard, parseTokenId, parseWave, positionCard, proofCard, siteUrl, unavailableCard, type CardSource } from "./share";
+import { missingCard, parseTokenId, parseWave, positionCard, proofCard, unavailableCard, type CardSource } from "./share";
 import type { Proof } from "./content";
 
 const e18 = (n: number) => BigInt(Math.round(n * 1e6)) * 10n ** 12n;
@@ -129,17 +129,5 @@ describe("proof card", () => {
 
   it("shows no numbers for a file that failed its checks", () => {
     expect(proofCard({ ok: false }).stats).toEqual([]);
-  });
-});
-
-describe("site url", () => {
-  it("prefers the explicit setting, then the Vercel domain, then localhost", () => {
-    expect(siteUrl({ NEXT_PUBLIC_SITE_URL: "https://a.example", VERCEL_PROJECT_PRODUCTION_URL: "b.example" }).origin).toBe("https://a.example");
-    expect(siteUrl({ VERCEL_PROJECT_PRODUCTION_URL: "b.example" }).origin).toBe("https://b.example");
-    expect(siteUrl({}).origin).toBe("http://localhost:3000");
-  });
-
-  it("falls back when the value is not a URL", () => {
-    expect(siteUrl({ NEXT_PUBLIC_SITE_URL: "not a url" }).origin).toBe("http://localhost:3000");
   });
 });
