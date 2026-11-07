@@ -1337,3 +1337,11 @@ small {
   align-items: center;
   gap: var(--s3);
 }
+
+/* chips next to a listing's title */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--s2);
+}

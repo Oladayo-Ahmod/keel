@@ -1,5 +1,7 @@
 "use client";
 
+import { teamSet } from "@/config/team";
+import { isDemoSeller, marketNotice } from "@/lib/demo";
 import { useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAccount, usePublicClient, useSignTypedData } from "wagmi";
@@ -83,6 +85,7 @@ export function MarketScreen() {
 
       {q.data && view === "browse" && (
         <>
+          <p className="banner" role="note" data-testid="market-notice">{marketNotice(open.map((r) => r.listing.seller), TEAM).text}</p>
           {open.length === 0 ? (
             <EmptyState
               title="Nothing for sale right now"
@@ -127,6 +130,8 @@ function PositionFacts({ row }: { row: MarketRow }) {
   );
 }
 
+const TEAM = teamSet();
+
 export function ListingCard({ row, feeBps, now, stale, onBought }: { row: MarketRow; feeBps: number; now: bigint; stale: boolean; onBought: () => void }) {
   const l = row.listing;
   const price = priceAt(l, now);
@@ -139,7 +144,10 @@ export function ListingCard({ row, feeBps, now, stale, onBought }: { row: Market
           <h3>Position #{l.tokenId.toString()}</h3>
           <a className="addr" href={explorerAddress(l.seller)} target="_blank" rel="noreferrer">seller {shortAddress(l.seller)}</a>
         </div>
-        <span className="chip chip-safe">{isDutch(l) ? "Dutch auction" : "Fixed price"}</span>
+        <div className="chips">
+          {isDemoSeller(l.seller, TEAM) && <span className="chip chip-caution" title="Announced by the team's own wallet to show the market working">Demo listing</span>}
+          <span className="chip chip-safe">{isDutch(l) ? "Dutch auction" : "Fixed price"}</span>
+        </div>
       </header>
       <p className="price-big">{formatMusd(price)} <small>MUSD</small></p>
       {equity !== undefined && <p className="note">Equity in the position is ${formatMusd(equity)}, shown to compare with the price.</p>}
