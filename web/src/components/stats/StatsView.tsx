@@ -33,6 +33,8 @@ export function StatsView({ s }: { s: StatsSnapshot }) {
   const k = s.keeper.byKind;
   const holds = Object.entries(s.planner.holds).sort((a, b) => b[1] - a[1]);
   const updated = new Date(s.generatedAt);
+  const others = s.participants.others;
+  const demo = s.activeListings.demo;
 
   return (
     <div className="grid-stack" ref={grid}>
@@ -60,6 +62,14 @@ export function StatsView({ s }: { s: StatsSnapshot }) {
         </div>
       )}
 
+      <div className="banner" role="note" data-testid="honesty">
+        <span>
+          {others === 0
+            ? "All activity so far was run by the team on testnet. Every position, listing, sale and keeper action in these logs came from the team's own wallets. It is test traffic, not user adoption."
+            : `These counts include the team's own test activity on testnet and are not a measure of user adoption. ${others} address${others === 1 ? "" : "es"} other than the team's appear in the logs, counted below.`}
+        </span>
+      </div>
+
       <p className="note" data-testid="updated">
         Last updated <time dateTime={s.generatedAt}>{updated.toISOString().replace("T", " ").slice(0, 19)} UTC</time>. Counts include
         blocks {Number(s.range.fromBlock).toLocaleString("en-US")} to {Number(s.asOfBlock).toLocaleString("en-US")}; the node&apos;s newest
@@ -70,14 +80,18 @@ export function StatsView({ s }: { s: StatsSnapshot }) {
         <header className="panel-head"><h2>Positions and market</h2></header>
         <div className="tiles">
           <Tile label="Positions created"><CountUp value={s.positionsCreated} format={int} /></Tile>
-          <Tile label="Active listings" hint={s.activeListings.exact ? "Checked with the market" : "Not exact"}>
+          <Tile label="Active listings" hint={`${demo} of ${s.activeListings.count} demo${s.activeListings.exact ? "" : ", not exact"}`}>
             <CountUp value={s.activeListings.count} format={int} />
           </Tile>
           <Tile label="Sales"><CountUp value={s.sales.count} format={int} /></Tile>
           <Tile label="Sale volume" hint="MUSD"><CountUp value={toNumber(volume)} format={musd} /></Tile>
           <Tile label="Fee collected" hint="MUSD, the market fee on sales"><CountUp value={toNumber(fees)} format={musd} /></Tile>
-          <Tile label="Listings ever"><CountUp value={s.listings.announced} format={int} /></Tile>
+          <Tile label="Listings ever" hint={`${s.listings.announcedByTeam} by the team`}><CountUp value={s.listings.announced} format={int} /></Tile>
+          <Tile label="Addresses other than the team's" hint={`distinct, from the logs. Team: ${s.participants.team}`}><span data-testid="others">{s.participants.others}</span></Tile>
         </div>
+        <p className="note">
+          Demo listings are the ones announced by the team&apos;s own wallets to give the market something to show. {demo === s.activeListings.count && s.activeListings.count > 0 ? "Every active listing is a demo listing." : `${demo} of the ${s.activeListings.count} active listings are demo listings.`}
+        </p>
         <p className="note">{s.activeListings.note}</p>
         <p className="note">
           Of {s.listings.announced} announced: {s.listings.sold} sold, {s.listings.cancelled} cancelled, {s.listings.revoked} cancelled in
@@ -127,6 +141,7 @@ export function StatsView({ s }: { s: StatsSnapshot }) {
           <li>Listings and sales: the market&apos;s <code>ListingAnnounced</code>, <code>ListingCancelled</code>, <code>AllListingsCancelled</code> and <code>Sold</code> events.</li>
           <li>Policies and keeper actions: <code>PolicySet</code>, <code>PolicyCleared</code> and <code>GuardianAction</code>, only from vaults the factory created
             {s.ignoredVaultLogs > 0 ? ` (${s.ignoredVaultLogs} from other addresses were ignored)` : ""}.</li>
+          <li>Team wallets: the deployer (also the fee recipient), the second wallet that played the buyer and the keeper, from <code>deployment.v2.json</code> and <code>proof.json</code>. Addresses other than these are counted from the position holders, sellers, buyers, recipients and keepers that appear in the logs. Someone who only looked, or only moved an NFT, is not seen.</li>
           <li>Logs are read in windows of 9,000 blocks because the public RPC refuses more.</li>
         </ul>
       </section>
