@@ -37,7 +37,7 @@ describe("the files as shipped", () => {
     expect(txLinks.length).toBeGreaterThan(0);
     for (const h of txLinks) expect(h).toMatch(/^https:\/\/explorer\.test\.mezo\.org\/tx\/0x[0-9a-f]{64}$/);
     expect(p.data.deployments.length).toBe(5);
-    expect(p.data.summary.tests).toBe(259);
+    expect(p.data.summary.tests).toBe(260);
     expect(p.data.claims.some((c) => c.status === "open")).toBe(true);
   });
 });
