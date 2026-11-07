@@ -2,7 +2,11 @@ import { Broken, ContentPage, Empty } from "@/components/ContentChrome";
 import { parseProof } from "@/lib/content";
 import raw from "@/content/proof.json";
 
-export const metadata = { title: "Proof · Trozu" };
+export const metadata = {
+  title: "Proof · Trozu",
+  openGraph: { title: "Proof · Trozu", images: [{ url: "/og/proof", width: 1200, height: 630, alt: "Trozu proof summary" }] },
+  twitter: { card: "summary_large_image" as const, images: ["/og/proof"] },
+};
 
 const num = (n: number | null) => (n === null ? "not recorded" : n.toLocaleString("en-US"));
 
