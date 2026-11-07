@@ -260,7 +260,7 @@ export function txBuilders(deployment: Deployment) {
       return check(() => {
         const spender = toAddress("spender", a.spender);
         const amount = toUint("amount", a.amount);
-        return make(deployment.mezo.musd, erc20Abi as unknown as Abi, "approve", [spender, amount], `Let ${short(spender)} spend up to ${musd(amount)} of your MUSD.`);
+        return make(deployment.mezo.musd, erc20Abi as unknown as Abi, "approve", [spender, amount], `Let ${short(spender)} spend up to ${musd(amount)} from your wallet.`);
       });
     },
 
