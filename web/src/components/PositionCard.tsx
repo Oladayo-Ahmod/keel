@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { explorerAddress } from "@/config";
 import { formatBtc, formatMusd, shortAddress, toNumber } from "@/lib/format";
+import { lensFor } from "@/lib/lens";
 import { riskOf } from "@/lib/risk";
 import type { PositionInfo } from "@/hooks/usePositions";
 import { BufferPanel } from "./BufferPanel";
@@ -128,7 +129,7 @@ export function PositionCard({
             spreadBps={Number(p.spreadBps)}
             annualSpread={p.annualSpreadMusd}
           />
-          <BufferPanel tokenId={p.tokenId} active={p.active} />
+          <BufferPanel tokenId={p.tokenId} active={p.active} lens={lensFor(v2)} />
           <WhatIf p={p} v2={v2} />
           {!p.canClose && !p.recoveryMode && <p className="note">This trove cannot be closed right now.</p>}
         </>

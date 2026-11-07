@@ -10,6 +10,7 @@ import { useGuardian, type GuardianState } from "@/hooks/useGuardian";
 import type { PositionInfo } from "@/hooks/usePositions";
 import { describePlan } from "@/lib/guardian";
 import { formatBtc, formatIcr, formatMusd, toNumber } from "@/lib/format";
+import { lensFor } from "@/lib/lens";
 import { pressPulse, revealIn } from "@/lib/motion";
 import { riskOf } from "@/lib/risk";
 import { agreesWithPreview, whatIf, type BufferReading, type BufferVerdict, type GuardianSetup } from "@/lib/whatif";
@@ -44,13 +45,13 @@ export function setupOf(g: GuardianState): GuardianSetup {
 
 /** The guardian is only read for wave 2 vaults, so this wrapper is the one that calls the hook. */
 export function WhatIf({ p, v2 }: { p: PositionInfo; v2: boolean }) {
-  return v2 && wave2.enabled ? <WhatIfWithGuardian p={p} /> : <WhatIfBody p={p} guardian={undefined} chainPlan={undefined} />;
+  return v2 && wave2.enabled ? <WhatIfWithGuardian p={p} /> : <WhatIfBody p={p} guardian={undefined} chainPlan={undefined} lens={lensFor(v2)} />;
 }
 
 function WhatIfWithGuardian({ p }: { p: PositionInfo }) {
   const q = useGuardian(p.vault, p.tokenId);
   const g = q.data?.data;
-  return <WhatIfBody p={p} guardian={g ? setupOf(g) : undefined} chainPlan={g?.plan} loading={q.isPending} />;
+  return <WhatIfBody p={p} guardian={g ? setupOf(g) : undefined} chainPlan={g?.plan} loading={q.isPending} lens={lensFor(true)} />;
 }
 
 export function WhatIfBody({
@@ -58,12 +59,15 @@ export function WhatIfBody({
   guardian,
   chainPlan,
   loading = false,
+  lens = config.keel.lens,
   fixture,
 }: {
   p: PositionInfo;
   guardian: GuardianSetup | undefined;
   chainPlan: GuardianState["plan"];
   loading?: boolean;
+  /** The lens that knows this position, see lib/lens.ts. */
+  lens?: `0x${string}`;
   /** Layout fixture only: numbers that stand in for the two chain reads. */
   fixture?: { minNetDebt: bigint; buffer: BufferReading };
 }) {
@@ -80,7 +84,7 @@ export function WhatIfBody({
   });
   // same read and arguments as the buffer panel, so a check made in either place serves both
   const buf = useReadContract({
-    address: config.keel.lens,
+    address: lens,
     abi: positionLensAbi,
     functionName: "redemptionBuffer",
     args: [p.tokenId, 100n],

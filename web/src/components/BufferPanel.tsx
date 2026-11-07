@@ -22,10 +22,10 @@ interface Buffer {
  * How much MUSD has to be redeemed before this trove is reached. It walks the
  * redemption queue on chain, so it only runs when asked.
  */
-export function BufferPanel({ tokenId, active }: { tokenId: bigint; active: boolean }) {
+export function BufferPanel({ tokenId, active, lens = config.keel.lens }: { tokenId: bigint; active: boolean; /** The lens that knows this position: wave 2 positions need the wave 2 lens. */ lens?: `0x${string}` }) {
   const [asked, setAsked] = useState(false);
   const q = useReadContract({
-    address: config.keel.lens,
+    address: lens,
     abi: positionLensAbi,
     functionName: "redemptionBuffer",
     args: [tokenId, MAX_STEPS],
