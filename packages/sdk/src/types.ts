@@ -61,9 +61,9 @@ export interface PositionView {
   lockedRateBps: number;
   /** The rate Mezo charges a new borrower today. */
   marketRateBps: number;
-  /** locked minus market. Negative means the position is cheaper than a fresh one. */
+  /** market minus locked, as the Lens computes it. Positive means the locked rate is cheaper than a new borrower's. */
   spreadBps: bigint;
-  /** What the spread is worth over a year on this debt, in MUSD wei. */
+  /** principal times the spread over a year at today's rate, not discounted, in MUSD wei. Positive means the locked rate saves that much. */
   annualSpreadMusd: bigint;
   claimableSurplus: bigint;
   refinanceFeeEstimate: bigint;
