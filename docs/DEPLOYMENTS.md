@@ -161,21 +161,23 @@ What was proven on chain: open, transfer away and back, announce, a fixed-price 
 
 **Collateral added after the proof (2026-11-06).** The redemption-defense proof was already recorded, so the position no longer needs to sit near the front of the redemption queue. 0.009 BTC added through `addCollateral` (tx `0xa331148ef6876c79769a5ac67915f8ae281ccc9ee5af250401248c567ec28707`): ratio 128.49% -> **162.58%** (a bit over the 150% aimed for, because the BTC price had also moved). The deployer keeps well over the 0.003 BTC reserve. Because the position is now far from the queue front, the 100-step walk will usually be incomplete and redemption defense will stay at `BufferUnknown` for it. That is the documented limit, not a fault.
 
-**Staged listings of the position (2026-11-06).** Two signed listings of token 1, announced so the browse view has something to show. Both are priced far above what the position is worth, so nobody should take them; a purchase would move the position away from the deployer and end its guardian policy. Full signed data is in [`staged_listings.json`](staged_listings.json) and was checked against the contract's `check()` (state Ok) after announcing.
+**Staged listings of the position (2026-11-07).** The position carries two live listings so the browse view has something to show, both signed through the app's own UI by the wallet round trip ([ROUNDTRIP.md](ROUNDTRIP.md)) and priced far above what the position is worth, so nobody should take them. A purchase would move the position away from the deployer and end its guardian policy. The first pair, signed by `keeper/src/stage.ts` on 2026-11-06 (tx `0x4449073a…1252` fixed, `0x47a76b45…a79e` Dutch), died when the round trip sold the position to the second wallet and moved it back, because every transfer bumps the epoch; they were replaced.
 
-| Listing | Price | Deadline | Announce tx |
-|---|---|---|---|
-| Fixed price | 6,000 MUSD | 30 days | `0x4449073abe1fe3fa94ec5633a3189d0428f0005cd1588e72bb98cb45f66e1252` |
-| Dutch auction | 9,000 MUSD falling to 5,000 over 30 days | 31 days | `0x47a76b4596767b6c2641b0f9ebdec904b7e9455e471c57f295ffa8de0b64a79e` |
+| Listing | Price | Announce tx |
+|---|---|---|
+| Fixed price | 6,000 MUSD, open 30 days | `0x0bef825f83e2de7418f95be1a375db821925a8ab07084a144d467ddb664ecbf9` |
+| Dutch auction | 9,000 MUSD falling to 5,000 over 30 days, open 30 days | `0x2f2f9a051ba91103fd87fb94909e214582e27a9416f6b6317d4bbe3e0a0b5d96` |
 
-Any transfer of the position bumps its epoch and kills both listings. The script is `keeper/src/stage.ts`.
+The listings are on chain as `ListingAnnounced` events. Any transfer of the position kills both.
+
+**Round trip through the UI (2026-11-07).** Position 1 went to the second wallet through a UI buy at 100 MUSD and came back through the UI's transfer screen (buy tx `0xf32de59b…5855`, transfer back `0x7d311c24…576f`), the guardian policy was set again afterwards (tx `0x661abb34…13c3`), and the position's ratio is about 163%. Details, gas and screenshots: [ROUNDTRIP.md](ROUNDTRIP.md).
 
 **Current state of the staged position (as of the proof, before the collateral above).** Held by the deployer, ratio about 127.9%, a live guardian policy (redemption defense, floor 112%, buffer floor 10,000,000 MUSD, so it will act again whenever the walk completes), and 0.001188 BTC left in its reserve. It is the "guarded position". It is close enough to liquidation (110%) that a moderate oracle move would matter, so it is a demo position, not a safe one.
 
 **Funds used.** Position 1 of Wave 1 was closed to fund this (see above): 0.057016 BTC and 1,897 MUSD afterwards. The proof used 0.0351 BTC net across the new position and its reserve, plus 0.004 BTC for the two wallets and negligible gas (146 wei per gas). The deployer now holds 0.017890 BTC and 3,513 MUSD, which keeps the 0.003 BTC reserve.
 
 **Failed transactions, kept in the record.** Three things went wrong and none moved funds:
-1. A keeper `execute` (tx `0x1002b8e1…2e60`, block 16,612,677) ran out of gas at a limit of 25,584: the node's `eth_estimateGas` answered about 21,300 where the call needs about 5.6M. The keeper now sends with at least 6M of gas limit (the unused part is not charged).
+1. A keeper `execute` (tx `0x1002b8e1…2e60`, block 16,612,677) ran out of gas at a limit of 25,584: the node's `eth_estimateGas` answered about 21,300 where the call needs about 5.6M. The keeper now sends with at least 6M of gas limit (Mezo charges at least half of a limit, which at 6M is still under 0.000000001 BTC).
 2. A second keeper `execute` (tx `0xae438464…722c`, block 16,612,964) used 5.58M of a 6M limit and ran out of gas: the redemption-defense path adds a 100-step walk and the keeper had sent no sorted-list hints. The keeper now computes hints and the retry succeeded.
 3. One of my own `setPolicy` transactions was rejected by the node before inclusion for a gas limit below the data-gas floor, same cause as the first.
 
@@ -184,7 +186,7 @@ Any transfer of the position bumps its epoch and kills both listings. The script
 | Item | Status | Needs |
 |---|---|---|
 | Listings at different prices | one fixed listing (6,000 MUSD) of the proof position; a second price point needs another position | one more position per extra listing, about 0.036 BTC each |
-| A running Dutch auction | **staged** on the proof position (9,000 -> 5,000 MUSD over 30 days) | nothing |
+| A running Dutch auction | **staged** on the proof position (9,000 -> 5,000 MUSD over 30 days, 2026-11-07) | nothing |
 | Extra positions for the browse view | not staged | about 0.036 BTC per position |
 | A guarded position | **staged** (above) | nothing |
 
