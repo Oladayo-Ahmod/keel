@@ -241,6 +241,16 @@ small {
   gap: var(--s3);
 }
 
+/* a full 42-character address or a long claim must wrap inside the card, not push the chip off screen */
+.card-head > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.card-head > .chip {
+  flex-shrink: 0;
+}
+
 .card-head h3 {
   font-size: 18px;
   font-weight: 650;
