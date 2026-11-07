@@ -1269,3 +1269,31 @@ small {
   color: var(--muted);
   font-size: 13px;
 }
+
+/* stats page */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: var(--s3);
+}
+
+.tile {
+  display: grid;
+  gap: 2px;
+  align-content: start;
+  min-width: 0;
+  padding: var(--s3) var(--s4);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 1px var(--hair);
+}
+
+.tile .big {
+  font-size: 22px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.tile .note {
+  font-size: 12px;
+}
