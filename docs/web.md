@@ -47,6 +47,19 @@ Policy form validates against every `BadPolicy` revert before sending. Reserve t
 - No suggestion is shown when the node is stale, the price feed is down, the trove is closed, or equity is zero or negative with nothing else to price.
 - Every input is shown. The button copies the number into the field; it never signs or lists anything.
 
+
+## Live stats: /stats and /api/stats
+
+Both read `getStats()` in `lib/statsServer.ts`, which runs `buildSnapshot` (`lib/statsSnapshot.ts`) against matsnet and keeps the answer for about 60 seconds. The page is rendered per request, so a build never calls the RPC. The API sends `Cache-Control: public, s-maxage=60` (5 seconds while a read is incomplete).
+
+- Positions: factory `PositionCreated`. Listings and sales: market `ListingAnnounced`, `ListingCancelled`, `AllListingsCancelled`, `Sold`. Sale volume and fee collected are the sums of `price` and `fee` in `Sold`. Policies and keeper actions: `PolicySet`, `PolicyCleared`, `GuardianAction`, kept only from vaults the factory created.
+- Active listings: announced, minus sold, cancelled, bulk-cancelled and expired, then each remaining one (up to 40) is asked `check()`. Over 40, the log count is shown and marked not exact.
+- Refusals: a refused `execute` reverts and leaves no event, so past refusals cannot be counted. The page shows the vault planner's answer right now for up to 25 policies instead, and says so.
+- Caps: 9,000-block windows, at most 540,000 blocks per scan (older history is dropped and the page says counts are "since block N"), 6 seconds of reading per request (an unfinished range is flagged and continues on the next load), and each window is retried four times.
+- Stale node: the head is judged like every other read (`freshness.ts`), and a window answered by a node whose head is below the window's end is retried. A stale head still shows, with a warning. If the chain cannot be read, the last good snapshot from server memory is shown marked as such, and with none the page shows no numbers.
+- The page prints when it was updated, the block range and the age of the newest block. The proof page links to it.
+- Cross-check: on 2026-11-07 the route's counts (1 position, 10 announced, 2 cancelled, 3 sold, same volume and fee) matched a separate script reading the same logs.
+
 ## Static pages
 
 `/break-it` and `/proof` render `src/content/break-it.json` and `src/content/proof.json`, shipped empty. `lib/content.ts` validates them and only allows https, local http and site-relative links. Schemas are the types in that file.
