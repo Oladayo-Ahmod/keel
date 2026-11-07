@@ -1,5 +1,6 @@
 # Example GitHub Actions job for @trozu/alerts. Copy it to .github/workflows/trozu-alerts.yml to use it.
 # It is not enabled by default, because it needs a webhook secret and a list of positions to watch.
+# It has never been run on GitHub: the pieces were tested separately (docs in packages/alerts/README.md).
 #
 # Setup:
 #   1. Settings -> Secrets and variables -> Actions -> New repository secret: ALERT_WEBHOOK_URL
@@ -9,6 +10,19 @@
 #
 # No key of any kind is needed: the job only reads the chain. Scheduled runs on GitHub can start late
 # and are paused in a repository with no activity for 60 days.
+#
+# About the cache step. The script remembers the last block it read and when it last sent each alert, in
+# .trozu-alerts/state.json under the working directory (that is the default, no setting needed). A
+# runner starts empty every time, so the job keeps that file with actions/cache:
+#   - A cache entry can never be overwritten, so each run saves a new one under a key with its run id and
+#     the next run restores the newest by the prefix (restore-keys). That is why restore and save are two
+#     steps with different keys.
+#   - Entries are removed after 7 days without being read, and when the repository goes over its cache
+#     limit. The job runs every 15 minutes so the entry stays fresh, but if it is ever lost the script
+#     starts clean: it looks back LOOKBACK_BLOCKS for keeper actions and may repeat the last near-floor alert.
+#   - Scheduled runs use the default branch's cache. A manual run from another branch cannot see it.
+#   - The file holds block numbers and times only, no secret, so caching it is safe.
+#   - Without the cache every run would look at the last LOOKBACK_BLOCKS blocks and repeat itself.
 
 name: trozu alerts
 
@@ -48,11 +62,10 @@ jobs:
           npm ci
           npm run build -w @trozu/sdk -w @trozu/alerts
 
-      # the state file remembers the last block read and when each alert was sent, so a run does not repeat the last one
       - name: restore state
         uses: actions/cache/restore@v4
         with:
-          path: packages/alerts/state.json
+          path: packages/.trozu-alerts
           key: trozu-alerts-state-${{ github.run_id }}
           restore-keys: trozu-alerts-state-
 
@@ -62,15 +75,15 @@ jobs:
           WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
           TOKEN_IDS: ${{ vars.ALERT_TOKEN_IDS }}
           MARGIN_POINTS: ${{ vars.ALERT_MARGIN_POINTS || '10' }}
-          STATE_FILE: alerts/state.json
-          # about 15 minutes of blocks, used only on the first run, before there is a state file
+          # about 15 minutes of blocks, used only when there is no saved state yet
           LOOKBACK_BLOCKS: "3000"
           DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
         run: node alerts/dist/cli.js
 
+      # a dry run does not write state, and there is nothing worth saving if the check failed
       - name: save state
-        if: ${{ !inputs.dry_run }}
+        if: ${{ success() && !inputs.dry_run }}
         uses: actions/cache/save@v4
         with:
-          path: packages/alerts/state.json
+          path: packages/.trozu-alerts
           key: trozu-alerts-state-${{ github.run_id }}
