@@ -83,3 +83,13 @@ export function flyAway(el: HTMLElement, done: () => void) {
     onComplete: done,
   });
 }
+
+/** A block fades up when it first appears. With reduced motion it is simply there. */
+export function revealIn(el: Element | null) {
+  if (!el) return;
+  if (prefersReducedMotion()) {
+    (el as HTMLElement).style.opacity = "1";
+    return;
+  }
+  animate(el, { opacity: [0, 1], translateY: [8, 0], duration: 380, ease: "outQuad" });
+}

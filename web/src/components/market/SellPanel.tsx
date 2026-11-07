@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { formatUnits } from "viem";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAccount, usePublicClient, useSignTypedData } from "wagmi";
 import { positionNFTAbi } from "@/abi/keel";
@@ -17,6 +18,7 @@ import { useTx } from "@/hooks/useTx";
 import type { PositionInfo } from "@/hooks/usePositions";
 import { TxStatus } from "../TxStatus";
 import { GasNote } from "../GasRow";
+import { FairPriceHint } from "./FairPriceHint";
 
 /** Everything a listing is built from, read together: the epoch, the nonce, the approval and the fee. */
 function useSellInputs(tokenId: bigint, owner: `0x${string}` | undefined) {
@@ -134,6 +136,15 @@ export function SellPanel({ p }: { p: PositionInfo }) {
             <button type="button" className={`btn btn-small ${kind === "fixed" ? "" : "btn-quiet"}`} onClick={() => setKind("fixed")}>Fixed price</button>
             <button type="button" className={`btn btn-small ${kind === "dutch" ? "" : "btn-quiet"}`} onClick={() => setKind("dutch")}>Dutch auction</button>
           </div>
+          <FairPriceHint
+            p={p}
+            kind={kind}
+            stale={stale}
+            onUse={(start, end) => {
+              setStartText(formatUnits(start, 18));
+              if (end !== undefined) setEndText(formatUnits(end, 18));
+            }}
+          />
           <label className="field">
             <span>{kind === "dutch" ? "Starting price (MUSD)" : "Price (MUSD)"}</span>
             <input inputMode="decimal" value={startText} onChange={(e) => setStartText(e.target.value)} aria-invalid={startText !== "" && !startPrice} />

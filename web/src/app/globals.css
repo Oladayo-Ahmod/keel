@@ -1212,3 +1212,60 @@ small {
   flex-wrap: wrap;
   gap: var(--s3);
 }
+
+/* price estimate in the sell flow */
+.hint {
+  display: grid;
+  gap: var(--s3);
+  padding: var(--s4);
+  border-radius: var(--r-md);
+  background: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 1px var(--hair);
+}
+
+.hint-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--s3);
+}
+
+.hint-head h5 {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.hint-inputs {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--s2) var(--s4);
+}
+
+.hint-inputs dt {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.hint-inputs dd {
+  margin: 2px 0 0;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.hint-result {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s2);
+  margin: 0;
+}
+
+.hint-result span {
+  color: var(--muted);
+  font-size: 13px;
+}
