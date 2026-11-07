@@ -1297,3 +1297,35 @@ small {
 .tile .note {
   font-size: 12px;
 }
+
+/* what-if simulator */
+.slider {
+  display: grid;
+  gap: var(--s2);
+}
+
+.slider label {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--s2);
+  font-size: 13px;
+}
+
+.slider input[type="range"] {
+  width: 100%;
+  accent-color: var(--accent);
+  min-height: 32px;
+}
+
+.slider input[type="range"]:disabled {
+  opacity: 0.4;
+}
+
+.whatif-out .wide {
+  grid-column: 1 / -1;
+}
+
+.whatif-out dd .chip {
+  margin-left: var(--s2);
+}

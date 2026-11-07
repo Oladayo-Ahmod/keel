@@ -8,6 +8,8 @@ import type { GuardianState } from "@/hooks/useGuardian";
 import type { PositionInfo } from "@/hooks/usePositions";
 import { LIMITS } from "@/lib/guardian";
 import type { Listing } from "@/lib/market";
+import { WhatIfBody, setupOf } from "@/components/WhatIf";
+import { FairPriceHint } from "@/components/market/FairPriceHint";
 import Providers from "../../providers";
 
 const e18 = (n: number) => BigInt(Math.round(n * 1e6)) * 10n ** 12n;
@@ -57,6 +59,13 @@ export default function Inner() {
         <section className="glass card"><DutchChart listing={dutch} nowSeconds={now} /></section>
         <section className="glass card guardian-fixture"><PolicyTab p={info} g={guardian} stale={false} onChanged={() => undefined} /></section>
         <section className="glass card guardian-fixture"><ReserveTab p={info} g={guardian} stale={false} onChanged={() => undefined} /></section>
+        <section className="glass card" data-testid="whatif-fixture">
+          <WhatIfBody p={{ ...info, icr: e18(2.05) }} guardian={setupOf(guardian)} chainPlan={guardian.plan}
+            fixture={{ minNetDebt: e18(1_800), buffer: { inList: true, value: e18(6_000), complete: true, steps: 12 } }} />
+        </section>
+        <section className="glass card" data-testid="hint-fixture">
+          <FairPriceHint p={{ ...info, lockedRateBps: 100, globalRateBps: 300, spreadBps: 200n }} kind="dutch" stale={false} onUse={() => undefined} />
+        </section>
       </main>
     </Providers>
   );

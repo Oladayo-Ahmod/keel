@@ -8,6 +8,8 @@ const base = process.argv[2];
 const shots = process.argv[3];
 const browser = await chromium.launch({ executablePath: process.env.CHROME, headless: true });
 let bad = 0;
+const only = (process.argv[4] ?? "all").split(",");
+const want = (n) => only.includes("all") || only.includes(n);
 
 for (const width of [390, 360]) {
   const ctx = await browser.newContext({ viewport: { width, height: 800 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
@@ -35,9 +37,7 @@ for (const width of [390, 360]) {
   };
   const shot = async (name) => shots && page.screenshot({ path: `${shots}/${name}-${width}.png`, fullPage: true });
 
-  const only = (process.argv[4] ?? "all").split(",");
-  const want = (n) => only.includes("all") || only.includes(n);
-
+  
   if (want("stats")) {
     await go("/stats", 1500);
     await measure("stats");
@@ -46,6 +46,32 @@ for (const width of [390, 360]) {
     await measure("proof");
     await shot("proof");
   }
+  if (want("whatif")) {
+    await go("/preview/wave2", 2500);
+    const sec = page.getByTestId("whatif-fixture");
+    await measure("what-if, at rest");
+    await sec.screenshot({ path: shots ? `${shots}/whatif-rest-${width}.png` : undefined });
+    await sec.locator("input[type=range]").nth(0).fill("-45");
+    await sec.locator("input[type=range]").nth(1).fill("120");
+    await page.waitForTimeout(900);
+    await measure("what-if, -45% price and 120% pressure");
+    await sec.screenshot({ path: shots ? `${shots}/whatif-moved-${width}.png` : undefined });
+    console.log("     result:", (await sec.locator(".whatif-out").innerText()).split("\n").join(" | ").slice(0, 400));
+    await page.getByTestId("hint-fixture").screenshot({ path: shots ? `${shots}/hint-${width}.png` : undefined });
+    console.log("     hint:", (await page.getByTestId("hint-fixture").innerText()).split("\n").join(" | ").slice(0, 300));
+  }
+  await ctx.close();
+}
+
+// reduced motion: everything must simply be there
+if (want("reduced")) {
+  const ctx = await browser.newContext({ viewport: { width: 390, height: 800 }, reducedMotion: "reduce" });
+  const page = await ctx.newPage();
+  await page.goto(base + "/stats", { waitUntil: "load" });
+  await page.waitForTimeout(800);
+  const faded = await page.evaluate(() => [...document.querySelectorAll(".tile")].filter((t) => getComputedStyle(t).opacity !== "1").length);
+  console.log(`[reduced motion] stats tiles not fully visible: ${faded}`);
+  if (faded) bad++;
   await ctx.close();
 }
 await browser.close();

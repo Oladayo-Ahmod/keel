@@ -12,6 +12,7 @@ import { CountUp } from "./CountUp";
 import { RateCompare } from "./RateCompare";
 import { RiskGauge } from "./RiskGauge";
 import { TransferPanel } from "./TransferPanel";
+import { WhatIf } from "./WhatIf";
 
 const NO_DEBT = 2n ** 200n;
 const btc = (n: number) => n.toFixed(5);
@@ -128,6 +129,7 @@ export function PositionCard({
             annualSpread={p.annualSpreadMusd}
           />
           <BufferPanel tokenId={p.tokenId} active={p.active} />
+          <WhatIf p={p} v2={v2} />
           {!p.canClose && !p.recoveryMode && <p className="note">This trove cannot be closed right now.</p>}
         </>
       )}
