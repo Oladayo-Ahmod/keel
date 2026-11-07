@@ -10,10 +10,14 @@ export const mezoTestnetChain = defineChain({
   blockExplorers: { default: { name: "Mezo Explorer", url: config.explorer } },
 });
 
-/** Each endpoint retries dropped connections; the list is tried in order. */
+/**
+ * Each endpoint retries dropped connections; the list is tried in order. Requests are never cached: on the server, Next wraps
+ * fetch in a data cache that can replay an old JSON-RPC answer (seen on 2026-11-07: a share image rendered a position with no
+ * network at all), and a chain read must come from the chain.
+ */
 export function makeTransport(batch = false) {
   const each = config.rpcUrls.map((url) =>
-    http(url, { retryCount: 3, retryDelay: 600, timeout: 15_000, ...(batch ? { batch: { wait: 8 } } : {}) }),
+    http(url, { retryCount: 3, retryDelay: 600, timeout: 15_000, fetchOptions: { cache: "no-store" }, ...(batch ? { batch: { wait: 8 } } : {}) }),
   );
   return each.length > 1 ? fallback(each, { retryCount: 2 }) : each[0];
 }
