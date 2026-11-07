@@ -48,6 +48,8 @@ jobs:
         run: npm test
       - name: Build
         run: npm run build
+      - name: No test-only wallet in the production build
+        run: npm run check:no-e2e
 
   keeper:
     runs-on: ubuntu-latest

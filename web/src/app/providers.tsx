@@ -9,7 +9,10 @@ import { useState, type ReactNode } from "react";
 import { walletConnectProjectId } from "@/config";
 import { makeTransport } from "@/lib/rpc";
 
-const wagmiConfig = getConfig({
+// the e2e config is a test-only build flag; in a normal build this branch and its module are removed
+const wagmiConfig = process.env.NEXT_PUBLIC_E2E === "1"
+  ? (require("@/e2e/config") as typeof import("@/e2e/config")).e2eWagmiConfig
+  : getConfig({
   appName: "Trozu",
   appDescription: "Tradable MUSD positions on Mezo",
   mezoNetwork: "testnet",

@@ -1,6 +1,11 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // always inline the test-wallet flag ("0" unless a test build sets it), so a normal build removes the
+  // connector module instead of leaving a runtime check that keeps it in the bundle
+  env: { NEXT_PUBLIC_E2E: process.env.NEXT_PUBLIC_E2E === "1" ? "1" : "0" },
   reactStrictMode: true,
+  // the wallet round trip builds a test-only variant next to the real one
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // Passport and the orangekit packages it builds on ship some TypeScript source,
   // and wallet libraries pull in node-only optional dependencies.
   transpilePackages: [
