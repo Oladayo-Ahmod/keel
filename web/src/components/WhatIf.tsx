@@ -17,7 +17,7 @@ import { CountUp } from "./CountUp";
 import { Tip } from "./Tip";
 
 const pct = (n: number) => `${n > 0 ? "+" : ""}${n}%`;
-const ratio = (n: number) => `${(n * 100).toFixed(1)}%`;
+const ratio = (n: number) => `${(Math.floor(n * 1000 + 1e-6) / 10).toFixed(1)}%`;
 
 const VERDICT: Record<BufferVerdict, string> = {
   unchecked: "Check the buffer to model redemptions.",
