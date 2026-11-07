@@ -43,8 +43,8 @@ for (const width of widths) {
   await go("/");
   await measure(page, "home, disconnected", width);
 
-  await go("/?id=1", 9000);
-  await measure(page, "positions view, live position #1", width);
+  await go("/?id=2", 9000);
+  await measure(page, "positions view, live position #2", width);
   if (shots) await page.screenshot({ path: `${shots}\\live-${width}.png`, fullPage: true });
 
   // fixtures: cards in several states, open form, empty and error states

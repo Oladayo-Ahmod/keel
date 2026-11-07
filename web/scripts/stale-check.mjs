@@ -47,7 +47,7 @@ async function run(mode, expect) {
     await route.fulfill({ response, json: Array.isArray(json) ? items : items[0] });
   });
 
-  await page.goto(`${base}/?id=1`, { waitUntil: "load" });
+  await page.goto(`${base}/?id=2`, { waitUntil: "load" });
   await page.waitForTimeout(mode === "flaky" ? 16000 : 24000);
   const text = await page.locator("body").innerText();
   if (process.env.DEBUG_TEXT) console.log(text.slice(0, 700));
