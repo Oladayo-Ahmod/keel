@@ -1,6 +1,6 @@
 {
   "updated": "2026-11-07",
-  "intro": "These are attacks that were tried against Trozu and what happened. The first three came from a one-pass AI-assisted review (not an independent audit; no human third party has reviewed these contracts). Each worked against the commit that was reviewed, and each was fixed in its own commit with a regression test. The rest are refusals recorded on Mezo testnet from the live proof run, with the contract's real revert, and the invariants the fuzzer checks.",
+  "intro": "These are attacks that were tried against Trozu and what happened. The first three came from a one-pass AI-assisted review (not an independent audit; no human third party has reviewed these contracts). Each worked against the commit that was reviewed, and each was fixed in its own commit with a regression test. The next two were found later by the project's own tests and a real browser run, in the app and not in the contracts, and fixed the same way. The rest are refusals recorded on Mezo testnet from the live proof run, with the contract's real revert, and the invariants the fuzzer checks.",
   "attempts": [
     {
       "id": "review-1",
@@ -31,6 +31,30 @@
       "why": "It worked against the reviewed commit (Low). Fixed: the buyer's bounds now include a minimum BTC and MUSD reserve, checked in the same transaction as the payment. A pending surplus claim is not pinned; a buyer should read it before buying.",
       "evidence": [
         { "label": "REVIEW.md, finding 3", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/REVIEW.md" }
+      ]
+    },
+    {
+      "id": "planner-port",
+      "title": "The what-if simulator disagreed with the contract's planner",
+      "attack": "Replay 503 guardian states that the vault itself had answered (written by test/v2/PlannerVectors.t.sol) against the TypeScript copy of its planner that the app's what-if simulator uses.",
+      "result": "succeeded",
+      "why": "It worked against the first version of the port: 81 of 503 states differed (60 in Recovery Mode, where the port used 110% instead of the system ratio; 21 in redemption defense, where it said Healthy and the contract said Unknown). Found by the project's own tests, not by the reviewer, and it affected only what the simulator showed. Fixed: the ratio is an input and the verdict is worked out as the contract does. All 503 now match with the contract's verdict supplied, and CI fails if the vectors go stale. One case cannot be known from the app's data and is shown as a warning.",
+      "evidence": [
+        { "label": "REVIEW.md, found later", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/REVIEW.md" },
+        { "label": "The vector generator", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/test/v2/PlannerVectors.t.sol" },
+        { "label": "The replay test", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/web/src/lib/whatif.test.ts" }
+      ]
+    },
+    {
+      "id": "wrong-lens",
+      "title": "The buffer check asked the wrong lens about a v2 position",
+      "attack": "Use the redemption buffer check in the real app, with the test wallet, on the live proof position (v2 NFT 1).",
+      "result": "succeeded",
+      "why": "It never worked for v2 positions: the check called the original lens, which reads a different NFT contract, so it failed or answered for another position with the same id. Found by driving the real app, because components are not unit tested. A display bug only: no funds or permissions were involved. Fixed so each position uses the lens of its own wave, with a test that fails if a component hardcodes one.",
+      "evidence": [
+        { "label": "REVIEW.md, found later", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/REVIEW.md" },
+        { "label": "The regression test", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/web/src/lib/lens.test.ts" },
+        { "label": "The browser run after the fix", "href": "https://github.com/Oladayo-Ahmod/keel/blob/main/docs/features-e2e.json" }
       ]
     },
     {
