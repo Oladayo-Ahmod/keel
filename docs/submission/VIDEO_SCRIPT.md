@@ -6,7 +6,7 @@ Everything on screen comes from a flow that [ROUNDTRIP.md](../ROUNDTRIP.md) or [
 
 ## Read this before recording
 
-- **Most of the sales and guardian footage is a recorded run, not a live one.** The wallet round trip (2026-11-07) ran the app's own screens at 390 px and saved a screenshot at each step in `docs/roundtrip/`. The live proof run (2026-11-06) is a script and shows as transactions on the explorer. A live repeat of the 100 MUSD purchase is not possible with the current balances (the second wallet holds 84.33 MUSD). So scenes 3, 4 and 5 show stills and explorer pages, with a caption that says "recorded run" and the date. Do not present them as live.
+- **Scenes 3, 4 and 5 are written as recorded footage, with a live option for 3 and 4.** The wallet round trip (2026-11-07) ran the app's own screens at 390 px and saved a screenshot at each step in `docs/roundtrip/`. The live proof run (2026-11-06) is a script and shows as transactions on the explorer. On 2026-11-08 the second wallet was funded with 300 MUSD (it now holds 384.33), so the 100 MUSD purchase and the transfer back can be recorded live: see [the rehearsal checklist](#rehearsal-checklist-for-a-live-recording). Whatever is shown must carry its real label: a caption that says "recorded run" and the date for stills, nothing for a live take. Do not present a still as live. Scene 5 stays stills in every case (the checklist says why).
 - **Never show or say:** open a position, close a position, refinance, claim surplus or sweep BTC through the app. ROUNDTRIP.md lists all of them as not run. Do not say "audited", do not mention users, partners or revenue other than the line in scene 7, and do not describe the proof run's keeper actions as a response to a price crash: the oracle cannot be moved on testnet, so the floor was set above the ratio (PROOF.md, notes).
 - **Deploy first.** Scenes 2 and 6 show the merged app, which needs `NEXT_PUBLIC_WAVE2=1` for the "Market and guardian positions" section, and the new proof and break-it content. On 2026-11-07 the live site did not yet have `/stats`, so it had not been redeployed. Open the live site and check scene 2's card and scene 6's pages exist before recording; if they do not, record from a local build and say nothing about it being the hosted site.
 - **Wallet addresses on screen** are the two testnet wallets in PROOF.md. No key, seed phrase or `.env` is ever on screen.
@@ -97,6 +97,80 @@ Everything on screen comes from a flow that [ROUNDTRIP.md](../ROUNDTRIP.md) or [
 2. One question typed in the client, for example "What is the ratio of Trozu position 1?", and the tool call and answer.
 
 > Claude can read positions through a read-only tool. It can't sign or send anything.
+
+## Rehearsal checklist for a live recording
+
+For scenes 3 and 4 (and the app part of scene 5). A live run changes the position, so rehearse it once off camera, restore the staged state, then record.
+
+### State to start from (read on 2026-11-08)
+
+| | |
+|---|---|
+| Position | 1, vault `0x2B08BB7F73beD0FA0454907a7E7082F1a58d9AB9`, held by the deployer `0x5104C1A6…8F98`, transfer epoch 9, about 0.0432 BTC against 2,010.90 MUSD |
+| Deployer wallet | 3,322.03 MUSD, 0.00859 BTC |
+| Second wallet (the buyer) `0xf8B5CF02…EdEe2` | 384.33 MUSD, 0.002 BTC. Funded on 2026-11-08 with 300 MUSD, tx `0x0fd99d02b7c7cc6a67c81f37e72e088b0d1cde97cfc9678c9e001fc329a9d447` |
+| Staged listings (both `Ok`, epoch 9) | a fixed 6,000 MUSD listing, and a Dutch auction from 9,000 falling to 5,000 MUSD, open about 30 days |
+| Guardian policy (live) | floor 130%, target 160%, largest BTC action 0.008643 BTC, largest MUSD action 402.17, period caps 0.017287 BTC and 804.34 MUSD, tip 0.00005 BTC, period 24 hours, redemption defense off. Reserve 0.001188 BTC |
+
+The two wallets must both have more than 0.001 BTC for gas before and after. A transaction here costs about 0.00000000015 BTC, so a few takes are nothing. Check balances before every take.
+
+**What a live run does to that state.** The buy moves the NFT to the second wallet, and the transfer back moves it again, so the transfer epoch goes from 9 to 11. That kills both staged listings (`StaleEpoch`) and the guardian policy (`PolicyStale`), and clears the market's approval on the token. The reserve is untouched. Restore it all afterwards (below).
+
+### 1. Before the take
+
+1. The merged app is deployed with `NEXT_PUBLIC_WAVE2=1` (see "Deploy first" above).
+2. Both wallets are imported into the browser wallet you will record with. No key, seed phrase or `.env` is ever on screen.
+3. Balances as in the table, or better. The second wallet needs at least 100 MUSD: the buyer pays the listed price, 100.00, and the 0.25 fee comes out of it, not on top.
+4. Nothing is pending on either wallet (check the explorer).
+
+### 2. The listing (deployer)
+
+1. Connect the deployer. Open "Position #1" under "Market and guardian positions". In the "Sell" panel press "List for sale".
+2. Choose **Fixed price**. Type **100** in "Price (MUSD)". Do not press "Use as price": the estimate suggests about 1,354 MUSD, which is not the sale you are filming. Leave "Listing stays open (days)" at 7.
+3. The note under the price should read that you receive 99.75 MUSD after the market's 0.25% fee of 0.25. That is the number to point at.
+4. Press "Sign and list". If the panel says it will first approve the market on this one NFT (it will, because the transfer cleared the approval), approve in the wallet first. Then sign the listing (a typed-data signature, no gas), then confirm the announce transaction. The panel says "Listed. It now shows in the market."
+5. In the ROUNDTRIP run this was `announce` for 100 MUSD (`0x84a7743f…6f7c`).
+
+### 3. The purchase (second wallet)
+
+1. Switch the browser wallet to the second wallet and reload. Open the Market tab, Browse. The 100 MUSD card ("Position #1", "Fixed price", the "Demo listing" chip) is among the cards. The staged 6,000 and Dutch listings are also there. Press "Buy" on the 100.00 MUSD one.
+2. The review step shows the price (100.00 MUSD), the fee and the bounds taken from what was on screen. Read the bounds aloud only if the narration has room.
+3. Press "Buy position". The wallet asks for a permit signature (no gas) and then the buy transaction. If the permit cannot be used the app asks for an approval transaction first. The panel ends with "The position is yours." and the hash. In the ROUNDTRIP run this was `0xf32de59b…5855`.
+4. The listing leaves Browse. Under "Positions" the second wallet now shows "Position #1", "Held by you".
+
+### 4. The transfer back (second wallet)
+
+1. On the card press "Transfer". The first step shows the ratio and equity: press "Continue".
+2. Paste the deployer address `0x5104C1A69242D94159Cf7151277252e568cB8F98` as the receiver and press "Continue". The app asks you to type the last four characters of the address: type `8F98`, then press "Transfer position" and confirm in the wallet. The card leaves the second wallet's list. In the ROUNDTRIP run this was `safeTransferFrom` (`0x7d311c24…576f`).
+3. Switch to the deployer: "Position #1" is "Held by you" again.
+
+### 5. Restore the staged demo state (deployer, after every take)
+
+Do all four. The numbers are the ones the staging used (ROUNDTRIP.md).
+
+1. **Dutch auction.** Sell panel, "Dutch auction". Starting price **9000**, lowest price **5000**, falls over **720** hours (30 days), listing stays open **30** days. Approve the market first if asked. Sign and list.
+2. **Fixed price.** Sell panel, "Fixed price", price **6000**, open **30** days. Sign and list.
+3. **Guardian policy.** Guardian panel, Policy tab. Press "Suggest from my position", which fills the values in the table above (act under 130%, restore to 160%, a fifth of the position per action, two fifths per period, tip 0.00005 BTC, period 24 hours) from the position's current collateral and debt, and check redemption defense is off. Press "Save policy". The reserve (0.001188 BTC) is still there.
+4. **Check.** Market, Browse shows 2 listings. `/stats` shows active listings of 2, both demo. The guardian panel says the policy is live. If either listing says it cannot settle, the token's approval is missing: list again and approve when asked.
+
+Each rehearsal and each take adds 2 to the epoch, so the epoch number in the table will move. That is expected.
+
+### 6. When to fall back to stills
+
+Keep scenes 3 and 4 as the stills in the scene list **only if** the live run proves unreliable. Call it unreliable if any of these happens in two takes in a row:
+
+- A step fails or the app says the node did not answer (the public RPC drops requests now and then). The app's own message says to check the explorer before retrying: do, and do not send twice.
+- The purchase or the transfer takes long enough that the scene needs more than about 40 seconds of dead time to cut.
+- The restore in section 5 does not bring the market back to 2 listings.
+
+If you fall back, use the stills named in the scenes and the "recorded run" caption, and say so in the first line of the video description.
+
+**Stays stills in every case:**
+
+- **Scene 5, the guardian.** The testnet oracle cannot be moved, so a keeper action can only be provoked by setting the policy floor above the position's current ratio and then running the keeper with its key. That is what the proof run did, and it is not something to do live on camera. The policy-save still and the keeper's top-up on the explorer (PROOF.md step 18) are the footage.
+- **The refusals** in scenes 3 and 4 (`NotHolder`, `PolicyStale`, `StaleEpoch`). They are `eth_call` results in PROOF.md, not app screens.
+
+**Can be live:** scene 2 (the card), scene 3's transfer (section 4) and scene 4's listing and purchase (sections 2 and 3). Because a live take is longer than the 26 seconds of narration in scene 4, record it, then cut it down to the listing, the review step, the success and the explorer page.
 
 ## What to cut if the first take is over 2:15
 
