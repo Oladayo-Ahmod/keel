@@ -174,6 +174,8 @@ The listings are on chain as `ListingAnnounced` events. Any transfer of the posi
 
 **Current state of the staged position (as of the proof, before the collateral above).** Held by the deployer, ratio about 127.9%, a live guardian policy (redemption defense, floor 112%, buffer floor 10,000,000 MUSD, so it will act again whenever the walk completes), and 0.001188 BTC left in its reserve. It is the "guarded position". It is close enough to liquidation (110%) that a moderate oracle move would matter, so it is a demo position, not a safe one.
 
+**Second wallet funded for a live recording (2026-11-08).** The deployer sent 300 MUSD to the second wallet so the 100 MUSD purchase can be recorded live: tx `0x0fd99d02b7c7cc6a67c81f37e72e088b0d1cde97cfc9678c9e001fc329a9d447`, block 16646082, status success. Balances after: deployer 3,322.03 MUSD and 0.008590 BTC, second wallet 384.33 MUSD and 0.002000 BTC. The deployer's BTC was unchanged to six places (a transfer costs about 0.00000000015 BTC). No faucet funds had arrived by then, so opening and closing a position through the UI was still not run.
+
 **Funds used.** Position 1 of Wave 1 was closed to fund this (see above): 0.057016 BTC and 1,897 MUSD afterwards. The proof used 0.0351 BTC net across the new position and its reserve, plus 0.004 BTC for the two wallets and negligible gas (146 wei per gas). The deployer now holds 0.017890 BTC and 3,513 MUSD, which keeps the 0.003 BTC reserve.
 
 **Failed transactions, kept in the record.** Three things went wrong and none moved funds:
