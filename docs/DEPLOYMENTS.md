@@ -132,15 +132,15 @@ Deployed 2026-11-06 from `0x5104C1A69242D94159Cf7151277252e568cB8F98` with `scri
 | TrozuVault implementation, created by the factory | `0x6ef4395325828083672FFe836d6Bc80Bf22cACFE` | inside the factory tx |
 | TrozuMarket | `0xEae6fEa26B178eF32829F36e5219363bB30D93DB` | `0xd4643026ede31329f68538261b9ff274a7b185e31acbf5422630189d9908a37a` (block 16611692, 2.06M gas) |
 
-**Source verification.** All five are verified on Sourcify, chain 31611, with status `match` as Sourcify's API reports it on 2026-11-07 (`GET /v2/contract/31611/<address>`): the compiled source reproduces the deployed bytecode, but not the metadata hash, so it is not an `exact_match`. The four original contracts above do report `exact_match`. Earlier notes here and in `proof.json` called the five `exact`; that was wrong, and the source in `src/` has not changed since the deployment. The three contracts created inside the factory have no creation transaction of their own, so only their runtime is matched. Re-run with `script/verify_v2.sh`.
+**Source verification.** All five are `exact_match` on Sourcify, chain 31611, as its API reports on 2026-11-08 (`GET /v2/contract/31611/<address>`): runtime for all five, and creation too for the factory and the market. The three created inside the factory have no creation transaction of their own, so only their runtime is matched. History, because it was wrong in between: on 2026-11-07 the API showed `match` (not exact) for all five after `script/verify_v2.sh` had submitted them with `forge verify-contract`, and the docs were corrected to say so. On 2026-11-08 `script/sourcify_metadata.mjs` first checked that the metadata the build writes hashes to exactly the hash embedded in each deployed bytecode (it does, for all five), then submitted that metadata and its sources, and all five became `exact_match`. Why `forge verify-contract` left them at `match` was not investigated. The source in `src/` has not changed since the deployment.
 
 | Contract | Sourcify |
 |---|---|
-| TrozuFactory | [match](https://repo.sourcify.dev/31611/0x70791379537cB14981AA7114678663164141eC31) |
-| TrozuNFT | [match](https://repo.sourcify.dev/31611/0xd53f649e4df31351De8935De9cA7110888F055b8) |
-| PositionLens (Trozu) | [match](https://repo.sourcify.dev/31611/0xCCF8c5aFe7473eC41F64906071e1bE497872004C) |
-| TrozuVault implementation | [match](https://repo.sourcify.dev/31611/0x6ef4395325828083672FFe836d6Bc80Bf22cACFE) |
-| TrozuMarket | [match](https://repo.sourcify.dev/31611/0xEae6fEa26B178eF32829F36e5219363bB30D93DB) |
+| TrozuFactory | [exact match](https://repo.sourcify.dev/31611/0x70791379537cB14981AA7114678663164141eC31) |
+| TrozuNFT | [exact match](https://repo.sourcify.dev/31611/0xd53f649e4df31351De8935De9cA7110888F055b8) |
+| PositionLens (Trozu) | [exact match](https://repo.sourcify.dev/31611/0xCCF8c5aFe7473eC41F64906071e1bE497872004C) |
+| TrozuVault implementation | [exact match](https://repo.sourcify.dev/31611/0x6ef4395325828083672FFe836d6Bc80Bf22cACFE) |
+| TrozuMarket | [exact match](https://repo.sourcify.dev/31611/0xEae6fEa26B178eF32829F36e5219363bB30D93DB) |
 
 Blockscout (explorer.test.mezo.org) was not tried again; Wave 1's Blockscout verification failed for explorer-side reasons.
 

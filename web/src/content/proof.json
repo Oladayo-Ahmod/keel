@@ -157,37 +157,37 @@
                         {
                             "explorer":  "https://repo.sourcify.dev/31611/0x70791379537cB14981AA7114678663164141eC31",
                             "name":  "TrozuFactory",
-                            "note":  "Sourcify status match (checked 2026-11-07): the source reproduces the deployed bytecode but not its metadata hash, so not an exact match",
+                            "note":  "Sourcify exact match (checked 2026-11-08)",
                             "address":  "0x70791379537cB14981AA7114678663164141eC31",
-                            "verification":  "partial"
+                            "verification":  "exact"
                         },
                         {
                             "explorer":  "https://repo.sourcify.dev/31611/0xd53f649e4df31351De8935De9cA7110888F055b8",
                             "name":  "TrozuNFT",
-                            "note":  "Sourcify status match (checked 2026-11-07): the source reproduces the deployed bytecode but not its metadata hash, so not an exact match",
+                            "note":  "Sourcify exact match (checked 2026-11-08)",
                             "address":  "0xd53f649e4df31351De8935De9cA7110888F055b8",
-                            "verification":  "partial"
+                            "verification":  "exact"
                         },
                         {
                             "explorer":  "https://repo.sourcify.dev/31611/0xCCF8c5aFe7473eC41F64906071e1bE497872004C",
                             "name":  "PositionLens (Trozu)",
-                            "note":  "Sourcify status match (checked 2026-11-07): the source reproduces the deployed bytecode but not its metadata hash, so not an exact match",
+                            "note":  "Sourcify exact match (checked 2026-11-08)",
                             "address":  "0xCCF8c5aFe7473eC41F64906071e1bE497872004C",
-                            "verification":  "partial"
+                            "verification":  "exact"
                         },
                         {
                             "explorer":  "https://repo.sourcify.dev/31611/0x6ef4395325828083672FFe836d6Bc80Bf22cACFE",
                             "name":  "TrozuVault implementation",
-                            "note":  "Sourcify status match (checked 2026-11-07): the source reproduces the deployed bytecode but not its metadata hash, so not an exact match",
+                            "note":  "Sourcify exact match (checked 2026-11-08)",
                             "address":  "0x6ef4395325828083672FFe836d6Bc80Bf22cACFE",
-                            "verification":  "partial"
+                            "verification":  "exact"
                         },
                         {
                             "explorer":  "https://repo.sourcify.dev/31611/0xEae6fEa26B178eF32829F36e5219363bB30D93DB",
                             "name":  "TrozuMarket",
-                            "note":  "Sourcify status match (checked 2026-11-07): the source reproduces the deployed bytecode but not its metadata hash, so not an exact match",
+                            "note":  "Sourcify exact match (checked 2026-11-08)",
                             "address":  "0xEae6fEa26B178eF32829F36e5219363bB30D93DB",
-                            "verification":  "partial"
+                            "verification":  "exact"
                         }
                     ]
 }

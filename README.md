@@ -195,19 +195,19 @@ What the repository includes to back that up:
 
 ## Deployments
 
-Mezo testnet (chain id `31611`, RPC `https://rpc.test.mezo.org`, explorer `https://explorer.test.mezo.org`). Checked against Sourcify's API on 2026-11-07.
+Mezo testnet (chain id `31611`, RPC `https://rpc.test.mezo.org`, explorer `https://explorer.test.mezo.org`). Checked against Sourcify's API on 2026-11-08.
 
 **Trozu contracts**, deployed 2026-11-06:
 
 | Contract | Address | Sourcify |
 |---|---|---|
-| TrozuFactory | `0x70791379537cB14981AA7114678663164141eC31` | [match](https://repo.sourcify.dev/31611/0x70791379537cB14981AA7114678663164141eC31) |
-| TrozuNFT | `0xd53f649e4df31351De8935De9cA7110888F055b8` | [match](https://repo.sourcify.dev/31611/0xd53f649e4df31351De8935De9cA7110888F055b8) |
-| PositionLens | `0xCCF8c5aFe7473eC41F64906071e1bE497872004C` | [match](https://repo.sourcify.dev/31611/0xCCF8c5aFe7473eC41F64906071e1bE497872004C) |
-| TrozuVault (implementation) | `0x6ef4395325828083672FFe836d6Bc80Bf22cACFE` | [match](https://repo.sourcify.dev/31611/0x6ef4395325828083672FFe836d6Bc80Bf22cACFE) |
-| TrozuMarket | `0xEae6fEa26B178eF32829F36e5219363bB30D93DB` | [match](https://repo.sourcify.dev/31611/0xEae6fEa26B178eF32829F36e5219363bB30D93DB) |
+| TrozuFactory | `0x70791379537cB14981AA7114678663164141eC31` | [exact match](https://repo.sourcify.dev/31611/0x70791379537cB14981AA7114678663164141eC31) |
+| TrozuNFT | `0xd53f649e4df31351De8935De9cA7110888F055b8` | [exact match](https://repo.sourcify.dev/31611/0xd53f649e4df31351De8935De9cA7110888F055b8) |
+| PositionLens | `0xCCF8c5aFe7473eC41F64906071e1bE497872004C` | [exact match](https://repo.sourcify.dev/31611/0xCCF8c5aFe7473eC41F64906071e1bE497872004C) |
+| TrozuVault (implementation) | `0x6ef4395325828083672FFe836d6Bc80Bf22cACFE` | [exact match](https://repo.sourcify.dev/31611/0x6ef4395325828083672FFe836d6Bc80Bf22cACFE) |
+| TrozuMarket | `0xEae6fEa26B178eF32829F36e5219363bB30D93DB` | [exact match](https://repo.sourcify.dev/31611/0xEae6fEa26B178eF32829F36e5219363bB30D93DB) |
 
-Sourcify reports `match` for these five, not `exact_match`: the source reproduces the deployed bytecode but not its metadata hash. The source in `src/` has not changed since the deployment. Fee recipient is the deployer address, fixed at deployment; fee 25 bps.
+All five are `exact_match` on Sourcify (checked 2026-11-08; the history of how is in [docs/DEPLOYMENTS.md](docs/DEPLOYMENTS.md)). Fee recipient is the deployer address, fixed at deployment; fee 25 bps.
 
 **Original contracts**, unchanged and still deployed:
 
@@ -228,7 +228,7 @@ Blockscout would not accept inputs that Sourcify accepted, so the repository shi
 script/check_bytecode.sh <factory deploy tx> <lens deploy tx> <nft address>
 ```
 
-The exact command with the real transaction hashes is in [docs/DEPLOYMENTS.md](docs/DEPLOYMENTS.md). `script/verify_v2.sh` resubmits the Trozu contracts to Sourcify.
+The exact command with the real transaction hashes is in [docs/DEPLOYMENTS.md](docs/DEPLOYMENTS.md). `script/sourcify_metadata.mjs` submits the build's own metadata to Sourcify for the Trozu contracts (`script/verify_v2.sh` is the older `forge verify-contract` route, which left them at `match`).
 
 ## Getting started
 
