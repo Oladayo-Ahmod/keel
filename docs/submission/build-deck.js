@@ -27,6 +27,7 @@ const FACTS = {
   webTests: 300,
   keeperTests: 24,
   packageTests: 90 + 78 + 45, // sdk, mcp, alerts
+  threats: 22, // T1 to T22 in docs/THREAT_MODEL.md, counted 2026-11-08
   vectors: 503, // docs/REVIEW.md
   mainnetTroves: 3, // docs/MARKET_DATA.md, block 13,040,764
   redemptions: "1,204",
@@ -354,7 +355,7 @@ async function buildSlides() {
     const s = frame(
       10,
       "Tested hard. Not audited.",
-      `${FACTS.forgeTests} Foundry tests as forge reports them, ${FACTS.invariants} invariant functions, ${FACTS.webTests} web tests, ${FACTS.keeperTests} keeper tests, and ${FACTS.packageTests} tests across the SDK, the MCP server and the alerts package. The Foundry tests deploy the real MUSD contracts and replace only the oracle. A Foundry test also writes ${FACTS.vectors} guardian states that the web tests replay against the simulator. It is testnet only and not audited; the review was AI-assisted, which is not an audit.`,
+      `${FACTS.forgeTests} Foundry tests as forge reports them, ${FACTS.invariants} invariant functions, ${FACTS.webTests} web tests, ${FACTS.keeperTests} keeper tests, and ${FACTS.packageTests} tests across the SDK, the MCP server and the alerts package. The threat model lists ${FACTS.threats} threats. The Foundry tests deploy the real MUSD contracts and replace only the oracle. A Foundry test also writes ${FACTS.vectors} guardian states that the web tests replay against the simulator. It is testnet only and not audited; the review was AI-assisted, which is not an audit.`,
     );
     const stats = [
       [String(FACTS.forgeTests), "Foundry tests"],
@@ -362,8 +363,9 @@ async function buildSlides() {
       [String(FACTS.webTests), "web tests"],
       [String(FACTS.keeperTests), "keeper tests"],
       [String(FACTS.packageTests), "SDK, MCP, alerts tests"],
+      [String(FACTS.threats), "threats modelled"],
     ];
-    const sw = 1.64, sg = 0.15;
+    const sw = 1.38, sg = 0.1;
     stats.forEach(([n, l], i) => {
       const x = 0.6 + i * (sw + sg);
       card(s, x, 1.25, sw, 1.2, C.white, `Stat ${i + 1}`);
