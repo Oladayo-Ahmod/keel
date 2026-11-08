@@ -1,96 +1,107 @@
 # Video script
 
-Target **2:00**. Hard maximum **2:15**. Narration is spoken at about 135 words a minute, so the seven scenes below (273 spoken words, not counting the optional clip) land at about two minutes with the pauses. Read it aloud once with a timer before recording and cut to fit.
+Target **1:55**. Hard maximum **2:15**. Narration is spoken at about 125 words a minute, so the six scenes below (about 240 spoken words, not counting the optional clip) land at about 1:55 with the pauses. Read it aloud once with a timer before recording and cut to fit.
 
-Everything on screen comes from a flow that [ROUNDTRIP.md](../ROUNDTRIP.md) or [PROOF.md](../PROOF.md) records as having run on Mezo testnet. Nothing is shown that those two documents list as not run.
+What is on screen comes from three places, and each scene says which:
+
+- [ROUNDTRIP.md](../ROUNDTRIP.md) and [PROOF.md](../PROOF.md): the flows that ran on Mezo testnet (listing, purchase, transfer, the keeper's transaction, the refusals).
+- [features-e2e.json](../features-e2e.json) and `docs/features-e2e/`: the test-wallet run of 2026-11-07 that drove the real sell panel (the price estimate) and the what-if simulator on the live position, and the share page.
+- The pages `/proof`, `/break-it` and `/stats`, which show what those documents record.
+
+Nothing is shown that those documents list as not run.
 
 ## Read this before recording
 
-- **Scenes 3, 4 and 5 are written as recorded footage, with a live option for 3 and 4.** The wallet round trip (2026-11-07) ran the app's own screens at 390 px and saved a screenshot at each step in `docs/roundtrip/`. The live proof run (2026-11-06) is a script and shows as transactions on the explorer. On 2026-11-08 the second wallet was funded with 300 MUSD (it now holds 384.33), so the 100 MUSD purchase and the transfer back can be recorded live: see [the rehearsal checklist](#rehearsal-checklist-for-a-live-recording). Whatever is shown must carry its real label: a caption that says "recorded run" and the date for stills, nothing for a live take. Do not present a still as live. Scene 5 stays stills in every case (the checklist says why).
-- **Never show or say:** open a position, close a position, refinance, claim surplus or sweep BTC through the app. ROUNDTRIP.md lists all of them as not run. Do not say "audited", do not mention users, partners or revenue other than the line in scene 7, and do not describe the proof run's keeper actions as a response to a price crash: the oracle cannot be moved on testnet, so the floor was set above the ratio (PROOF.md, notes).
-- **Deploy first.** Scenes 2 and 6 show the merged app, which needs `NEXT_PUBLIC_WAVE2=1` for the "Market and guardian positions" section, and the new proof and break-it content. On 2026-11-07 the live site did not yet have `/stats`, so it had not been redeployed. Open the live site and check scene 2's card and scene 6's pages exist before recording; if they do not, record from a local build and say nothing about it being the hosted site.
+- **Scene 3 is live by choice, and has a still fallback.** On 2026-11-08 the second wallet was funded with 300 MUSD (it now holds 384.33), so the 100 MUSD listing, the purchase and the transfer back can be recorded live: see [the rehearsal checklist](#rehearsal-checklist-for-a-live-recording). Whatever is shown must carry its real label: a caption that says "recorded run" and the date for stills, nothing for a live take. Do not present a still as live. The fallback rules are in [When to fall back to stills](#6-when-to-fall-back-to-stills).
+- **The keeper's transaction in scene 4 is always a recorded run.** The testnet oracle cannot be moved, so the proof run set the floor above the ratio (PROOF.md, notes). The what-if simulator in the same scene is read only and can be live.
+- **Never show or say:** open a position, close a position, refinance, claim surplus or sweep BTC through the app. ROUNDTRIP.md lists all of them as not run. Do not say "audited". Do not call 100 MUSD a fair price: the estimate on screen says about 1,354 MUSD, and 100 is a demo price chosen to keep the test balances small. Do not describe the stats page as adoption, and do not describe the keeper's action as a response to a price crash.
+- **Deploy first.** Scenes 2, 3 and 5 show the merged app, which needs `NEXT_PUBLIC_WAVE2=1` for the "Market and guardian positions" section and has the price estimate, the simulator and `/stats`. On 2026-11-08 the live site did not yet have `/stats`, so it had not been redeployed. Open the live site and check each of those exists before recording; if one does not, record from a local build and say nothing about it being the hosted site.
 - **Wallet addresses on screen** are the two testnet wallets in PROOF.md. No key, seed phrase or `.env` is ever on screen.
-- Record the app at a desktop window about 1280 wide for scene 2 and use the 390 px stills as they are, with a plain background around them. Hide browser bookmarks and notifications.
+- Record the app at a desktop window about 1280 wide and use the 390 px stills as they are, with a plain background around them. Hide browser bookmarks and notifications.
 
 ## Scenes
 
 | Scene | Time | Seconds |
 |---|---|---|
-| 1. The problem | 0:00 to 0:12 | 12 |
-| 2. The position | 0:12 to 0:26 | 14 |
-| 3. Hand it over | 0:26 to 0:44 | 18 |
-| 4. Sell it | 0:44 to 1:10 | 26 |
-| 5. The guardian | 1:10 to 1:34 | 24 |
-| 6. It is all public | 1:34 to 1:46 | 12 |
-| 7. What it is today | 1:46 to 2:00 | 14 |
+| 1. Hook | 0:00 to 0:10 | 10 |
+| 2. The position | 0:10 to 0:22 | 12 |
+| 3. List, buy, hand over | 0:22 to 1:00 | 38 |
+| 4. The guardian | 1:00 to 1:25 | 25 |
+| 5. It is all public | 1:25 to 1:40 | 15 |
+| 6. What it is today | 1:40 to 1:55 | 15 |
 
-### Scene 1: the problem (0:00 to 0:12)
+Captions are text laid over the picture, plain white on a dark bar at the bottom, one line, shown for the whole clip. They are listed in each scene.
+
+### Scene 1: hook (0:00 to 0:10)
 
 **On screen.** Slide 2 of the deck (`web/public/trozu-deck.pdf`, "Two things a MUSD trove cannot do"), full screen. No cursor. Hold for the whole scene.
 
-> On Mezo, a MUSD trove belongs to one address. To hand it over, you close and reopen it. And redemptions hit the lowest-ratio troves first, with no defense.
+**Caption.** "Mezo testnet. Not audited."
 
-### Scene 2: the position (0:12 to 0:26)
+> A MUSD trove can't change hands, and redemptions hit the lowest ratios first. Trozu puts the trove in an NFT, so it can be sold, handed over, or guarded.
+
+### Scene 2: the position (0:10 to 0:22)
 
 **On screen.**
 1. Open the live app at https://keel-two-roan.vercel.app/ with the deployer wallet connected. The header shows "Mezo Testnet" and the block number.
 2. In the section "Market and guardian positions", scroll to the card "Position #1". Stop where the gauge, the collateral, debt, equity and BTC price, and the locked-versus-market rate bars are all in view.
 3. Move the cursor slowly over the gauge, then the two rate bars. Do not click anything that sends a transaction.
 
-> Trozu puts the trove in a vault controlled by an NFT. This is position one on Mezo testnet, with its ratio and its locked rate. Move the NFT and the whole position moves.
+**Caption.** "Position 1, live on Mezo testnet"
+
+> This is position one on Mezo testnet: its ratio, its locked rate against the market, its collateral and debt. Move the NFT and all of it moves.
 
 *Source:* PROOF.md step 2 (position opened through the factory, token 1). The card is the app's position view.
 
-### Scene 3: hand it over (0:26 to 0:44)
+### Scene 3: list, buy, hand over (0:22 to 1:00)
 
-**On screen** (recorded run, caption "Recorded on Mezo testnet, 2026-11-06"):
-1. Open the explorer page for the transfer to the second wallet, tx `0x5a5f35a22f294e7331b5710bf55f70729d8ca75bb173df159a2269db02076c70` (PROOF.md step 5). Hold about 5 seconds on the transaction and its status.
-2. Cut to docs/PROOF.md, section "Refusals". Highlight the rows "the old holder tries to withdraw collateral after the transfer: `NotHolder`" and "a keeper tries the policy that was set before the two transfers: `NothingToDo(PolicyStale)`". Hold about 8 seconds.
+**On screen** (live, see the checklist; the fallback is stills):
+1. Deployer, "Sell" panel on Position #1, "List for sale". The "Price estimate" box appears with its inputs: equity, the guardian reserve, locked rate 1.00%, market rate 1.00%, rate advantage "none", and a suggested price. Hold on it about 5 seconds. Do not press "Use as price". (Fallback still: `docs/features-e2e/price-hint-390.png`, from the test-wallet run on the live position.) **Caption:** "The estimate shows its inputs. No rate premium: the rates match."
+2. Type 100 in "Price (MUSD)". Point at the note that you receive 99.75 MUSD after the 0.25 fee. Sign and list. **Caption:** "Demo price: 100 MUSD. The estimate says about 1,354."
+3. Switch to the second wallet. Market, Browse, the 100.00 MUSD card, "Buy", the review step with the bounds, "Buy position", "The position is yours." (Fallback stills: `list-fixed-100-success.jpg`, `buy-review.jpg`, `buy-success.jpg` from `docs/roundtrip/`, hashes `0x84a7743f…6f7c` and `0xf32de59b…5855` as text overlays.) **Caption:** "Buyer's bounds checked in the same transaction."
+4. Second wallet, "Transfer" to the deployer, type the last four characters, "Transfer position". (Fallback still: `transfer-back-success.jpg`, hash `0x7d311c24…576f`.) **Caption:** "The new holder sends it back."
 
-> We sent it to a second wallet and back, on chain. The old holder's calls revert with NotHolder. A guardian policy set by the old holder stops applying, so a keeper's call reverts with PolicyStale.
+If time is short, cut to the explorer page for the purchase, tx `0xf32de59bc28e9382785130b209770dc65f2a5f2d8883b36fc5285cad70535855`.
 
-### Scene 4: sell it (0:44 to 1:10)
+> To sell, the holder lists it. The app shows an estimate with its inputs: equity, and no rate premium, because the rates match. For the demo we list at 100 MUSD. The buyer sets bounds on collateral, debt, rate and reserve. One transaction checks them, pays the seller and the fee, and moves the NFT. Then the new holder sends it back.
 
-**On screen** (stills from `docs/roundtrip/`, caption "Recorded run through the app, 2026-11-07, 390 px"; each still about 5 seconds, then the explorer):
-1. `list-fixed-100-success.jpg`: the listing of 100 MUSD, with its hash `0x84a7743f…6f7c` as a text overlay (ROUNDTRIP.md, "List fixed price 100 MUSD").
-2. `buy-review.jpg`: the buyer's review step.
-3. `buy-success.jpg`: the purchase by the second wallet, with its hash `0xf32de59b…5855` as a text overlay (ROUNDTRIP.md, "Second wallet buys the 100 MUSD listing (permit)").
-4. The explorer page for the buy transaction `0xf32de59bc28e9382785130b209770dc65f2a5f2d8883b36fc5285cad70535855`, about 4 seconds.
-5. docs/PROOF.md "Refusals", the row "buying a listing signed before the position moved away and back: `ListingInvalid(StaleEpoch)`", about 5 seconds.
+*Source:* ROUNDTRIP.md ("List fixed price 100 MUSD", "Second wallet buys the 100 MUSD listing (permit)", "Second wallet transfers the position back"); the estimate from `docs/features-e2e.json`.
 
-> To sell, the holder signs a listing at a fixed or falling price. The buyer sets bounds on collateral, debt, rate and reserve. One transaction checks every bound, pays the seller and the fee, and moves the NFT. Here the second wallet buys for 100 MUSD with a signed permit. A listing signed before the position moved is refused.
-
-### Scene 5: the guardian (1:10 to 1:34)
-
-**On screen:**
-1. `docs/roundtrip/policy-success.jpg`, caption "Recorded run through the app, 2026-11-07": the policy saved from the app (ROUNDTRIP.md, "Guardian: save a policy", hash `0x661abb34…13c3`). About 6 seconds.
-2. Explorer page for the keeper's top-up, tx `0x7d2280786535e8ce51456007e12073906266a3afc39a8e6341ac90763a309335` (PROOF.md step 18), caption "Recorded on Mezo testnet, 2026-11-06". About 6 seconds.
-3. The proof page claim "keeper-floor" (https://keel-two-roan.vercel.app/proof), showing "ratio 135.07% to 145.17%, tip 0.00001 BTC". About 6 seconds.
-4. docs/PROOF.md "Refusals", the row "a keeper calls execute while the position is inside its policy: `NothingToDo(Healthy)`". About 5 seconds.
-
-> The guardian. The holder funds a reserve and sets a floor. Anyone can trigger it, and it acts only if the vault's planner agrees the policy calls for it. A keeper lifted this position from 135 to 145 percent and earned 0.00001 BTC. The testnet price can't move, so we set the floor above the ratio.
-
-### Scene 6: it is all public (1:34 to 1:46)
+### Scene 4: the guardian (1:00 to 1:25)
 
 **On screen.**
-1. https://keel-two-roan.vercel.app/proof, scrolled slowly through the claims list. About 6 seconds. Stop on the two claims marked Open.
-2. https://keel-two-roan.vercel.app/break-it, top of the page with the first entries. About 6 seconds.
+1. Deployer, Position #1, the "What if" section. Press "Check buffer to enable", then drag "BTC price" to about -45% and "Redemption pressure" to about 120%. The result shows the ratio falling, "Liquidatable", the guardian's line, and "Model, not a prediction". Read only: nothing is sent. (Fallback still: `docs/features-e2e/what-if-390.png`.) About 10 seconds. **Caption:** "A model, not a prediction."
+2. Cut to the explorer page for the keeper's top-up, tx `0x7d2280786535e8ce51456007e12073906266a3afc39a8e6341ac90763a309335` (PROOF.md step 18). About 7 seconds. **Caption:** "Recorded on Mezo testnet, 2026-11-06"
+3. The proof page claim "keeper-floor" (https://keel-two-roan.vercel.app/proof): "ratio 135.07% to 145.17%, tip 0.00001 BTC". About 6 seconds.
 
-> Everything is public. The proof page links each claim to its transaction, and the break-it page lists the attacks that worked, including the ones we found ourselves.
+> The guardian. The holder funds a reserve and sets a floor. The what-if simulator shows what it would do if the price fell, and says it is a model, not a prediction. Here is the real thing, recorded: a keeper lifted this position from 135 to 145 percent. The testnet price can't move, so we set the floor above the ratio.
 
-*Source of the content:* these two pages render `web/src/content/proof.json` and `break-it.json`, which are taken from PROOF.md and REVIEW.md. They are pages, not ROUNDTRIP or PROOF flows, and they only show what those documents record. Check the live site shows the version with the two later findings before recording (it did not on 2026-11-07, because the merged app had not been deployed). If it does not, cut this scene.
+*Source:* the simulator from `docs/features-e2e.json`; the keeper's action from PROOF.md step 18 and the notes on the oracle.
 
-### Scene 7: what it is today (1:46 to 2:00)
+### Scene 5: it is all public (1:25 to 1:40)
+
+**On screen.**
+1. https://keel-two-roan.vercel.app/proof, scrolled slowly through the claims. About 5 seconds. Stop on the two claims marked Open.
+2. https://keel-two-roan.vercel.app/break-it, top of the page with the first entries. About 5 seconds.
+3. https://keel-two-roan.vercel.app/stats, the banner at the top ("All activity so far was run by the team on testnet…") and the tile "Addresses other than the team's". About 5 seconds. **Caption:** "All activity so far: the team's own wallets."
+
+> Everything is public. The proof page ties each claim to a transaction, the break-it page lists the attacks that worked, and the stats page shows all activity so far is ours.
+
+*Source of the content:* these pages render `web/src/content/proof.json` and `break-it.json` (taken from PROOF.md and REVIEW.md) and read the chain's event logs. Check on the day that the stats banner really says the activity is all the team's: it only does while the tile "Addresses other than the team's" reads 0. If someone else has used the contracts, say what the page says instead. Check the live site shows the version with the two later findings on `/break-it` (it did not on 2026-11-08, because the merged app had not been deployed). If it does not, cut that clip.
+
+### Scene 6: what it is today (1:40 to 1:55)
 
 **On screen.**
 1. Slide 3 of the deck, "What the chain says", for about 8 seconds.
-2. Slide 1, with the QR code and "keel-two-roan.vercel.app" and the chip "Testnet. Not audited.", for the last 6 seconds. Leave it up until the narration ends.
+2. Slide 1, with the QR code and "keel-two-roan.vercel.app" and the chip "Testnet. Not audited.", for the last 7 seconds. Leave it up until the narration ends.
 
-> It's testnet only and not audited. On mainnet there are three troves and the rate has never moved, so revenue today is zero. The fee is 25 basis points on sales, paid by the seller.
+**Caption.** "Testnet only. Not audited. keel-two-roan.vercel.app"
+
+> It's testnet only and not audited. On mainnet there are three troves and the rate has never moved, so revenue today is zero. Try it at keel-two-roan.vercel.app.
 
 ## Optional: 10-second MCP clip (leave out unless the condition is met)
 
-**Condition.** Only record this if Claude Desktop or Claude Code is actually shown loading the `@trozu/mcp` server from the config in `packages/mcp/examples/claude_desktop_config.json`, with the server listed as connected and one read-only tool call answering from live testnet data. As of 2026-11-07 that has **not** been done: `packages/mcp/README.md` says only the stdio handshake was tested, not a real client, so this clip is **not** part of the script. If it is recorded later it replaces nothing; it goes between scenes 5 and 6 and needs 10 seconds taken from scene 6 or from the pauses.
+**Condition.** Only record this if Claude Desktop or Claude Code is actually shown loading the `@trozu/mcp` server from the config in `packages/mcp/examples/claude_desktop_config.json`, with the server listed as connected and one read-only tool call answering from live testnet data. As of 2026-11-08 that has **not** been done: `packages/mcp/README.md` says only the stdio handshake was tested, not a real client, so this clip is **not** part of the script. If it is recorded later it goes between scenes 4 and 5 and needs 10 seconds taken from scene 5 or from the pauses.
 
 **On screen, if the condition is met.**
 1. The client's settings or tools list showing `trozu` connected (no key anywhere on screen).
@@ -100,7 +111,7 @@ Everything on screen comes from a flow that [ROUNDTRIP.md](../ROUNDTRIP.md) or [
 
 ## Rehearsal checklist for a live recording
 
-For scenes 3 and 4 (and the app part of scene 5). A live run changes the position, so rehearse it once off camera, restore the staged state, then record.
+For scene 3 (and the read-only simulator in scene 4). A live run changes the position, so rehearse it once off camera, restore the staged state, then record.
 
 ### State to start from (read on 2026-11-08)
 
@@ -126,10 +137,11 @@ The two wallets must both have more than 0.001 BTC for gas before and after. A t
 ### 2. The listing (deployer)
 
 1. Connect the deployer. Open "Position #1" under "Market and guardian positions". In the "Sell" panel press "List for sale".
-2. Choose **Fixed price**. Type **100** in "Price (MUSD)". Do not press "Use as price": the estimate suggests about 1,354 MUSD, which is not the sale you are filming. Leave "Listing stays open (days)" at 7.
-3. The note under the price should read that you receive 99.75 MUSD after the market's 0.25% fee of 0.25. That is the number to point at.
-4. Press "Sign and list". If the panel says it will first approve the market on this one NFT (it will, because the transfer cleared the approval), approve in the wallet first. Then sign the listing (a typed-data signature, no gas), then confirm the announce transaction. The panel says "Listed. It now shows in the market."
-5. In the ROUNDTRIP run this was `announce` for 100 MUSD (`0x84a7743f…6f7c`).
+2. The "Price estimate" box appears. Check it before the take: it should show the equity (about 1,264 MUSD at the testnet price on 2026-11-07, so it moves), the guardian reserve, the two rates both 1.00%, the rate advantage "none", and a suggested price of about 1,354 MUSD. Hold on it for the narration. Do not press "Use as price".
+3. Choose **Fixed price**. Type **100** in "Price (MUSD)". Leave "Listing stays open (days)" at 7.
+4. The note under the price should read that you receive 99.75 MUSD after the market's 0.25% fee of 0.25. That is the number to point at.
+5. Press "Sign and list". If the panel says it will first approve the market on this one NFT (it will, because the transfer cleared the approval), approve in the wallet first. Then sign the listing (a typed-data signature, no gas), then confirm the announce transaction. The panel says "Listed. It now shows in the market."
+6. In the ROUNDTRIP run this was `announce` for 100 MUSD (`0x84a7743f…6f7c`).
 
 ### 3. The purchase (second wallet)
 
@@ -148,7 +160,7 @@ The two wallets must both have more than 0.001 BTC for gas before and after. A t
 
 Do all four. The numbers are the ones the staging used (ROUNDTRIP.md).
 
-1. **Dutch auction.** Sell panel, "Dutch auction". Starting price **9000**, lowest price **5000**, falls over **720** hours (30 days), listing stays open **30** days. Approve the market first if asked. Sign and list.
+1. **Dutch auction.** Sell panel, "Dutch auction". Starting price **9000**, lowest price **5000**, falls over **720** hours (30 days), listing stays open **30** days. Approve the market first if asked. Sign and list. (With equal rates the price estimate says an auction has no range here. Ignore that; the form still accepts the prices you type.)
 2. **Fixed price.** Sell panel, "Fixed price", price **6000**, open **30** days. Sign and list.
 3. **Guardian policy.** Guardian panel, Policy tab. Press "Suggest from my position", which fills the values in the table above (act under 130%, restore to 160%, a fifth of the position per action, two fifths per period, tip 0.00005 BTC, period 24 hours) from the position's current collateral and debt, and check redemption defense is off. Press "Save policy". The reserve (0.001188 BTC) is still there.
 4. **Check.** Market, Browse shows 2 listings. `/stats` shows active listings of 2, both demo. The guardian panel says the policy is live. If either listing says it cannot settle, the token's approval is missing: list again and approve when asked.
@@ -157,24 +169,25 @@ Each rehearsal and each take adds 2 to the epoch, so the epoch number in the tab
 
 ### 6. When to fall back to stills
 
-Keep scenes 3 and 4 as the stills in the scene list **only if** the live run proves unreliable. Call it unreliable if any of these happens in two takes in a row:
+Keep scene 3 as the stills named in it **only if** the live run proves unreliable. Call it unreliable if any of these happens in two takes in a row:
 
 - A step fails or the app says the node did not answer (the public RPC drops requests now and then). The app's own message says to check the explorer before retrying: do, and do not send twice.
 - The purchase or the transfer takes long enough that the scene needs more than about 40 seconds of dead time to cut.
 - The restore in section 5 does not bring the market back to 2 listings.
 
-If you fall back, use the stills named in the scenes and the "recorded run" caption, and say so in the first line of the video description.
+If you fall back, use the stills named in the scene and the "recorded run" caption, and say so in the first line of the video description.
 
-**Stays stills in every case:**
+**Stays recorded in every case:**
 
-- **Scene 5, the guardian.** The testnet oracle cannot be moved, so a keeper action can only be provoked by setting the policy floor above the position's current ratio and then running the keeper with its key. That is what the proof run did, and it is not something to do live on camera. The policy-save still and the keeper's top-up on the explorer (PROOF.md step 18) are the footage.
-- **The refusals** in scenes 3 and 4 (`NotHolder`, `PolicyStale`, `StaleEpoch`). They are `eth_call` results in PROOF.md, not app screens.
+- **The keeper's transaction in scene 4.** The testnet oracle cannot be moved, so a keeper action can only be provoked by setting the policy floor above the position's current ratio and then running the keeper with its key. That is what the proof run did, and it is not something to do live on camera. The explorer page for PROOF.md step 18 is the footage.
 
-**Can be live:** scene 2 (the card), scene 3's transfer (section 4) and scene 4's listing and purchase (sections 2 and 3). Because a live take is longer than the 26 seconds of narration in scene 4, record it, then cut it down to the listing, the review step, the success and the explorer page.
+**Can be live, read only:** scene 2 (the card), the price estimate in scene 3 (it only reads), and the what-if simulator in scene 4 (no transaction). If any of these misbehaves, use the stills named in the scene.
+
+Because a live take of scene 3 is longer than its 38 seconds of narration, record it, then cut it down to the estimate, the listing, the review step, the success and the transfer.
 
 ## What to cut if the first take is over 2:15
 
-In this order: the explorer page in scene 4 (4 seconds), the third item in scene 5 (6 seconds), scene 6 (12 seconds). Do not cut the closing line in scene 7.
+In this order: the explorer page in scene 3 (4 seconds), the proof-page clip in scene 4 (6 seconds), the `/break-it` clip in scene 5 (5 seconds). Do not cut the closing line in scene 6.
 
 ## Checks before publishing
 
