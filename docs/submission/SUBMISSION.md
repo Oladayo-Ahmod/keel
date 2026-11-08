@@ -25,7 +25,7 @@ Tradable MUSD debt positions
 _202 characters_
 
 ```
-Trozu puts each MUSD trove inside a vault controlled by an NFT, so a position can be sold or handed over as one object or watched by a bounded guardian; it is live on Mezo testnet and earns nothing yet.
+Trozu (formerly KEEL) puts each MUSD trove in a vault controlled by an NFT, so a position can be sold or handed over as one object, or protected by a bounded guardian. Live on Mezo testnet, not audited.
 ```
 
 ## How it works (max 3000 characters)
