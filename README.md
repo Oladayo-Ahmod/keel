@@ -118,7 +118,7 @@ flowchart LR
 | `TrozuMarket` | Signed listings, fixed price or Dutch, with a buyer's bounds checked at settlement. Immutable fee (25 bps, capped at 100) and fee recipient. Holds nothing between calls. |
 | `PositionLens` | Read-only view of ratio, equity, locked versus market rate, annual rate spread, claimable surplus and the redemption buffer, including the bounded verdict the guardian uses. Uses `getEntireDebtAndColl`, so pending redistribution and accrued interest are included. |
 
-The original contracts (`PositionFactory`, `PositionVault`, `PositionNFT`, `PositionLens`) are still deployed on testnet, unchanged, and are what [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) describes in detail. The Trozu contracts keep the same vault interface, so the app and the SDK work with both. Design reasons are in [docs/DECISIONS.md](docs/DECISIONS.md).
+The original contracts (`PositionFactory`, `PositionVault`, `PositionNFT`, `PositionLens`) are still deployed on testnet, unchanged. The Trozu contracts keep the same vault interface, so the app and the SDK work with both, but only Trozu positions can be sold or guarded. Each contract, the guardian's planner, the keeper and the packages are described in detail in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), and the reasons for each choice are numbered in [docs/DECISIONS.md](docs/DECISIONS.md).
 
 ## Position lifecycle
 
@@ -338,7 +338,7 @@ docs/           Threat model, decisions, viability, review, proof, deployments, 
 |---|---|
 | [VIABILITY.md](docs/VIABILITY.md) | What the market data supports, the revenue model, what happens if rates stay flat, who uses it first, and a section for real user feedback |
 | [MARKET_DATA.md](docs/MARKET_DATA.md) | The Mezo mainnet snapshot behind it, with the script and its limits |
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Components, rules and extension points of the original contracts; the Trozu contracts are described above and in DECISIONS |
+| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Every contract (the original ones and the Trozu vault, market and guardian), the keeper, the app and the packages: what each does, its rules and its limits |
 | [THREAT_MODEL.md](docs/THREAT_MODEL.md) | Threats, mitigations and the tests that cover them |
 | [REVIEW.md](docs/REVIEW.md) | The AI-assisted review, what it found, what was fixed, and what it does not cover |
 | [DECISIONS.md](docs/DECISIONS.md) | Design decisions and reasons |
