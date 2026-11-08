@@ -182,7 +182,7 @@ The design is built around invariants, each covered by a test:
 
 What the repository includes to back that up:
 
-- A [threat model](docs/THREAT_MODEL.md) covering reentrancy through native BTC callbacks, factory mint callbacks, clone initialisation, approval leakage across transfers, refinance edge cases, Recovery Mode and last-trove liveness, forced sends, permit front-running, redemption risk, and the upgradeability of Mezo's own core contracts.
+- A [threat model](docs/THREAT_MODEL.md) of 22 threats (T1 to T22, seven of them specific to the marketplace and guardian) covering reentrancy through native BTC callbacks, factory mint callbacks, clone initialisation, approval leakage across transfers, refinance edge cases, Recovery Mode and last-trove liveness, forced sends, permit front-running, redemption risk, and the upgradeability of Mezo's own core contracts.
 - Tests that deploy the **real MUSD contracts** (pinned at commit `aa25fd6`) and replace only the oracle, so behaviour cannot drift from a hand-written mock.
 - Invariant suites with state-machine handlers that interleave holder actions, transfers, listings, sales, keeper calls, strangers and previous holders, redemptions, liquidations, price moves, rate changes and time.
 - An AI-assisted review ([docs/REVIEW.md](docs/REVIEW.md)): three findings with working exploits (two Medium, one Low), all fixed with regression tests, plus two more found later by the project's own tests (a what-if planner that disagreed with the contract in 81 of 503 states, and a buffer check that used the wrong lens). **It is not an independent audit.**
