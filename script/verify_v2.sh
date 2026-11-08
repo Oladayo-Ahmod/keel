@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
-# Verify the Wave 2 testnet deployment on Sourcify (exact match needs the same compiler
-# settings as foundry.toml). Read only against the chain; submits source to Sourcify.
+# Verify the Wave 2 testnet deployment on Sourcify with forge verify-contract. On 2026-11-07 this left all five at
+# Sourcify's `match`, not `exact_match`; script/sourcify_metadata.mjs, which submits the build's own metadata, gave exact_match.
+# Read only against the chain; submits source to Sourcify.
 #   script/verify_v2.sh
 set -u
 export PATH=$PATH:$HOME/.foundry/bin
