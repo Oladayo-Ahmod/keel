@@ -6,10 +6,10 @@ The form's long answer is "How it works". It opens with what Trozu is and what t
 
 ## Project name
 
-_5 characters_
+_21 characters_
 
 ```
-Trozu
+Trozu (formerly KEEL)
 ```
 
 ## Project category (3 to 5 words)
@@ -90,28 +90,52 @@ Mezo testnet (chain id 31611)
 
 ## Project status
 
-_334 characters_
+_495 characters_
 
 ```
-Entirely new, built from an empty repository during the build period. The first commit is dated 16 Oct 2026 and the history has 307 commits through 7 Nov 2026, with no earlier code. The only third-party code is vendored as git submodules: the MUSD contracts, used by the tests, and OpenZeppelin. [Confirm the build period start date.]
+Entirely new, built from an empty repository during the build period. The first commit is dated 16 Oct 2026. 186 of the 320 commits in the history were written between 2 and 8 Nov 2026 (counted by author date, through commit 6db65aa): the marketplace, the guardian, the keeper, the app features, the SDK, the MCP server and the alerts script. The only third-party code is vendored as git submodules: the MUSD contracts, used by the tests, and OpenZeppelin. [Confirm the build period start date.]
 ```
 
 ## Project readiness
 
-_356 characters_
+_306 characters_
 
 ```
-Testnet deployment. Nine contracts are deployed on Mezo testnet: four original and five Trozu contracts (factory, NFT, lens, vault implementation, market). The original four are exact Sourcify matches and the five Trozu contracts are Sourcify matches (not exact). The app is live and a keeper workflow is in the repository. Not audited, and not on mainnet.
+Testnet deployment. Nine contracts are deployed on Mezo testnet: four original and five Trozu contracts (factory, NFT, lens, vault implementation, market). All nine are exact Sourcify matches (checked 2026-11-08). The app is live and a keeper workflow is in the repository. Not audited, and not on mainnet.
 ```
 
-## Future milestones
+## Future milestones (a post-hackathon plan, each answer under 1,000 characters)
 
-_470 characters_
+### 1. Independent audit
+
+_424 characters, limit 1,000: 576 to spare_
 
 ```
-1. A real user. Everything on testnet so far was run by the team. The next step that matters is someone else setting a guardian policy or buying a position, and recording what they say (docs/VIABILITY.md has the section).
-2. Rate-dependent features, only if governance moves the global rate. It has not moved since block 0, so the app shows no rate premium rather than inventing one.
-3. Independent audit before any mainnet use. No date. Mainnet deployment waits for it.
+Today the contracts are testnet only and not audited. The review in docs/REVIEW.md is AI-assisted, and docs/VIABILITY.md says in so many words that it is not an independent audit. Nothing in VIABILITY.md schedules an audit: no auditor, date or budget is chosen. This milestone is to get one independent review of the contracts, and to publish what it finds the way the AI-assisted one was published, including what it broke.
+```
+
+### 2. Capped mainnet
+
+_428 characters, limit 1,000: 572 to spare_
+
+```
+VIABILITY.md has no mainnet plan, and this is not one. What it does say: nothing is deployed on Mezo mainnet; the mainnet book is 3 troves (71,696 MUSD of debt), so it is a small market for any product built on positions; and whether a keeper's tip covers gas on mainnet has not been measured. Any capped mainnet release would have to start from those three facts. The size of a cap and a date are not decided in the repository.
+```
+
+### 3. First real users
+
+_503 characters, limit 1,000: 497 to spare_
+
+```
+Everything on testnet so far was run by the team. VIABILITY.md names who to look for, in order: a holder of a trove near the front of the redemption queue who cannot watch the chain; someone moving a position between wallets; a keeper; and a buyer, last. It asks four questions so replies can be compared (do you watch your ratio, have you been redeemed against, would you fund a reserve, would you buy a position) and has a table for real replies, in their words. The milestone is the first filled row.
+```
+
+### 4. Integrations
+
+_532 characters, limit 1,000: 468 to spare_
+
+```
+VIABILITY.md plans no integrations. What exists is in docs/INTEGRATIONS.md: a TypeScript SDK that builds unsigned transactions, a read-only MCP server for Claude Desktop and Claude Code (handshake tested, not yet run in a real client), and webhook alerts. VIABILITY.md does name two things that bear on this: keepers, who earn a capped tip, and the risk that Mezo adds transferable positions or its own auto-protection, which would make the overlap direct. This milestone is to see whether anyone outside the team builds on the SDK.
 ```
 
 ## Team info
